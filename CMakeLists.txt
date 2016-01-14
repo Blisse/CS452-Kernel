@@ -25,6 +25,8 @@ else()
     set(LDFLAGS "-init main -Map a0.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
     set(CMAKE_ASM_FLAGS "-mcpu=arm920t -mapcs-32")
 
+    set(CMAKE_C_LINK_EXECUTABLE "ld ${LDFLAGS} <OBJECTS> -o <TARGET>")
+
     link_directories("/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2")
 endif()
 
@@ -40,10 +42,6 @@ set(CMAKE_AR_FLAGS "rcs")
 
 # get rid of rdynamic flag > https://cmake.org/Bug/view.php?id=9985
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
-
-set(CMAKE_C_LINK_EXECUTABLE "ld ${LDFLAGS} <OBJECTS> -o <TARGET>")
-
-
 
 # output variables
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
