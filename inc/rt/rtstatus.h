@@ -1,0 +1,12 @@
+#pragma once
+
+typedef int RT_STATUS;
+
+#define STATUS_SUCCESS 0
+#define STATUS_FAILURE -1
+#define STATUS_INVALID_PARAMETER -2
+#define STATUS_BUFFER_OVERFLOW -3
+#define STATUS_BUFFER_TOO_SMALL -4
+#define STATUS_DEVICE_NOT_READY -5
+
+#define RT_SUCCESS(status) (STATUS_SUCCESS == (status))
