@@ -1,6 +1,8 @@
 #pragma once
 
-typedef int RT_STATUS;
+#include "types.h"
+
+typedef INT RT_STATUS;
 
 #define STATUS_SUCCESS 0
 #define STATUS_FAILURE -1

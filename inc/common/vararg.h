@@ -1,13 +1,15 @@
 #pragma once
 
-typedef char *va_list;
+#include "types.h"
+
+typedef CHAR *va_list;
 
 #define __va_argsiz(t)  \
-        (((sizeof(t) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
+        (((sizeof(t) + sizeof(INT) - 1) / sizeof(INT)) * sizeof(INT))
 
 #define va_start(ap, pN) ((ap) = ((va_list) __builtin_next_arg(pN)))
 
-#define va_end(ap)  ((void)0)
+#define va_end(ap)  ((VOID)0)
 
 #define va_arg(ap, t)   \
-         (((ap) = (ap) + __va_argsiz(t)), *((t*) (void*) ((ap) - __va_argsiz(t))))
+         (((ap) = (ap) + __va_argsiz(t)), *((t*) (PVOID) ((ap) - __va_argsiz(t))))
