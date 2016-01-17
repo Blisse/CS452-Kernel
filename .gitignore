@@ -35,3 +35,7 @@
 local/*
 debug/*
 release/*
+
+# Sublime
+*.sublime-workspace
+*.sublime-project
