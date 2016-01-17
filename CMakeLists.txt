@@ -16,13 +16,13 @@ option(LOCAL "LOCAL" OFF)
 
 if (LOCAL)
     set(CMAKE_C_COMPILER "/usr/bin/gcc")
-    set(CMAKE_C_FLAGS "-Wall")
-    set(LDFLAGS "-init main -Map a0.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
+    set(CMAKE_C_FLAGS "-Wall -Werror")
+    set(LDFLAGS "-init main -Map os.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
     set(CMAKE_ASM_FLAGS "-mapcs-32")
 else()
     set(CMAKE_C_COMPILER "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc")
-    set(CMAKE_C_FLAGS "-fPIC -Wall -mcpu=arm920t -msoft-float")
-    set(LDFLAGS "-init main -Map a0.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
+    set(CMAKE_C_FLAGS "-fPIC -Wall -Werror -mcpu=arm920t -msoft-float")
+    set(LDFLAGS "-init main -Map os.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
     set(CMAKE_ASM_FLAGS "-mcpu=arm920t -mapcs-32")
 
     set(CMAKE_C_LINK_EXECUTABLE "ld ${LDFLAGS} <OBJECTS> -o <TARGET>")
@@ -34,6 +34,7 @@ endif()
 # -c: only compile
 # -fpic: emit position-independent code
 # -Wall: report all warnings
+# -Werror: report warnings as errors
 # -mcpu=arm920t: generate code for the 920t architecture
 # -msoft-float: use software for floating point
 # -mapcs-32: always create a complete stack frame
