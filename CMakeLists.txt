@@ -22,12 +22,14 @@ if (LOCAL)
 else()
     set(CMAKE_C_COMPILER "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc")
     set(CMAKE_C_FLAGS "-fPIC -Wall -Werror -mcpu=arm920t -msoft-float")
-    set(LDFLAGS "-init main -Map rtos.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
     set(CMAKE_ASM_FLAGS "-mcpu=arm920t -mapcs-32")
+    set(CMAKE_MODULE_LINKER_FLAGS "rcs")
 
-    set(CMAKE_C_LINK_EXECUTABLE "ld ${LDFLAGS} <OBJECTS> -o <TARGET>")
+    set(CMAKE_EXE_LINKER_FLAGS "-init main -Map kernel.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
+    set(CMAKE_EXE_LINKER_LIBS_DIRS "-L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L./lib")
+    set(CMAKE_EXE_LINKER_LIBS_SEARCH "-lkernel -los -lutilities -lbwio -lgcc")
+    set(CMAKE_C_LINK_EXECUTABLE "ld <LINK_FLAGS> -o <TARGET> ${CMAKE_EXE_LINKER_LIBS_DIRS} <OBJECTS> ${CMAKE_EXE_LINKER_LIBS_SEARCH}")
 
-    link_directories("/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2")
 endif()
 
 # -g: include hooks for gdb
