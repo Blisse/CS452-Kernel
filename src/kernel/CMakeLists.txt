@@ -1,6 +1,6 @@
 set(SRC_KERNEL
     "scheduler.c"
-    "swi.asm"
+    "trap.asm"
     )
 
 add_library(
