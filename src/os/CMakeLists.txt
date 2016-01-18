@@ -1,6 +1,8 @@
 set(SRC_OS
+    "init.c"
     "io.c"
     "object.c"
+    "rtos.asm"
     "uart.c"
     )
 
