@@ -14,5 +14,33 @@ RT_STATUS
 TrapReturn
     (
         IN RT_STATUS status, 
-        IN UINT stack
+        IN UINT* stack
+    );
+
+extern
+INT
+GetR3
+    (
+        VOID
+    );
+
+extern
+INT
+GetSPSR
+    (
+        VOID
+    );
+
+extern
+INT
+GetSP
+    (
+        VOID
+    );
+
+extern
+UINT*
+GetUserSP
+    (
+        VOID
     );

@@ -12,4 +12,5 @@ set_target_properties(
     ${LIB_BWIO}
     PROPERTIES
     LINKER_LANGUAGE C
+    COMPILE_FLAGS "-O0"
     )

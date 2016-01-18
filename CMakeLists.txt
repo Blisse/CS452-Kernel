@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 # verbose
-set(CMAKE_VERBOSE_MAKEFILE OFF)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # cross compiler settings
 set(CMAKE_SYSTEM_PROCESSOR arm)
@@ -21,7 +21,7 @@ if (LOCAL)
     set(CMAKE_ASM_FLAGS "-mapcs-32")
 else()
     set(CMAKE_C_COMPILER "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc")
-    set(CMAKE_C_FLAGS "-fPIC -Wall -Werror -mcpu=arm920t -mfloat-abi=soft")
+    set(CMAKE_C_FLAGS "-fPIC -O2 -Wall -Werror -mcpu=arm920t -mfloat-abi=soft")
 
     set(CMAKE_C_ARCHIVE_CREATE "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ar rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
     set(CMAKE_C_ARCHIVE_FINISH "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ranlib <TARGET>")
