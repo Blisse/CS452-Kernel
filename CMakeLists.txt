@@ -21,17 +21,20 @@ if (LOCAL)
     set(CMAKE_ASM_FLAGS "-mapcs-32")
 else()
     set(CMAKE_C_COMPILER "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc")
-    set(CMAKE_C_FLAGS "-fPIC -Wall -Werror -mcpu=arm920t -msoft-float")
+    set(CMAKE_C_FLAGS "-fPIC -Wall -Werror -mcpu=arm920t -mfloat-abi=soft")
+
+    set(CMAKE_C_ARCHIVE_CREATE "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ar rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
+    set(CMAKE_C_ARCHIVE_FINISH "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ranlib <TARGET>")
+
     set(CMAKE_ASM_COMPILER "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/as")
-    set(CMAKE_ASM_FLAGS "-mcpu=arm920t -mapcs-32")
+    set(CMAKE_ASM_FLAGS "-mcpu=arm920t -mapcs-32 -mfloat-abi=soft")
     set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <DEFINES> <FLAGS> -o <OBJECT> <SOURCE>")
     set(CMAKE_MODULE_LINKER_FLAGS "rcs")
 
-    set(CMAKE_EXE_LINKER_FLAGS "-init main -Map kernel.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
+    set(CMAKE_EXE_LINKER_FLAGS "-init main -Map rtos.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
     set(CMAKE_EXE_LINKER_LIBS_DIRS "-L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L./lib")
     set(CMAKE_EXE_LINKER_LIBS_SEARCH "-lkernel -los -lutilities -lbwio -lgcc")
-    set(CMAKE_C_LINK_EXECUTABLE "ld <LINK_FLAGS> -o <TARGET> ${CMAKE_EXE_LINKER_LIBS_DIRS} <OBJECTS> ${CMAKE_EXE_LINKER_LIBS_SEARCH}")
-
+    set(CMAKE_C_LINK_EXECUTABLE "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld <LINK_FLAGS> -o <TARGET> ${CMAKE_EXE_LINKER_LIBS_DIRS} <OBJECTS> ${CMAKE_EXE_LINKER_LIBS_SEARCH}")
 endif()
 
 # -g: include hooks for gdb
@@ -42,8 +45,6 @@ endif()
 # -mcpu=arm920t: generate code for the 920t architecture
 # -msoft-float: use software for floating point
 # -mapcs-32: always create a complete stack frame
-
-set(CMAKE_AR_FLAGS "rcs")
 
 # get rid of rdynamic flag > https://cmake.org/Bug/view.php?id=9985
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
