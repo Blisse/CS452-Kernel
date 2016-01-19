@@ -65,9 +65,9 @@ GetSP:
 
 .globl GetUserSP
 GetUserSP:
-    msr cpsr_c, #0x9F
+    msr cpsr_c, #0xDF
     mov r0, sp
-    msr cpsr_c, #0x93
+    msr cpsr_c, #0xD3
     bx lr
 
 .globl GetLR

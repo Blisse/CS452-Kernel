@@ -19,7 +19,7 @@ TrapReturn:
     stmfd sp!, {r4-r12, lr}
 
     /* Switch to system mode */
-    msr cpsr_c, #0x9F
+    msr cpsr_c, #0xDF
 
     /* Restore user's stack pointer */
     mov sp, r1
@@ -28,7 +28,7 @@ TrapReturn:
     ldmfd sp!, {r2-r12, lr}
 
     /* Switch back to supervisor mode */
-    msr cpsr_c, #0x93
+    msr cpsr_c, #0xD3
 
     /* Jump back to user mode */
     msr spsr, r2
@@ -44,13 +44,13 @@ TrapEntry:
     mov r3, lr
 
     /* Switch to system mode */
-    msr cpsr_c, #0x9F
+    msr cpsr_c, #0xDF
 
     /* Store user registers */
     stmfd sp!, {r2-r12, lr}
 
     /* Switch back to supervisor mode */
-    msr cpsr_c, #0x93
+    msr cpsr_c, #0xD3
 
     /* Restore clobbered function parameters */
     ldmfd sp!, {r2, r3}
