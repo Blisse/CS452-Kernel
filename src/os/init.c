@@ -3,24 +3,37 @@
 
 extern
 INT
+GetCPSR
+    (
+        VOID
+    );
+
+extern
+UINT*
 GetSP
     (
         VOID
     );
 
 VOID
-FirstUserTask
+InitTask
     (
         VOID
     )
 {
-    // bwprintf(BWCOM2, "IN FIRST USER TASK \r\n");
-    // bwprintf(BWCOM2, "IN user task sp is: %d \r\n", GetSP());
-    // TODO: VERIFY THAT CPSR IS IN USER MODE
+    bwprintf(BWCOM2, "User CPSR is: %d \r\n", GetCPSR());
+    bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
     Pass();
 
-    // bwprintf(BWCOM2, "IN FIRST USER TASK \r\n");
-    // bwprintf(BWCOM2, "IN user task sp is: %d \r\n", GetSP());
-    // TODO: VERIFY THAT CPSR IS IN USER MODE
+    bwprintf(BWCOM2, "User CPSR is: %d \r\n", GetCPSR());
+    bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
+    Pass();
+
+    bwprintf(BWCOM2, "User CPSR is: %d \r\n", GetCPSR());
+    bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
+    Pass();
+
+    bwprintf(BWCOM2, "User CPSR is: %d \r\n", GetCPSR());
+    bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
     Pass();
 }

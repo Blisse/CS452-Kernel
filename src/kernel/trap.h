@@ -10,37 +10,9 @@ TrapInstallHandler
     );
 
 extern
-RT_STATUS
+PVOID
 TrapReturn
     (
-        IN RT_STATUS status, 
+        IN PVOID returnValue, 
         IN UINT* stack
-    );
-
-extern
-INT
-GetR3
-    (
-        VOID
-    );
-
-extern
-INT
-GetSPSR
-    (
-        VOID
-    );
-
-extern
-INT
-GetSP
-    (
-        VOID
-    );
-
-extern
-UINT*
-GetUserSP
-    (
-        VOID
     );

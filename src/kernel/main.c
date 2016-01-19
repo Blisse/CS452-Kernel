@@ -1,26 +1,20 @@
 #include "rt.h"
+#include "arm.h"
 #include "bwio/bwio.h"
 #include "trap.h"
 
+extern
 VOID
-FirstUserTask
+InitTask
     (
         VOID
     );
-
-VOID
-Pass
-    (
-        VOID
-    );
-
-extern int GetCpsr();
 
 static UINT testStack[256];
 
 typedef struct _TASK {
     UINT* stack;
-    int retval;
+    PVOID retval;
 } TASK;
 
 VOID
@@ -39,7 +33,7 @@ TestCreate
         stack[i] = 0x20;
     }
 
-    *(testStack - 10) = (UINT) FirstUserTask;
+    *(testStack - 10) = (UINT) InitTask;
     *(testStack - 11) = 0x10;
     testStack -= 11;
 
@@ -61,37 +55,41 @@ main
     bwprintf(BWCOM2, "Installing swi handler\r\n");
     TrapInstallHandler();
 
-    // bwprintf(BWCOM2, "Creating test task \r\n");
+    bwprintf(BWCOM2, "Creating test task \r\n");
 
     TestCreate(&test, testStack, 256);
 
-    // bwprintf(BWCOM2, "R3 should be %d \r\n", (UINT) Pass);
-    // bwprintf(BWCOM2, "Top of stack is %d \r\n", (UINT)(testStack + 255));
-    // bwprintf(BWCOM2, "SP should be %d \r\n", (UINT) test.stack);
-    // bwprintf(BWCOM2, "Calling test task \r\n");
+    bwprintf(BWCOM2, "Starting CPSR is %d \r\n", GetCPSR());
+    bwprintf(BWCOM2, "Top of stack is %d \r\n", (UINT)(testStack + 255));
+    bwprintf(BWCOM2, "SP should be %d \r\n", (UINT) test.stack);
 
     test.retval = TrapReturn(test.retval, test.stack);
     test.stack = GetUserSP();
 
-    // bwprintf(BWCOM2, "Ending with value %d\r\n", test.retval);
-    // bwprintf(BWCOM2, "SP is %d \r\n", (UINT) test.stack);
+    bwprintf(BWCOM2, "Kernel trap returned with %d\r\n", test.retval);
+    bwprintf(BWCOM2, "Kernel CPSR is %d \r\n", GetCPSR());
+    bwprintf(BWCOM2, "Kernel has user SP as %d \r\n", (UINT) test.stack);
 
     test.retval = TrapReturn(test.retval, test.stack);
     test.stack = GetUserSP();
 
-    // bwprintf(BWCOM2, "Ending with value %d\r\n", test.retval);
-    // bwprintf(BWCOM2, "SP is %d \r\n", (UINT) test.stack);
+    bwprintf(BWCOM2, "Kernel trap returned with %d\r\n", test.retval);
+    bwprintf(BWCOM2, "Kernel CPSR is %d \r\n", GetCPSR());
+    bwprintf(BWCOM2, "Kernel has user SP as %d \r\n", (UINT) test.stack);
+
+    test.retval = TrapReturn(test.retval, test.stack);
+    test.stack = GetUserSP();
+
+    bwprintf(BWCOM2, "Kernel trap returned with %d\r\n", test.retval);
+    bwprintf(BWCOM2, "Kernel CPSR is %d \r\n", GetCPSR());
+    bwprintf(BWCOM2, "Kernel has user SP as %d \r\n", (UINT) test.stack);
+
+    test.retval = TrapReturn(test.retval, test.stack);
+    test.stack = GetUserSP();
+
+    bwprintf(BWCOM2, "Kernel trap returned with %d\r\n", test.retval);
+    bwprintf(BWCOM2, "Kernel CPSR is %d \r\n", GetCPSR());
+    bwprintf(BWCOM2, "Kernel has user SP as %d \r\n", (UINT) test.stack);
 
     return STATUS_SUCCESS;
 }
-
-// VOID
-// print
-//     (
-//         VOID
-//     )
-// {
-//     bwprintf(BWCOM2, "R1 is %d \r\n", GetR3());
-//     bwprintf(BWCOM2, "SPSR is %d \r\n", GetSPSR());
-//     bwprintf(BWCOM2, "SP is %d \r\n", GetSP());
-// }

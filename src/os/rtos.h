@@ -14,7 +14,7 @@ VOID
     );
 
 extern
-RT_STATUS
+INT
 Create
     (
         IN INT priority, 
@@ -22,14 +22,14 @@ Create
     );
 
 extern
-RT_STATUS
+INT
 MyTid
     (
         VOID
     );
 
 extern
-RT_STATUS
+INT
 MyParentTid
     (
         VOID

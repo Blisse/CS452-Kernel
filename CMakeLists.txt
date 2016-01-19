@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 # verbose
-set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 # cross compiler settings
 set(CMAKE_SYSTEM_PROCESSOR arm)

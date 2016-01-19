@@ -1,5 +1,8 @@
 set(SRC_KERNEL
+    "arm.asm"
+    "kernel.c"
     "scheduler.c"
+    "task.c"
     "trap.asm"
     )
 
