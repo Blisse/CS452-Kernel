@@ -11,6 +11,8 @@ set(CMAKE_C_COMPILER_WORKS 1)
 
 project("CS452" C ASM)
 
+enable_testing()
+
 # command-line parameters
 option(LOCAL "LOCAL" OFF)
 
@@ -52,7 +54,7 @@ include_directories(
 # -msoft-float: use software for floating point
 # -mapcs-32: always create a complete stack frame
 
-if (LOCAL)
+if(LOCAL)
     set(CMAKE_C_COMPILER "/usr/bin/gcc")
     set(CMAKE_C_FLAGS "-Wall -Werror")
 else()
@@ -68,13 +70,29 @@ else()
     set(CMAKE_MODULE_LINKER_FLAGS "rcs")
 
     set(CMAKE_EXE_LINKER_FLAGS "-init main -Map rtos.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
-    set(CMAKE_EXE_LINKER_LIBS_DIRS "-L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L./lib")
+    set(CMAKE_EXE_LINKER_LIBS_DIRS "-L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L${CMAKE_LIBRARY_OUTPUT_DIRECTORY} -L${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
     set(CMAKE_EXE_LINKER_LIBS_SEARCH "${ALL_LIBS} -lgcc")
     set(CMAKE_C_LINK_EXECUTABLE "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld <LINK_FLAGS> -o <TARGET> ${CMAKE_EXE_LINKER_LIBS_DIRS} <OBJECTS> ${CMAKE_EXE_LINKER_LIBS_SEARCH}")
 
     # get rid of rdynamic flag > https://cmake.org/Bug/view.php?id=9985
     set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 endif()
+
+function(add_c_library LIBRARY_NAME LIBRARY_SOURCES LIBRARY_DEPENDENCIES)
+    add_library("${LIBRARY_NAME}" STATIC ${LIBRARY_SOURCES})
+    target_link_libraries("${LIBRARY_NAME}" "${LIBRARY_DEPENDENCIES}")
+    if(argc EQUAL 3)
+        set_target_properties("${LIBRARY_NAME}" PROPERTIES LINKER_LANGUAGE C)
+    else()
+        set_target_properties("${LIBRARY_NAME}" PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "${ARG4}")
+    endif()
+endfunction(add_c_library)
+
+function(add_c_executable LIBRARY_NAME LIBRARY_SOURCES LIBRARY_DEPENDENCIES)
+    add_executable("${LIBRARY_NAME}" "${LIBRARY_SOURCES}")
+    target_link_libraries("${LIBRARY_NAME}" "${LIBRARY_DEPENDENCIES}")
+    set_target_properties("${LIBRARY_NAME}" PROPERTIES LINKER_LANGUAGE C)
+endfunction(add_c_executable)
 
 # build directories
 add_subdirectory("external")

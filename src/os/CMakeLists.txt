@@ -6,19 +6,8 @@ set(SRC_OS
     "uart.c"
     )
 
-add_library(
-    ${LIB_OS}
-    STATIC
-    ${SRC_OS}
-    )
-
-target_link_libraries(
-    ${LIB_OS}
-    ${LIB_RTOSC}
-    )
-
-set_target_properties(
-    ${LIB_OS}
-    PROPERTIES
-    LINKER_LANGUAGE C
+add_c_library(
+    "${LIB_OS}"
+    "${SRC_OS}"
+    "${LIB_RTOSC}"
     )

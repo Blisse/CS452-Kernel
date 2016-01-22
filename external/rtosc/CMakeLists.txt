@@ -4,19 +4,8 @@ set(SRC_UTILITIES
     "string.c"
     )
 
-add_library(
-    ${LIB_RTOSC}
-    STATIC
-    ${SRC_UTILITIES}
-    )
-
-target_link_libraries(
-    ${LIB_RTOSC}
-    ${LIB_BWIO}
-    )
-
-set_target_properties(
-    ${LIB_RTOSC}
-    PROPERTIES
-    LINKER_LANGUAGE C
+add_c_library(
+    "${LIB_RTOSC}"
+    "${SRC_UTILITIES}"
+    "${LIB_BWIO}"
     )

@@ -6,14 +6,14 @@ set(SRC_KERNEL
     "trap.asm"
     )
 
-add_library(
-    ${LIB_KERNEL}
-    ${SRC_KERNEL}
+add_c_library(
+    "${LIB_KERNEL}"
+    "${SRC_KERNEL}"
+    "${LIB_BWIO} ${LIB_RTOSC}"
     )
 
-target_link_libraries(
-    ${LIB_KERNEL}
-    ${LIB_BWIO}
-    ${LIB_OS}
-    ${LIB_RTOSC}
+add_c_executable(
+    "${EXE_RTOS}"
+    "main.c"
+    "${LIB_KERNEL}"
     )
