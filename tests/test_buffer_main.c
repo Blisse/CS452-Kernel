@@ -1,4 +1,4 @@
-#include "buffer.h"
+#include <rtosc/buffer.h>
 
 int main(int argc, char* argv[]) {
 

@@ -15,5 +15,5 @@ target_link_libraries(
     ${LIB_KERNEL}
     ${LIB_BWIO}
     ${LIB_OS}
-    ${LIB_UTILITIES}
+    ${LIB_RTOSC}
     )

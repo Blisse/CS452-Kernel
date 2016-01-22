@@ -1,5 +1,6 @@
 #include "object.h"
-#include "assert.h"
+
+#include <rtosc/assert.h>
 
 #define HANDLE_TABLE_SIZE 2
 

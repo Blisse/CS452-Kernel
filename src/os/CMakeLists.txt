@@ -14,7 +14,7 @@ add_library(
 
 target_link_libraries(
     ${LIB_OS}
-    ${LIB_UTILITIES}
+    ${LIB_RTOSC}
     )
 
 set_target_properties(

@@ -5,18 +5,18 @@ set(SRC_UTILITIES
     )
 
 add_library(
-    ${LIB_UTILITIES}
+    ${LIB_RTOSC}
     STATIC
     ${SRC_UTILITIES}
     )
 
 target_link_libraries(
-    ${LIB_UTILITIES}
+    ${LIB_RTOSC}
     ${LIB_BWIO}
     )
 
 set_target_properties(
-    ${LIB_UTILITIES}
+    ${LIB_RTOSC}
     PROPERTIES
     LINKER_LANGUAGE C
     )

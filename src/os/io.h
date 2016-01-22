@@ -1,6 +1,6 @@
 #pragma once
 
-#include "buffer.h"
+#include <rtosc/buffer.h>
 #include "object.h"
 #include "rt.h"
 

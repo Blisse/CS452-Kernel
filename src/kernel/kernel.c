@@ -1,5 +1,6 @@
 #include "kernel.h"
-#include "assert.h"
+
+#include <rtosc/assert.h>
 #include "scheduler.h"
 #include "task.h"
 #include "trap.h"

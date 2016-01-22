@@ -1,5 +1,6 @@
 #include "io.h"
-#include "assert.h"
+
+#include <rtosc/assert.h>
 #include "ts7200.h"
 
 static
