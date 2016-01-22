@@ -11,8 +11,37 @@ set(CMAKE_C_COMPILER_WORKS 1)
 
 project("CS452" C ASM)
 
+# command-line parameters
 option(LOCAL "LOCAL" OFF)
 
+# build settings
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# libraries
+set(LIB_BWIO "bwio")
+set(LIB_RTOSC "rtosc")
+set(LIB_OS "os")
+set(LIB_KERNEL "kernel")
+set(ALL_LIBS "-l${LIB_KERNEL} -l${LIB_OS} -l${LIB_RTOSC} -l${LIB_BWIO}")
+
+# executables
+set(EXE_RTOS "rtos.elf")
+set(EXE_TEST_BUFFER "test_buffer")
+set(EXE_TEST_STRING "test_string")
+
+# includes
+include_directories(
+    "external"
+    "inc"
+    "inc/common"
+    "inc/rt"
+    "src/kernel"
+    "src/os"
+    )
+
+# compile options
 
 # -g: include hooks for gdb
 # -c: only compile
@@ -40,35 +69,12 @@ else()
 
     set(CMAKE_EXE_LINKER_FLAGS "-init main -Map rtos.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
     set(CMAKE_EXE_LINKER_LIBS_DIRS "-L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L./lib")
-    set(CMAKE_EXE_LINKER_LIBS_SEARCH "-lkernel -los -lrtosc -lbwio -lgcc")
+    set(CMAKE_EXE_LINKER_LIBS_SEARCH "${ALL_LIBS} -lgcc")
     set(CMAKE_C_LINK_EXECUTABLE "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld <LINK_FLAGS> -o <TARGET> ${CMAKE_EXE_LINKER_LIBS_DIRS} <OBJECTS> ${CMAKE_EXE_LINKER_LIBS_SEARCH}")
+
+    # get rid of rdynamic flag > https://cmake.org/Bug/view.php?id=9985
+    set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 endif()
-
-# get rid of rdynamic flag > https://cmake.org/Bug/view.php?id=9985
-set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
-
-# output variables
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-set(EXE_RTOS "rtos.elf")
-set(EXE_TEST_BUFFER "test_buffer")
-set(EXE_TEST_STRING "test_string")
-
-set(LIB_BWIO "bwio")
-set(LIB_RTOSC "rtosc")
-set(LIB_KERNEL "kernel")
-set(LIB_OS "os")
-
-include_directories(
-    "external"
-    "inc"
-    "inc/common"
-    "inc/rt"
-    "src/kernel"
-    "src/os"
-    )
 
 # build directories
 add_subdirectory("external")
