@@ -1,3 +1,8 @@
+.globl GetR0
+GetR0:
+    mov r0, r0
+    bx lr
+
 .globl GetR1
 GetR1:
     mov r0, r1

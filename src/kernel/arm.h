@@ -4,6 +4,13 @@
 
 extern
 INT
+GetR0
+    (
+        VOID
+    );
+
+extern
+INT
 GetR1
     (
         VOID
