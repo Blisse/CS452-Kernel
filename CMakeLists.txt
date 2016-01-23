@@ -59,14 +59,14 @@ if(LOCAL)
     set(CMAKE_C_FLAGS "-Wall -Werror")
 else()
     set(CMAKE_C_COMPILER "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc")
-    set(CMAKE_C_FLAGS "-fPIC -O2 -Wall -Werror -mcpu=arm920t -mfloat-abi=soft")
+    set(CMAKE_C_FLAGS "-fPIC -Wall -Werror -mcpu=arm920t -mfloat-abi=soft")
 
     set(CMAKE_C_ARCHIVE_CREATE "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ar rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
     set(CMAKE_C_ARCHIVE_FINISH "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ranlib <TARGET>")
 
     set(CMAKE_ASM_COMPILER "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/as")
-    set(CMAKE_ASM_FLAGS "-mcpu=arm920t -mapcs-32 -mfloat-abi=soft")
-    set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <DEFINES> <FLAGS> -o <OBJECT> <SOURCE>")
+    set(CMAKE_ASM_COMPILE_FLAGS "-mcpu=arm920t -mapcs-32 -mfloat-abi=soft")
+    set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <DEFINES> ${CMAKE_ASM_COMPILE_FLAGS} -o <OBJECT> <SOURCE>")
     set(CMAKE_MODULE_LINKER_FLAGS "rcs")
 
     set(CMAKE_EXE_LINKER_FLAGS "-init main -Map rtos.map -N -T ${CMAKE_CURRENT_SOURCE_DIR}/src/orex.ld")
