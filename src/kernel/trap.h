@@ -10,9 +10,8 @@ TrapInstallHandler
     );
 
 extern
-PVOID
+VOID
 TrapReturn
     (
-        IN PVOID returnValue, 
         IN UINT* stack
     );

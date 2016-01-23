@@ -28,8 +28,7 @@ typedef struct _TASK_DESCRIPTOR
     TASK_STATE state;
     INT tid;
     INT parentTid;
-    INT priority;    
-    PVOID returnValue;
+    INT priority;
 } TASK_DESCRIPTOR;
 
 VOID
@@ -55,8 +54,7 @@ inline
 VOID
 TaskUpdate
     (
-        IN TASK_DESCRIPTOR* task,
-        IN PVOID returnValue
+        IN TASK_DESCRIPTOR* task
     );
 
 INT

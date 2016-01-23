@@ -11,8 +11,7 @@ TrapInstallHandler:
     bx lr
 
 @ This function is passed 2 parameters
-@ R0 contains the return value - Do not touch this register
-@ R1 contains the user's stack
+@ R0 contains the user's stack
 .globl TrapReturn
 TrapReturn:
     /* Store kernel state */
@@ -22,10 +21,10 @@ TrapReturn:
     msr cpsr_c, #0xDF
 
     /* Restore user's stack pointer */
-    mov sp, r1
+    mov sp, r0
 
     /* Restore the user state */
-    ldmfd sp!, {r2-r12, lr}
+    ldmfd sp!, {r0, r2-r12, lr}
 
     /* Switch back to supervisor mode */
     msr cpsr_c, #0xD3
@@ -64,6 +63,15 @@ TrapEntry:
 
     /* TODO: Make the system call */
     mov r0, r4
+
+    /* Switch to system mode */
+    msr cpsr_c, #0xDF
+
+    /* Store the system call return value on the user's stack */
+    stmfd sp!, {r0}
+
+    /* Switch back to supervisor mode */
+    msr cpsr_c, #0xD3
 
     /* Restore kernel state */
     /* This will jump back to whoever called TrapReturn() */

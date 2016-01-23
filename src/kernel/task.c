@@ -48,12 +48,10 @@ inline
 VOID
 TaskUpdate
     (
-        IN TASK_DESCRIPTOR* task,
-        IN PVOID returnValue
+        IN TASK_DESCRIPTOR* task
     )
 {
     task->stack = GetUserSP();
-    task->returnValue = returnValue;
 }
 
 INT

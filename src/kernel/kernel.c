@@ -51,16 +51,17 @@ KernelRun
 
         if(NULL != nextTask)
         {
-            PVOID returnValue;
-
             if(!TaskValidate(nextTask))
             {
                 ASSERT(FALSE, "Invalid task!  This likely indicats a buffer overflow \r\n");
             }
 
-            returnValue = TrapReturn(nextTask->returnValue, nextTask->stack);
+            // Return to user mode
+            TrapReturn(nextTask->stack);
 
-            TaskUpdate(nextTask, returnValue);
+            // This will execute once we return back to kernel mode
+            // Update the task that just ran
+            TaskUpdate(nextTask);
         }
         else
         {

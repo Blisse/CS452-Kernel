@@ -35,7 +35,8 @@ TestCreate
 
     *(testStack - 10) = (UINT) InitTask;
     *(testStack - 11) = 0x10;
-    testStack -= 11;
+    *(testStack - 12) = 0x30;
+    testStack -= 12;
 
     task->stack = testStack;
     task->retval = 0;
@@ -59,37 +60,45 @@ main
 
     TestCreate(&test, testStack, 256);
 
+    bwprintf(BWCOM2, "Init task addr is %d \r\n", (UINT) InitTask);
     bwprintf(BWCOM2, "Starting CPSR is %d \r\n", GetCPSR());
     bwprintf(BWCOM2, "Top of stack is %d \r\n", (UINT)(testStack + 255));
     bwprintf(BWCOM2, "SP should be %d \r\n", (UINT) test.stack);
 
-    test.retval = TrapReturn(test.retval, test.stack);
+    TrapReturn(test.stack);
     test.stack = GetUserSP();
 
-    bwprintf(BWCOM2, "Kernel trap returned with %d\r\n", test.retval);
     bwprintf(BWCOM2, "Kernel CPSR is %d \r\n", GetCPSR());
     bwprintf(BWCOM2, "Kernel has user SP as %d \r\n", (UINT) test.stack);
 
-    test.retval = TrapReturn(test.retval, test.stack);
+    TrapReturn(test.stack);
     test.stack = GetUserSP();
 
-    bwprintf(BWCOM2, "Kernel trap returned with %d\r\n", test.retval);
     bwprintf(BWCOM2, "Kernel CPSR is %d \r\n", GetCPSR());
     bwprintf(BWCOM2, "Kernel has user SP as %d \r\n", (UINT) test.stack);
 
-    test.retval = TrapReturn(test.retval, test.stack);
+    TrapReturn(test.stack);
     test.stack = GetUserSP();
 
-    bwprintf(BWCOM2, "Kernel trap returned with %d\r\n", test.retval);
     bwprintf(BWCOM2, "Kernel CPSR is %d \r\n", GetCPSR());
     bwprintf(BWCOM2, "Kernel has user SP as %d \r\n", (UINT) test.stack);
 
-    test.retval = TrapReturn(test.retval, test.stack);
+    TrapReturn(test.stack);
     test.stack = GetUserSP();
 
-    bwprintf(BWCOM2, "Kernel trap returned with %d\r\n", test.retval);
     bwprintf(BWCOM2, "Kernel CPSR is %d \r\n", GetCPSR());
     bwprintf(BWCOM2, "Kernel has user SP as %d \r\n", (UINT) test.stack);
 
     return STATUS_SUCCESS;
+}
+
+VOID
+print
+    (
+        VOID
+    )
+{
+    bwprintf(BWCOM2, "R0 is %d \r\n", GetR0());
+    bwprintf(BWCOM2, "R2 is %d \r\n", GetR2());
+    bwprintf(BWCOM2, "R3 is %d \r\n", GetR3());
 }
