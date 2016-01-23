@@ -69,6 +69,8 @@ SchedulerGetNextTask
     TASK_DESCRIPTOR* nextTask;
     RT_STATUS status = SchedulerpFindNextTask(&nextTask);    
 
+    // If there's nothing in the queue, that's OK
+    // We'll try to re-run the current task
     if(STATUS_NOT_FOUND == status)
     {
         nextTask = NULL;
@@ -83,8 +85,12 @@ SchedulerGetNextTask
             {
                 if(TaskGetPriority(nextTask) <= TaskGetPriority(g_CurrentTask))
                 {
-                    SchedulerAddTask(g_CurrentTask);
-                    g_CurrentTask = nextTask;
+                    status = SchedulerAddTask(g_CurrentTask);
+
+                    if(RT_SUCCESS(status))
+                    {
+                        g_CurrentTask = nextTask;
+                    }
                 }
             }
             else
@@ -95,6 +101,7 @@ SchedulerGetNextTask
         else if(Zombie == TaskGetState(g_CurrentTask))
         {
             g_CurrentTask = NULL;
+            status = STATUS_NOT_FOUND;
         }
 
         *task = g_CurrentTask;
