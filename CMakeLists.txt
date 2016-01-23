@@ -84,7 +84,7 @@ function(add_c_library LIBRARY_NAME LIBRARY_SOURCES LIBRARY_DEPENDENCIES)
     if(argc EQUAL 3)
         set_target_properties("${LIBRARY_NAME}" PROPERTIES LINKER_LANGUAGE C)
     else()
-        set_target_properties("${LIBRARY_NAME}" PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "${ARG4}")
+        set_target_properties("${LIBRARY_NAME}" PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "${ARGV3}")
     endif()
 endfunction(add_c_library)
 
