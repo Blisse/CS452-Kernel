@@ -1,6 +1,11 @@
 #include "scheduler.h"
 
+#include <rtosc/buffer.h>
+
 static TASK_DESCRIPTOR* g_CurrentTask;
+
+static TASK_DESCRIPTOR* g_underlyingBuffers[NumPriority][NUM_TASKS];
+static RT_CIRCULAR_BUFFER g_priorityQueue[NumPriority];
 
 VOID
 SchedulerInit
@@ -8,26 +13,94 @@ SchedulerInit
         VOID
     )
 {
+    UINT i;
     g_CurrentTask = NULL;
+
+    for(i = 0; i < NumPriority; i++)
+    {
+        RtCircularBufferInit(&g_priorityQueue[i], 
+                             g_underlyingBuffers[i], 
+                             sizeof(g_underlyingBuffers[i]));
+    }
 }
 
-VOID
+inline
+RT_STATUS
 SchedulerAddTask
     (
         IN TASK_DESCRIPTOR* task
     )
 {
-
+    return RtCircularBufferAdd(&g_priorityQueue[task->priority], 
+                               task, 
+                               sizeof(task));
 }
 
-TASK_DESCRIPTOR*
-SchedulerGetNextTask
+static
+RT_STATUS
+SchedulerpFindNextTask
     (
-        VOID
+        OUT TASK_DESCRIPTOR** nextTask
     )
 {
-    // TODO: Run the scheduler
-    return g_CurrentTask;
+    UINT i;
+    RT_STATUS status = STATUS_NOT_FOUND;
+
+    for(i = 0; i < NumPriority; i++)
+    {
+        if(!RtCircularBufferIsEmpty(&g_priorityQueue[i]))
+        {
+            status = RtCircularBufferGetAndRemove(&g_priorityQueue[i], 
+                                                  nextTask, 
+                                                  sizeof(*nextTask));
+            break;
+        }
+    }
+
+    return status;
+}
+
+RT_STATUS
+SchedulerGetNextTask
+    (
+        OUT TASK_DESCRIPTOR** task
+    )
+{   
+    TASK_DESCRIPTOR* nextTask;
+    RT_STATUS status = SchedulerpFindNextTask(&nextTask);    
+
+    if(STATUS_NOT_FOUND == status)
+    {
+        nextTask = NULL;
+        status = STATUS_SUCCESS;
+    }
+
+    if(RT_SUCCESS(status))
+    {
+        if(NULL != nextTask)
+        {
+            if(Zombie != TaskGetState(g_CurrentTask))
+            {
+                if(TaskGetPriority(nextTask) <= TaskGetPriority(g_CurrentTask))
+                {
+                    SchedulerAddTask(g_CurrentTask);
+                    g_CurrentTask = nextTask;
+                }
+            }
+            else
+            {
+                g_CurrentTask = nextTask;
+            }
+        }
+        else if(Zombie == TaskGetState(g_CurrentTask))
+        {
+            g_CurrentTask = NULL;
+        }
+
+        *task = g_CurrentTask;
+    }    
+    
+    return status;
 }
 
 inline
@@ -46,5 +119,5 @@ SchedulerPassCurrentTask
         VOID
     )
 {
-    // Probably a nop?
+    // This is intentionally left blank - it is a NOP
 }

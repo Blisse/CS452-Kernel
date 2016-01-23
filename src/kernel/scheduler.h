@@ -9,16 +9,17 @@ SchedulerInit
         VOID
     );
 
-VOID
+inline
+RT_STATUS
 SchedulerAddTask
     (
         IN TASK_DESCRIPTOR* task
     );
 
-TASK_DESCRIPTOR*
+RT_STATUS
 SchedulerGetNextTask
     (
-        VOID
+        OUT TASK_DESCRIPTOR** task
     );
 
 inline

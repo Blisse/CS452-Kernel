@@ -47,9 +47,10 @@ KernelRun
 {
     while(!g_exit)
     {
-        TASK_DESCRIPTOR* nextTask = SchedulerGetNextTask();
+        TASK_DESCRIPTOR* nextTask;
+        RT_STATUS status = SchedulerGetNextTask(&nextTask);
 
-        if(NULL != nextTask)
+        if(RT_SUCCESS(status))
         {
             if(!TaskValidate(nextTask))
             {
@@ -63,10 +64,14 @@ KernelRun
             // Update the task that just ran
             TaskUpdate(nextTask);
         }
-        else
+        else if(STATUS_NOT_FOUND == status)
         {
             // No more tasks to run, quit the system
             g_exit = TRUE;
+        }
+        else
+        {
+            ASSERT(FALSE, "Scheduling failed \r\n");
         }
     }
 }
