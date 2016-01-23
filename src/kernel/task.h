@@ -2,11 +2,11 @@
 
 #include "rt.h"
 
-#define PRIORITY_SYSTEM 0 // Reserved for system tasks (e.g. init task)
-#define PRIORITY_HIGH 1 // Interrupt tasks
-#define PRIORITY_MEDIUM 2 // Interactive tasks
-#define PRIORITY_LOW 3 // Computation tasks
-#define PRIORITY_IDLE 4 // Reserved for the idle task
+#define PRIORITY_SYSTEM 0 
+#define PRIORITY_HIGH 1 
+#define PRIORITY_MEDIUM 2 
+#define PRIORITY_LOW 3 
+#define PRIORITY_IDLE 4 
 
 typedef
 VOID
@@ -14,6 +14,16 @@ VOID
     (
         VOID
     );
+
+typedef enum _TASK_PRIORITY
+{
+    SystemPriority = 0, // Reserved for system tasks (e.g. init task)
+    HighPriority, // Interrupt tasks
+    MediumPriority, // Interactive tasks
+    LowPriority, // Computation tasks
+    IdlePriority, // Reserved for the idle task
+    NumPriority
+} TASK_PRIORITY;
 
 typedef enum _TASK_STATE 
 {
@@ -25,10 +35,10 @@ typedef enum _TASK_STATE
 typedef struct _TASK_DESCRIPTOR 
 {
     UINT* stack;
+    TASK_PRIORITY priority;
     TASK_STATE state;
     INT tid;
     INT parentTid;
-    INT priority;
 } TASK_DESCRIPTOR;
 
 VOID
