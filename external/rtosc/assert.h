@@ -4,7 +4,7 @@
 
 #ifdef NDEBUG
 
-#define ASSERT(expr, msg)?
+#define ASSERT(expr, msg)
 
 #else
 
