@@ -2,12 +2,6 @@
 
 #include "rt.h"
 
-#define PRIORITY_SYSTEM 0 
-#define PRIORITY_HIGH 1 
-#define PRIORITY_MEDIUM 2 
-#define PRIORITY_LOW 3 
-#define PRIORITY_IDLE 4 
-
 typedef
 VOID
 (*TASK_START_FUNC)

@@ -26,7 +26,7 @@ KernelInit
     TaskInit();
     TrapInstallHandler();
 
-    TaskCreate(PRIORITY_SYSTEM, InitTask);
+    TaskCreate(SystemPriority, InitTask);
 }
 
 inline
