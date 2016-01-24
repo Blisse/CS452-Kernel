@@ -26,7 +26,7 @@ KernelInit
     TaskInit();
     TrapInstallHandler();
 
-    TaskCreate(SystemPriority, InitTask);
+    SystemCreateTask(SystemPriority, InitTask);
 }
 
 inline
@@ -74,4 +74,40 @@ KernelRun
             ASSERT(FALSE, "Scheduling failed \r\n");
         }
     }
+}
+
+INT
+SystemCreateTask
+    (
+        IN INT priority,
+        IN TASK_START_FUNC startFunc
+    )
+{
+    return 0;
+}
+
+INT
+SystemGetCurrentTaskId
+    (
+        VOID
+    )
+{
+    return 0;
+}
+
+INT
+SystemGetCurrentParentTaskId
+    (
+        VOID
+    )
+{
+    return 0;
+}
+
+VOID
+SystemDestroyCurrentTask
+    (
+        VOID
+    )
+{
 }

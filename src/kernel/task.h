@@ -68,21 +68,3 @@ TaskUpdate
     (
         IN TASK_DESCRIPTOR* task
     );
-
-INT
-TaskGetCurrentTid
-    (
-        VOID
-    );
-
-INT
-TaskGetCurrentParentTid
-    (
-        VOID
-    );
-
-VOID
-TaskDestroyCurrent
-    (
-        VOID
-    );

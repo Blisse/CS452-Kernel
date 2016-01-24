@@ -53,30 +53,3 @@ TaskUpdate
 {
     task->stack = GetUserSP();
 }
-
-INT
-TaskGetCurrentTid
-    (
-        VOID
-    )
-{
-    return SchedulerGetCurrentTask()->tid;
-}
-
-INT
-TaskGetCurrentParentTid
-    (
-        VOID
-    )
-{
-    return SchedulerGetCurrentTask()->parentTid;
-}
-
-VOID
-TaskDestroyCurrent
-    (
-        VOID
-    )
-{
-
-}
