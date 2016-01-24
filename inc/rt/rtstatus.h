@@ -13,3 +13,4 @@ typedef INT RT_STATUS;
 #define STATUS_NOT_FOUND -6
 
 #define RT_SUCCESS(status) (STATUS_SUCCESS == (status))
+#define RT_FAILURE(status) (!RT_SUCCESS(status))
