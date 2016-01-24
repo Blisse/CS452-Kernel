@@ -54,14 +54,17 @@ KernelRun
         {
             if(!TaskValidate(nextTask))
             {
-                ASSERT(FALSE, "Invalid task!  This likely indicats a buffer overflow \r\n");
+                ASSERT(FALSE, "Invalid task!  This likely indicates a buffer overflow \r\n");
             }
+
+            nextTask->state = Running;
 
             // Return to user mode
             TrapReturn(nextTask->stack);
 
             // This will execute once we return back to kernel mode
             // Update the task that just ran
+            nextTask->state = Ready;
             TaskUpdate(nextTask);
         }
         else if(STATUS_NOT_FOUND == status)

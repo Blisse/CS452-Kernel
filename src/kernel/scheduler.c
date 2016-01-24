@@ -4,7 +4,7 @@
 
 static TASK_DESCRIPTOR* g_CurrentTask;
 
-static TASK_DESCRIPTOR* g_underlyingBuffers[NumPriority][NUM_TASKS];
+static TASK_DESCRIPTOR* g_underlyingBuffers[NumPriority][NUM_TASKS + 1];
 static RT_CIRCULAR_BUFFER g_priorityQueue[NumPriority];
 
 VOID
@@ -32,7 +32,7 @@ SchedulerAddTask
     )
 {
     return RtCircularBufferAdd(&g_priorityQueue[task->priority], 
-                               task, 
+                               &task, 
                                sizeof(task));
 }
 
@@ -53,6 +53,7 @@ SchedulerpFindNextTask
             status = RtCircularBufferGetAndRemove(&g_priorityQueue[i], 
                                                   nextTask, 
                                                   sizeof(*nextTask));
+
             break;
         }
     }
@@ -67,7 +68,7 @@ SchedulerGetNextTask
     )
 {   
     TASK_DESCRIPTOR* nextTask;
-    RT_STATUS status = SchedulerpFindNextTask(&nextTask);    
+    RT_STATUS status = SchedulerpFindNextTask(&nextTask);
 
     // If there's nothing in the queue, that's OK
     // We'll try to re-run the current task
@@ -81,7 +82,7 @@ SchedulerGetNextTask
     {
         if(NULL != nextTask)
         {
-            if(Zombie != TaskGetState(g_CurrentTask))
+            if(NULL != g_CurrentTask && Zombie != TaskGetState(g_CurrentTask))
             {
                 if(TaskGetPriority(nextTask) <= TaskGetPriority(g_CurrentTask))
                 {
@@ -98,7 +99,7 @@ SchedulerGetNextTask
                 g_CurrentTask = nextTask;
             }
         }
-        else if(Zombie == TaskGetState(g_CurrentTask))
+        else if(NULL == g_CurrentTask || Zombie == TaskGetState(g_CurrentTask))
         {
             g_CurrentTask = NULL;
             status = STATUS_NOT_FOUND;
