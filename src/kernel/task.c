@@ -51,5 +51,5 @@ TaskUpdate
         IN TASK_DESCRIPTOR* task
     )
 {
-    task->stack = GetUserSP();
+    task->stackPointer = GetUserSP();
 }

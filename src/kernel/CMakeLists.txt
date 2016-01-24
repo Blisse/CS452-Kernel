@@ -5,6 +5,7 @@ set(SRC_KERNEL
     "scheduler.c"
     "stack.c"
     "task.c"
+    "task_descriptor.c"
     "trap.asm"
     )
 

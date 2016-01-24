@@ -4,10 +4,11 @@
 #include <rtosc/buffer.h>
 #include "task.h"
 
+#define STACK_SIZE  0xFFFF
 #define STACK_ADDRESS_START 0x00400000
 #define STACK_ADDRESS_END   0x01F00000
 
-static INT AvailableStacksBuffer[NUMBER_OF_TASKS + 1];
+static INT AvailableStacksBuffer[NUM_TASK_DESCRIPTORS + 1];
 static RT_CIRCULAR_BUFFER AvailableStacksQueue;
 
 RT_STATUS
@@ -19,9 +20,9 @@ StackInit
     RtCircularBufferInit(&AvailableStacksQueue, AvailableStacksBuffer, sizeof(AvailableStacksBuffer));
 
     UINT i;
-    for(i = 0; i < NUMBER_OF_TASKS; i++)
+    for(i = 0; i < NUM_TASK_DESCRIPTORS; i++)
     {
-        if ((STACK_ADDRESS_START + (SIZE_OF_STACK * i)) > STACK_ADDRESS_END)
+        if ((STACK_ADDRESS_START + (STACK_SIZE * i)) > STACK_ADDRESS_END)
         {
             return STATUS_FAILURE;
         }
@@ -45,8 +46,8 @@ StackGet
     if (RT_SUCCESS(RtCircularBufferGetAndRemove(&AvailableStacksQueue, &stackId, sizeof(stackId))))
     {
         stack->id = stackId;
-        stack->top = (UINT*) (STACK_ADDRESS_START + (SIZE_OF_STACK * stackId));
-        stack->size = SIZE_OF_STACK;
+        stack->top = (UINT*) (STACK_ADDRESS_START + (STACK_SIZE * stackId));
+        stack->size = STACK_SIZE;
 
         return STATUS_SUCCESS;
     }

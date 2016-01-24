@@ -57,7 +57,7 @@ KernelRun
             nextTd->state = Running;
 
             // Return to user mode
-            TrapReturn(nextTd->stack);
+            TrapReturn(nextTd->stackPointer);
 
             // This will execute once we return back to kernel mode
             // Update the task that just ran
