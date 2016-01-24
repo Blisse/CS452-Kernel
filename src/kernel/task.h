@@ -1,6 +1,8 @@
 #pragma once
 
 #include "rt.h"
+#define NUMBER_OF_TASKS 64
+#define SIZE_OF_STACK   0xFFFF
 
 #define NUM_TASKS 64
 
