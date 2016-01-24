@@ -1,18 +1,12 @@
 #pragma once
 
 #include "rt.h"
-#define NUMBER_OF_TASKS 64
-#define SIZE_OF_STACK   0xFFFF
+#include "task_descriptor.h"
 
+<<<<<<< HEAD
 #define NUM_TASKS 64
 
 typedef
-VOID
-(*TASK_START_FUNC)
-    (
-        VOID
-    );
-
 typedef enum _TASK_PRIORITY
 {
     SystemPriority = 0, // Reserved for system tasks (e.g. init task)
@@ -23,14 +17,14 @@ typedef enum _TASK_PRIORITY
     NumPriority
 } TASK_PRIORITY;
 
-typedef enum _TASK_STATE 
+typedef enum _TASK_STATE
 {
     Ready = 0,
     Running,
     Zombie
 } TASK_STATE;
 
-typedef struct _TASK_DESCRIPTOR 
+typedef struct _TASK_DESCRIPTOR
 {
     UINT* stack;
     TASK_PRIORITY priority;
@@ -54,8 +48,10 @@ TaskInit
 INT
 TaskCreate
     (
-        IN INT priority, 
-        IN TASK_START_FUNC start
+        IN INT parentTaskId,
+        IN TASK_PRIORITY priority,
+        IN TASK_START_FUNC startFunc,
+        OUT TASK_DESCRIPTOR** taskDescriptor
     );
 
 BOOLEAN

@@ -83,6 +83,10 @@ SystemCreateTask
         IN TASK_START_FUNC startFunc
     )
 {
+    TASK_DESCRIPTOR* td;
+
+    TaskCreate(SystemGetCurrentTaskId(), priority, startFunc, &td);
+
     return 0;
 }
 
