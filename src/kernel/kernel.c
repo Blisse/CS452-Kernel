@@ -5,6 +5,46 @@
 #include "task.h"
 #include "trap.h"
 
+INT
+SystemGetCurrentTaskId
+    (
+        VOID
+    )
+{
+    return 0;
+}
+
+INT
+SystemGetCurrentParentTaskId
+    (
+        VOID
+    )
+{
+    return 0;
+}
+
+VOID
+SystemDestroyCurrentTask
+    (
+        VOID
+    )
+{
+}
+
+INT
+SystemCreateTask
+    (
+        IN INT priority,
+        IN TASK_START_FUNC startFunc
+    )
+{
+    TASK_DESCRIPTOR* td;
+
+    TaskCreate(SystemGetCurrentTaskId(), priority, startFunc, &td);
+
+    return 0;
+}
+
 extern
 VOID
 InitTask
@@ -26,7 +66,7 @@ KernelInit
     TaskInit();
     TrapInstallHandler();
 
-    TaskCreate(SystemPriority, InitTask);
+    SystemCreateTask(SystemPriority, InitTask);
 }
 
 inline
@@ -57,7 +97,7 @@ KernelRun
             nextTd->state = Running;
 
             // Return to user mode
-            TrapReturn(nextTd->stack);
+            TrapReturn(nextTd->stackPointer);
 
             // This will execute once we return back to kernel mode
             // Update the task that just ran
