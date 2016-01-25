@@ -31,7 +31,7 @@ set(ALL_LIBS "-l${LIB_KERNEL} -l${LIB_OS} -l${LIB_RTOSC} -l${LIB_BWIO}")
 # executables
 set(EXE_RTOS "rtos.elf")
 set(EXE_TEST_BUFFER "test_buffer")
-set(EXE_TEST_SCHEDULER "test_scheduler")
+set(EXE_TEST_SCHEDULER "tscheduler.elf")
 set(EXE_TEST_STRING "test_string")
 
 # includes

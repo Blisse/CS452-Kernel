@@ -1,11 +1,9 @@
 #include "scheduler.h"
 
-#include <rtosc/buffer.h>
+#include "priority_queue.h"
 
 static TASK_DESCRIPTOR* g_CurrentTask;
-
-static TASK_DESCRIPTOR* g_underlyingBuffers[NumPriority][NUM_TASKS + 1];
-static RT_CIRCULAR_BUFFER g_priorityQueue[NumPriority];
+static RT_PRIORITY_QUEUE g_priorityQueue;
 
 VOID
 SchedulerInit
@@ -13,15 +11,9 @@ SchedulerInit
         VOID
     )
 {
-    UINT i;
     g_CurrentTask = NULL;
 
-    for(i = 0; i < NumPriority; i++)
-    {
-        RtCircularBufferInit(&g_priorityQueue[i], 
-                             g_underlyingBuffers[i], 
-                             sizeof(g_underlyingBuffers[i]));
-    }
+    RtPriorityQueueInit(&g_priorityQueue);
 }
 
 inline
@@ -31,83 +23,48 @@ SchedulerAddTask
         IN TASK_DESCRIPTOR* task
     )
 {
-    return RtCircularBufferAdd(&g_priorityQueue[task->priority], 
-                               &task, 
-                               sizeof(task));
+    return RtPriorityQueueAdd(&g_priorityQueue, task);
 }
 
-static
-RT_STATUS
-SchedulerpFindNextTask
-    (
-        OUT TASK_DESCRIPTOR** nextTask
-    )
-{
-    UINT i;
-    RT_STATUS status = STATUS_NOT_FOUND;
-
-    for(i = 0; i < NumPriority; i++)
-    {
-        if(!RtCircularBufferIsEmpty(&g_priorityQueue[i]))
-        {
-            status = RtCircularBufferGetAndRemove(&g_priorityQueue[i], 
-                                                  nextTask, 
-                                                  sizeof(*nextTask));
-
-            break;
-        }
-    }
-
-    return status;
-}
-
-RT_STATUS
+RT_STATUS 
 SchedulerGetNextTask
     (
         OUT TASK_DESCRIPTOR** task
     )
-{   
+{
     TASK_DESCRIPTOR* nextTask;
-    RT_STATUS status = SchedulerpFindNextTask(&nextTask);
+    RT_STATUS status = RtPriorityQueueGet(&g_priorityQueue, &nextTask);
 
-    // If there's nothing in the queue, that's OK
-    // We'll try to re-run the current task
-    if(STATUS_NOT_FOUND == status)
+    if(NULL != g_CurrentTask && Zombie != TaskGetState(g_CurrentTask))
     {
-        nextTask = NULL;
-        status = STATUS_SUCCESS;
-    }
-
-    if(RT_SUCCESS(status))
-    {
-        if(NULL != nextTask)
+        if(RT_SUCCESS(status) && 
+           TaskGetPriority(nextTask) <= TaskGetPriority(g_CurrentTask))
         {
-            if(NULL != g_CurrentTask && Zombie != TaskGetState(g_CurrentTask))
-            {
-                if(TaskGetPriority(nextTask) <= TaskGetPriority(g_CurrentTask))
-                {
-                    status = SchedulerAddTask(g_CurrentTask);
+            status = RtPriorityQueueRemove(&g_priorityQueue, nextTask);
 
-                    if(RT_SUCCESS(status))
-                    {
-                        g_CurrentTask = nextTask;
-                    }
+            if(RT_SUCCESS(status))
+            {
+                status = SchedulerAddTask(g_CurrentTask);
+
+                if(RT_SUCCESS(status))
+                {
+                    g_CurrentTask = nextTask;
                 }
             }
-            else
-            {
-                g_CurrentTask = nextTask;
-            }
         }
-        else if(NULL == g_CurrentTask || Zombie == TaskGetState(g_CurrentTask))
-        {
-            g_CurrentTask = NULL;
-            status = STATUS_NOT_FOUND;
-        }
+    }
+    else if(RT_SUCCESS(status))
+    {
+        status = RtPriorityQueueRemove(&g_priorityQueue, nextTask);
 
-        *task = g_CurrentTask;
-    }    
-    
+        if(RT_SUCCESS(status))
+        {
+            g_CurrentTask = nextTask;
+        }
+    }
+
+    *task = g_CurrentTask;
+
     return status;
 }
 
