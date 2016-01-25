@@ -47,25 +47,25 @@ KernelRun
 {
     while(!g_exit)
     {
-        TASK_DESCRIPTOR* nextTask;
-        RT_STATUS status = SchedulerGetNextTask(&nextTask);
+        TASK_DESCRIPTOR* nextTd;
+        RT_STATUS status = SchedulerGetNextTask(&nextTd);
 
         if(RT_SUCCESS(status))
         {
-            if(!TaskValidate(nextTask))
+            if(!TaskValidate(nextTd))
             {
                 ASSERT(FALSE, "Invalid task!  This likely indicates a buffer overflow \r\n");
             }
 
-            nextTask->state = Running;
+            nextTd->state = Running;
 
             // Return to user mode
-            TrapReturn(nextTask->stack);
+            TrapReturn(nextTd->stack);
 
             // This will execute once we return back to kernel mode
             // Update the task that just ran
-            nextTask->state = Ready;
-            TaskUpdate(nextTask);
+            nextTd->state = Ready;
+            TaskUpdate(nextTd);
         }
         else if(STATUS_NOT_FOUND == status)
         {

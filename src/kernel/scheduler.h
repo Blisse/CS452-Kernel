@@ -13,13 +13,13 @@ inline
 RT_STATUS
 SchedulerAddTask
     (
-        IN TASK_DESCRIPTOR* task
+        IN TASK_DESCRIPTOR* td
     );
 
 RT_STATUS
 SchedulerGetNextTask
     (
-        OUT TASK_DESCRIPTOR** task
+        OUT TASK_DESCRIPTOR** td
     );
 
 inline

@@ -2,7 +2,7 @@
 
 #include "priority_queue.h"
 
-static TASK_DESCRIPTOR* g_CurrentTask;
+static TASK_DESCRIPTOR* g_currentTd;
 static RT_PRIORITY_QUEUE g_priorityQueue;
 
 VOID
@@ -11,7 +11,7 @@ SchedulerInit
         VOID
     )
 {
-    g_CurrentTask = NULL;
+    g_currentTd = NULL;
 
     RtPriorityQueueInit(&g_priorityQueue);
 }
@@ -20,50 +20,50 @@ inline
 RT_STATUS
 SchedulerAddTask
     (
-        IN TASK_DESCRIPTOR* task
+        IN TASK_DESCRIPTOR* td
     )
 {
-    return RtPriorityQueueAdd(&g_priorityQueue, task);
+    return RtPriorityQueueAdd(&g_priorityQueue, td);
 }
 
 RT_STATUS 
 SchedulerGetNextTask
     (
-        OUT TASK_DESCRIPTOR** task
+        OUT TASK_DESCRIPTOR** td
     )
 {
-    TASK_DESCRIPTOR* nextTask;
-    RT_STATUS status = RtPriorityQueueGet(&g_priorityQueue, &nextTask);
+    TASK_DESCRIPTOR* nextTd;
+    RT_STATUS status = RtPriorityQueueGet(&g_priorityQueue, &nextTd);
 
-    if(NULL != g_CurrentTask && Zombie != TaskGetState(g_CurrentTask))
+    if(NULL != g_currentTd && Zombie != TaskGetState(g_currentTd))
     {
         if(RT_SUCCESS(status) && 
-           TaskGetPriority(nextTask) <= TaskGetPriority(g_CurrentTask))
+           TaskGetPriority(nextTd) <= TaskGetPriority(g_currentTd))
         {
-            status = RtPriorityQueueRemove(&g_priorityQueue, nextTask);
+            status = RtPriorityQueueRemove(&g_priorityQueue, nextTd);
 
             if(RT_SUCCESS(status))
             {
-                status = SchedulerAddTask(g_CurrentTask);
+                status = SchedulerAddTask(g_currentTd);
 
                 if(RT_SUCCESS(status))
                 {
-                    g_CurrentTask = nextTask;
+                    g_currentTd = nextTd;
                 }
             }
         }
     }
     else if(RT_SUCCESS(status))
     {
-        status = RtPriorityQueueRemove(&g_priorityQueue, nextTask);
+        status = RtPriorityQueueRemove(&g_priorityQueue, nextTd);
 
         if(RT_SUCCESS(status))
         {
-            g_CurrentTask = nextTask;
+            g_currentTd = nextTd;
         }
     }
 
-    *task = g_CurrentTask;
+    *td = g_currentTd;
 
     return status;
 }
@@ -75,7 +75,7 @@ SchedulerGetCurrentTask
         VOID
     )
 {
-    return g_CurrentTask;
+    return g_currentTd;
 }
 
 VOID
