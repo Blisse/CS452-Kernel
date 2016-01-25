@@ -33,7 +33,7 @@ InitTask
     bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
     Pass();
 
-    bwprintf(BWCOM2, "User CPSR is: %d \r\n", GetCPSR());
-    bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
+    bwprintf(BWCOM2, "About to call my tid \r\n");
+    bwprintf(BWCOM2, "My tid is %d \r\n", MyTid());
     Pass();
 }

@@ -61,8 +61,23 @@ TrapEntry:
     /* Take the complement of the mask, then perform an "AND" */
     bic r4, r4, #0xFF000000
 
-    /* TODO: Make the system call */
-    mov r0, r4
+    /* Convert system call number to table offset */
+    mov r5, #4
+    mul r6, r5, r4
+
+    /* Grab the system call table */
+    ldr r7, =g_systemCallTable
+
+    /* Grab the system call from the system call table */
+    ldr r8, [r7, r6]
+
+    /* Make the system call */
+    /* Return value will be in r0 */
+    /* NOTE: Arm v4 doesn't support blx so we have to emulate it.
+             The mov from pc to lr takes in to consideration the 
+             processor pipeline. */
+    mov lr, pc
+    mov pc, r8
 
     /* Switch to system mode */
     msr cpsr_c, #0xDF

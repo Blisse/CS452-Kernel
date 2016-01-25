@@ -28,9 +28,3 @@ SchedulerGetCurrentTask
     (
         VOID
     );
-
-VOID
-SchedulerPassCurrentTask
-    (
-        VOID
-    );
