@@ -29,7 +29,10 @@ SystemCreateTask
     INT status;
     TASK_DESCRIPTOR* td;
 
-    status = TaskCreate(SystemGetCurrentTaskId(), priority, startFunc, &td);
+    status = TaskCreate(SchedulerGetCurrentTask()->taskId, 
+                        priority, 
+                        startFunc, 
+                        &td);
 
     if (status > 0)
     {
@@ -72,5 +75,5 @@ SystemDestroyCurrentTask
         VOID
     )
 {
-
+    SchedulerGetCurrentTask()->state = ZombieState;
 }

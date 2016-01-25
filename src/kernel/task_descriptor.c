@@ -46,7 +46,7 @@ TaskDescriptorUpdateStack
         IN TASK_START_FUNC startFunc
     )
 {
-    UINT* stackPointer = (UINT*) (stack->top + stack->size - 1);
+    UINT* stackPointer = ((UINT*) ptr_add(stack->top, stack->size)) - sizeof(UINT);
 
     *(stackPointer - 10) = (UINT) startFunc;
     *(stackPointer - 11) = TASK_INITIAL_CSPR;

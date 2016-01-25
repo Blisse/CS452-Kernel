@@ -4,7 +4,7 @@
 #include <rtosc/buffer.h>
 #include "task.h"
 
-#define STACK_SIZE  0xFFFF
+#define STACK_SIZE  0x10000
 #define STACK_ADDRESS_START 0x00400000
 #define STACK_ADDRESS_END   0x01F00000
 

@@ -23,9 +23,10 @@ KernelInit
     TrapInstallHandler();
 }
 
+static
 inline
 VOID
-KernelExit
+KernelpExit
     (
         VOID
     )
@@ -33,9 +34,10 @@ KernelExit
     g_exit = TRUE;
 }
 
+static
 inline
 VOID
-KernelCreateFirstUserTask
+KernelpCreateFirstUserTask
     (
         VOID
     )
@@ -53,7 +55,7 @@ KernelRun
         VOID
     )
 {
-    KernelCreateFirstUserTask();
+    KernelpCreateFirstUserTask();
 
     while(!g_exit)
     {
@@ -71,13 +73,20 @@ KernelRun
 
             // This will execute once we return back to kernel mode
             // Update the task that just ran
-            nextTd->state = ReadyState;
             TaskUpdate(nextTd);
+
+            // The task may have transitioned to a new state
+            // due to interrupts, Exit(), etc.  Don't update
+            // the state unless nothing happened to the task
+            if(nextTd->state == RunningState)
+            {
+                nextTd->state = ReadyState;
+            }
         }
         else if(STATUS_NOT_FOUND == status)
         {
             // No more tasks to run, quit the system
-            KernelExit();
+            KernelpExit();
         }
         else
         {

@@ -9,11 +9,14 @@ UserTask
         VOID
     )
 {
-    bwprintf(BWCOM2, "UserTask: task id %d\r\n", MyTid());
+    INT myTid = MyTid();
+    INT myParentTid = MyParentTid();
+
+    bwprintf(BWCOM2, "%d %d\r\n", myTid, myParentTid);
 
     Pass();
 
-    bwprintf(BWCOM2, "UserTask: task id %d\r\n", MyTid());
+    bwprintf(BWCOM2, "%d %d\r\n", myTid, myParentTid);
 
     Exit();
 }
@@ -24,28 +27,18 @@ InitTask
         VOID
     )
 {
-    bwprintf(BWCOM2, "FirstUserTask: starting\r\n");
+    INT userTaskId;
 
-    int priority = MyTid();
-
-    bwprintf(BWCOM2, "FirstUserTask: task id %d\r\n", priority);
-
-    int userTaskId;
-
-    userTaskId = Create(priority-1, UserTask);
-
+    userTaskId = Create(LOW_PRIORITY, UserTask);
     bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
 
-    userTaskId = Create(priority-1, UserTask);
-
+    userTaskId = Create(LOW_PRIORITY, UserTask);
     bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
 
-    userTaskId = Create(priority+1, UserTask);
-
+    userTaskId = Create(HIGH_PRIORITY, UserTask);
     bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
 
-    userTaskId = Create(priority+1, UserTask);
-
+    userTaskId = Create(HIGH_PRIORITY, UserTask);
     bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
 
     bwprintf(BWCOM2, "FirstUserTask: exiting\r\n");
