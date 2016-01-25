@@ -4,6 +4,7 @@ set(SRC_KERNEL
     "priority_queue.c"
     "scheduler.c"
     "stack.c"
+    "syscall.c"
     "task.c"
     "task_descriptor.c"
     "trap.asm"

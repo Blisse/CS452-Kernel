@@ -77,12 +77,3 @@ SchedulerGetCurrentTask
 {
     return g_currentTd;
 }
-
-VOID
-SchedulerPassCurrentTask
-    (
-        VOID
-    )
-{
-    // This is intentionally left blank - it is a NOP
-}

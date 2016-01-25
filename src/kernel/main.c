@@ -1,6 +1,7 @@
 #include "rt.h"
 #include "arm.h"
 #include "bwio/bwio.h"
+#include "kernel.h"
 #include "trap.h"
 
 extern
@@ -53,8 +54,8 @@ main
     bwsetfifo(BWCOM2, OFF);
     bwsetspeed(BWCOM2, 115200);
 
-    bwprintf(BWCOM2, "Installing swi handler\r\n");
-    TrapInstallHandler();
+    bwprintf(BWCOM2, "Initializing kernel \r\n");
+    KernelInit();
 
     bwprintf(BWCOM2, "Creating test task \r\n");
 
@@ -89,6 +90,12 @@ main
     bwprintf(BWCOM2, "Kernel CPSR is %d \r\n", GetCPSR());
     bwprintf(BWCOM2, "Kernel has user SP as %d \r\n", (UINT) test.stack);
 
+    TrapReturn(test.stack);
+    test.stack = GetUserSP();
+
+    bwprintf(BWCOM2, "Kernel CPSR is %d \r\n", GetCPSR());
+    bwprintf(BWCOM2, "Kernel has user SP as %d \r\n", (UINT) test.stack);
+
     return STATUS_SUCCESS;
 }
 
@@ -98,7 +105,5 @@ print
         VOID
     )
 {
-    bwprintf(BWCOM2, "R0 is %d \r\n", GetR0());
-    bwprintf(BWCOM2, "R2 is %d \r\n", GetR2());
-    bwprintf(BWCOM2, "R3 is %d \r\n", GetR3());
+    bwprintf(BWCOM2, "R8 is %d \r\n", GetR8());
 }
