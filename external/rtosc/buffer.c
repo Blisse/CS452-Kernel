@@ -106,9 +106,15 @@ RtCircularBufferRemove
         IN UINT bytesToRemove
     )
 {
-    buffer->front = (buffer->front + bytesToRemove) % buffer->capacity;
-
-    return STATUS_SUCCESS;
+    if(bytesToRemove <= RtCircularBufferSize(buffer))
+    {
+        buffer->front = (buffer->front + bytesToRemove) % buffer->capacity;
+        return STATUS_SUCCESS;
+    }
+    else
+    {
+        return STATUS_BUFFER_TOO_SMALL;
+    }
 }
 
 RT_STATUS
