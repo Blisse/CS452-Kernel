@@ -15,7 +15,7 @@ TaskDescriptorReset
 {
     td->taskId = -1;
     td->parentTaskId = -1;
-    td->state = Zombie;
+    td->state = ZombieState;
     td->priority = IdlePriority;
     td->startFunc = NULLPTR;
     td->stackPointer = NULLPTR;
@@ -64,7 +64,7 @@ TaskDescriptorIsZombie
         IN TASK_DESCRIPTOR* td
     )
 {
-    return (td->state == Zombie);
+    return (td->state == ZombieState);
 }
 
 static
@@ -110,7 +110,7 @@ TaskDescriptorCreate
     {
         zombieTd->taskId = g_nextFreeTaskId;
         zombieTd->parentTaskId = parentTaskId;
-        zombieTd->state = Ready;
+        zombieTd->state = ReadyState;
         zombieTd->priority = priority;
         zombieTd->startFunc = startFunc;
 

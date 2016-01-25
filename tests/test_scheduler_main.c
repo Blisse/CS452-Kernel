@@ -18,19 +18,19 @@ main
     RT_STATUS status;
 
     lowPriorityTask1.taskId = 1;
-    lowPriorityTask1.state = Ready;
+    lowPriorityTask1.state = ReadyState;
     lowPriorityTask1.priority = LowPriority;
 
     lowPriorityTask2.taskId = 2;
-    lowPriorityTask2.state = Ready;
+    lowPriorityTask2.state = ReadyState;
     lowPriorityTask2.priority = LowPriority;
 
     highPriorityTask1.taskId = 3;
-    highPriorityTask1.state = Ready;
+    highPriorityTask1.state = ReadyState;
     highPriorityTask1.priority = HighPriority;
 
     highPriorityTask2.taskId = 4;
-    highPriorityTask2.state = Ready;
+    highPriorityTask2.state = ReadyState;
     highPriorityTask2.priority = HighPriority;
 
     bwsetfifo(BWCOM2, OFF);
@@ -77,7 +77,7 @@ main
     ASSERT(SchedulerGetCurrentTask()->taskId == 3, "Scheduler has wrong task: expected hp1 \r\n");
 
     bwprintf(BWCOM2, "Exitting hp1 \r\n");
-    highPriorityTask1.state = Zombie;
+    highPriorityTask1.state = ZombieState;
 
     status = SchedulerGetNextTask(&nextTask);
     bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
@@ -94,7 +94,7 @@ main
     ASSERT(SchedulerGetCurrentTask()->taskId == 4, "Scheduler has wrong task: expected hp2 \r\n");
 
     bwprintf(BWCOM2, "Exitting hp2 \r\n");
-    highPriorityTask2.state = Zombie;
+    highPriorityTask2.state = ZombieState;
 
     status = SchedulerGetNextTask(&nextTask);
     bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
@@ -119,7 +119,7 @@ main
     ASSERT(SchedulerGetCurrentTask()->taskId == 1, "Scheduler has wrong task: expected lp1 \r\n");
 
     bwprintf(BWCOM2, "Exitting lp1 \r\n");
-    lowPriorityTask1.state = Zombie;
+    lowPriorityTask1.state = ZombieState;
 
     status = SchedulerGetNextTask(&nextTask);
     bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
@@ -128,7 +128,7 @@ main
     ASSERT(SchedulerGetCurrentTask()->taskId == 2, "Scheduler has wrong task: expected lp2 \r\n");
 
     bwprintf(BWCOM2, "Exitting lp2 \r\n");
-    lowPriorityTask2.state = Zombie;
+    lowPriorityTask2.state = ZombieState;
 
     status = SchedulerGetNextTask(&nextTask);
     ASSERT(STATUS_NOT_FOUND == status, "Scheduler should be out of tasks \r\n");
