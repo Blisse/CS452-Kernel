@@ -85,6 +85,14 @@ main
     ASSERT(nextTask->tid == 4, "Got wrong task: expected hp2 \r\n");
     ASSERT(SchedulerGetCurrentTask()->tid == 4, "Scheduler has wrong task: expected hp2 \r\n");
 
+    bwprintf(BWCOM2, "Passing hp2 \r\n");
+    
+    status = SchedulerGetNextTask(&nextTask);
+    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->tid);
+    ASSERT(RT_SUCCESS(status), "Getting hp2 failed \r\n");
+    ASSERT(nextTask->tid == 4, "Got wrong task: expected hp2 \r\n");
+    ASSERT(SchedulerGetCurrentTask()->tid == 4, "Scheduler has wrong task: expected hp2 \r\n");
+
     bwprintf(BWCOM2, "Exitting hp2 \r\n");
     highPriorityTask2.state = Zombie;
 
