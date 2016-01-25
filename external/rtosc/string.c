@@ -1,5 +1,4 @@
 #include "string.h"
-#include <bwio/bwio.h>
 
 // TODO: Optimize all of these functions
 // NOTE: Much of this code is copied from code I wrote in SE350.
@@ -193,12 +192,10 @@ RtMemcpy
     if(0 == ((UINT) dest) % sizeof(UINT) &&
        0 == ((UINT) src) % sizeof(UINT))
     {
-        bwprintf(BWCOM2, "ALIGNED memcpy of size %d \r\n", bytes);
         memcpy_aligned(dest, src, bytes);
     }
     else
     {
-        bwprintf(BWCOM2, "UNALIGNED memcpy of size %d \r\n", bytes);
         memcpy_unaligned(dest, src, bytes);
     }
 }
