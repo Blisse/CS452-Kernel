@@ -2,6 +2,8 @@
 
 #include "rt.h"
 
+#define NUM_TASKS 64
+
 typedef
 VOID
 (*TASK_START_FUNC)
@@ -34,6 +36,12 @@ typedef struct _TASK_DESCRIPTOR
     INT tid;
     INT parentTid;
 } TASK_DESCRIPTOR;
+
+#define TaskGetStack(task) ((task)->stack)
+#define TaskGetPriority(task) ((task)->priority)
+#define TaskGetState(task) ((task)->state)
+#define TaskGetID(task) ((task)->tid)
+#define TaskGetParentID(task) ((task)->parentTid)
 
 VOID
 TaskInit

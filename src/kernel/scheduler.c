@@ -1,6 +1,9 @@
 #include "scheduler.h"
 
-static TASK_DESCRIPTOR* g_CurrentTask;
+#include "priority_queue.h"
+
+static TASK_DESCRIPTOR* g_currentTd;
+static RT_PRIORITY_QUEUE g_priorityQueue;
 
 VOID
 SchedulerInit
@@ -8,26 +11,61 @@ SchedulerInit
         VOID
     )
 {
-    g_CurrentTask = NULL;
+    g_currentTd = NULL;
+
+    RtPriorityQueueInit(&g_priorityQueue);
 }
 
-VOID
+inline
+RT_STATUS
 SchedulerAddTask
     (
-        IN TASK_DESCRIPTOR* task
+        IN TASK_DESCRIPTOR* td
     )
 {
-
+    return RtPriorityQueueAdd(&g_priorityQueue, td);
 }
 
-TASK_DESCRIPTOR*
+RT_STATUS 
 SchedulerGetNextTask
     (
-        VOID
+        OUT TASK_DESCRIPTOR** td
     )
 {
-    // TODO: Run the scheduler
-    return g_CurrentTask;
+    TASK_DESCRIPTOR* nextTd;
+    RT_STATUS status = RtPriorityQueueGet(&g_priorityQueue, &nextTd);
+
+    if(NULL != g_currentTd && Zombie != TaskGetState(g_currentTd))
+    {
+        if(RT_SUCCESS(status) && 
+           TaskGetPriority(nextTd) <= TaskGetPriority(g_currentTd))
+        {
+            status = RtPriorityQueueRemove(&g_priorityQueue, nextTd);
+
+            if(RT_SUCCESS(status))
+            {
+                status = SchedulerAddTask(g_currentTd);
+
+                if(RT_SUCCESS(status))
+                {
+                    g_currentTd = nextTd;
+                }
+            }
+        }
+    }
+    else if(RT_SUCCESS(status))
+    {
+        status = RtPriorityQueueRemove(&g_priorityQueue, nextTd);
+
+        if(RT_SUCCESS(status))
+        {
+            g_currentTd = nextTd;
+        }
+    }
+
+    *td = g_currentTd;
+
+    return status;
 }
 
 inline
@@ -37,7 +75,7 @@ SchedulerGetCurrentTask
         VOID
     )
 {
-    return g_CurrentTask;
+    return g_currentTd;
 }
 
 VOID
@@ -46,5 +84,5 @@ SchedulerPassCurrentTask
         VOID
     )
 {
-    // Probably a nop?
+    // This is intentionally left blank - it is a NOP
 }

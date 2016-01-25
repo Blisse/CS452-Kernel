@@ -137,6 +137,69 @@ RtStrFind
     return pos;
 }
 
+// TODO: Optimize this with NEON or Load-Multiple
+static
+inline
+VOID
+memcpy_unaligned
+    (
+        PVOID dest, 
+        PVOID src, 
+        UINT bytes
+    )
+{
+    CHAR* d = dest;
+    CHAR* s = src;
+
+    while(bytes > 0)
+    {
+        *(d++) = *(s++);
+        bytes--;
+    }
+}
+
+static
+inline
+VOID
+memcpy_aligned
+    (
+        PVOID dest, 
+        PVOID src, 
+        UINT bytes
+    )
+{
+    INT* d = dest;
+    INT* s = src;
+    UINT words = bytes / sizeof(INT);
+
+    while(words > 0)
+    {
+        *(d++) = *(s++);
+        words--;
+    }
+
+    memcpy_unaligned(d, s, bytes % sizeof(INT));
+}
+
+VOID
+RtMemcpy
+    (
+        PVOID dest,
+        PVOID src,
+        UINT bytes
+    )
+{
+    if(0 == ((UINT) dest) % sizeof(UINT) &&
+       0 == ((UINT) src) % sizeof(UINT))
+    {
+        memcpy_aligned(dest, src, bytes);
+    }
+    else
+    {
+        memcpy_unaligned(dest, src, bytes);
+    }
+}
+
 // These functions were taken from bwio
 // All credit goes to the authors of bwio
 void RtUitoa( unsigned int num, char *bf, unsigned int* len ) {
@@ -158,22 +221,4 @@ void RtUitoa( unsigned int num, char *bf, unsigned int* len ) {
     }
     *bf = 0;
     *len = bf - orig;
-}
-
-// TODO: Optimize this with NEON or Load-Multiple
-// TODO: Don't forget things need to be word aligned
-VOID
-RtMemcpy
-    (
-        PVOID dest,
-        PVOID src,
-        UINT bytes
-    )
-{
-    UINT i;
-
-    for(i = 0; i < bytes; i++)
-    {
-        ((CHAR*) dest)[i] = ((CHAR*) src)[i];
-    }
 }
