@@ -1,27 +1,12 @@
 #include "task_descriptor.h"
 
-#include <bwio/bwio.h>
-
-static UINT NextFreeTaskId;
-static TASK_DESCRIPTOR TaskDescriptors[NUM_TASK_DESCRIPTORS];
+static UINT g_nextFreeTaskId;
+static TASK_DESCRIPTOR g_taskDescriptors[NUM_TASK_DESCRIPTORS];
 
 #define TASK_INITIAL_CSPR   0x10
-#define TASK_INITIAL_RETURN 0x0
 
-VOID
-TaskDescriptorInit
-    (
-        VOID
-    )
-{
-    NextFreeTaskId = 1;
-
-    UINT i;
-    for(i = 0; i < NUM_TASK_DESCRIPTORS; i++) {
-        TaskDescriptorReset(&TaskDescriptors[i]);
-    }
-}
-
+static
+inline
 VOID
 TaskDescriptorReset
     (
@@ -36,24 +21,38 @@ TaskDescriptorReset
     td->stackPointer = NULLPTR;
 }
 
+VOID
+TaskDescriptorInit
+    (
+        VOID
+    )
+{
+    g_nextFreeTaskId = 1;
+
+    UINT i;
+    for(i = 0; i < NUM_TASK_DESCRIPTORS; i++)
+    {
+        TaskDescriptorReset(&g_taskDescriptors[i]);
+    }
+}
+
 static
 inline
 VOID
-TaskDescriptorSetStack
+TaskDescriptorUpdateStack
     (
         IN TASK_DESCRIPTOR* td,
-        IN STACK stack,
+        IN STACK* stack,
         IN TASK_START_FUNC startFunc
     )
 {
-    UINT* stackPointer = (UINT*) (stack.top + stack.size - 1);
+    UINT* stackPointer = (UINT*) (stack->top + stack->size - 1);
 
     *(stackPointer - 10) = (UINT) startFunc;
     *(stackPointer - 11) = TASK_INITIAL_CSPR;
-    *(stackPointer - 12) = TASK_INITIAL_RETURN;
     stackPointer -= 12;
 
-    td->stack = stack;
+    td->stack = *stack;
     td->stackPointer = stackPointer;
 }
 
@@ -76,19 +75,20 @@ TaskDescriptorGetZombie
     )
 {
     UINT i;
-    UINT idx = NextFreeTaskId % NUM_TASK_DESCRIPTORS;
+    UINT idx = g_nextFreeTaskId % NUM_TASK_DESCRIPTORS;
 
     for(i = 0; i < NUM_TASK_DESCRIPTORS; i++)
     {
-        if (TaskDescriptorIsZombie(&TaskDescriptors[idx]))
+        if (TaskDescriptorIsZombie(&g_taskDescriptors[idx]))
         {
-            *td = &TaskDescriptors[idx];
+            *td = &g_taskDescriptors[idx];
+
             return STATUS_SUCCESS;
         }
         idx = (idx + 1) % NUM_TASK_DESCRIPTORS;
     }
 
-    return STATUS_FAILURE;
+    return STATUS_NOT_FOUND;
 }
 
 RT_STATUS
@@ -97,30 +97,31 @@ TaskDescriptorCreate
         IN INT parentTaskId,
         IN TASK_PRIORITY priority,
         IN TASK_START_FUNC startFunc,
-        IN STACK stack,
+        IN STACK* stack,
         OUT TASK_DESCRIPTOR** td
     )
 {
+    RT_STATUS status;
     TASK_DESCRIPTOR* zombieTd;
 
-    if (RT_SUCCESS(TaskDescriptorGetZombie(&zombieTd)))
+    status = TaskDescriptorGetZombie(&zombieTd);
+
+    if (RT_SUCCESS(status))
     {
-        zombieTd->taskId = NextFreeTaskId;
+        zombieTd->taskId = g_nextFreeTaskId;
         zombieTd->parentTaskId = parentTaskId;
         zombieTd->state = Ready;
         zombieTd->priority = priority;
         zombieTd->startFunc = startFunc;
 
-        TaskDescriptorSetStack(zombieTd, stack, startFunc);
+        TaskDescriptorUpdateStack(zombieTd, stack, startFunc);
 
-        NextFreeTaskId += 1;
+        g_nextFreeTaskId += 1;
 
         *td = zombieTd;
-
-        return STATUS_SUCCESS;
     }
 
-    return STATUS_FAILURE;
+    return status;
 }
 
 RT_STATUS
@@ -129,16 +130,17 @@ TaskDescriptorDestroy
         IN INT taskId
     )
 {
+    RT_STATUS status;
     TASK_DESCRIPTOR* td;
 
-    if (RT_SUCCESS(TaskDescriptorGet(taskId, &td)))
+    status = TaskDescriptorGet(taskId, &td);
+
+    if (RT_SUCCESS(status))
     {
         TaskDescriptorReset(td);
-
-        return STATUS_SUCCESS;
     }
 
-    return STATUS_FAILURE;
+    return status;
 }
 
 RT_STATUS
@@ -153,13 +155,14 @@ TaskDescriptorGet
 
     for(i = 0; i < NUM_TASK_DESCRIPTORS; i++)
     {
-        if (TaskDescriptors[idx].taskId == taskId)
+        if (g_taskDescriptors[idx].taskId == taskId)
         {
-            *td = &TaskDescriptors[idx];
+            *td = &g_taskDescriptors[idx];
+
             return STATUS_SUCCESS;
         }
         idx = (idx + 1) % NUM_TASK_DESCRIPTORS;
     }
 
-    return STATUS_FAILURE;
+    return STATUS_NOT_FOUND;
 }

@@ -17,19 +17,19 @@ main
     TASK_DESCRIPTOR* nextTask;
     RT_STATUS status;
 
-    lowPriorityTask1.tid = 1;
+    lowPriorityTask1.taskId = 1;
     lowPriorityTask1.state = Ready;
     lowPriorityTask1.priority = LowPriority;
 
-    lowPriorityTask2.tid = 2;
+    lowPriorityTask2.taskId = 2;
     lowPriorityTask2.state = Ready;
     lowPriorityTask2.priority = LowPriority;
 
-    highPriorityTask1.tid = 3;
+    highPriorityTask1.taskId = 3;
     highPriorityTask1.state = Ready;
     highPriorityTask1.priority = HighPriority;
 
-    highPriorityTask2.tid = 4;
+    highPriorityTask2.taskId = 4;
     highPriorityTask2.state = Ready;
     highPriorityTask2.priority = HighPriority;
 
@@ -55,77 +55,77 @@ main
     bwprintf(BWCOM2, "Running scheduler \r\n");
 
     status = SchedulerGetNextTask(&nextTask);
-    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->tid);
+    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
     ASSERT(RT_SUCCESS(status), "Getting hp1 failed \r\n");
-    ASSERT(nextTask->tid == 3, "Got wrong task: expected hp1 \r\n");
-    ASSERT(SchedulerGetCurrentTask()->tid == 3, "Scheduler has wrong task: expected hp1 \r\n");
+    ASSERT(nextTask->taskId == 3, "Got wrong task: expected hp1 \r\n");
+    ASSERT(SchedulerGetCurrentTask()->taskId == 3, "Scheduler has wrong task: expected hp1 \r\n");
 
     bwprintf(BWCOM2, "Passing hp1 \r\n");
 
     status = SchedulerGetNextTask(&nextTask);
-    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->tid);
+    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
     ASSERT(RT_SUCCESS(status), "Getting hp2 failed \r\n");
-    ASSERT(nextTask->tid == 4, "Got wrong task: expected hp2 \r\n");
-    ASSERT(SchedulerGetCurrentTask()->tid == 4, "Scheduler has wrong task: expected hp2 \r\n");
+    ASSERT(nextTask->taskId == 4, "Got wrong task: expected hp2 \r\n");
+    ASSERT(SchedulerGetCurrentTask()->taskId == 4, "Scheduler has wrong task: expected hp2 \r\n");
 
     bwprintf(BWCOM2, "Passing hp2 \r\n");
 
     status = SchedulerGetNextTask(&nextTask);
-    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->tid);
+    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
     ASSERT(RT_SUCCESS(status), "Getting hp1 failed \r\n");
-    ASSERT(nextTask->tid == 3, "Got wrong task: expected hp1 \r\n");
-    ASSERT(SchedulerGetCurrentTask()->tid == 3, "Scheduler has wrong task: expected hp1 \r\n");
+    ASSERT(nextTask->taskId == 3, "Got wrong task: expected hp1 \r\n");
+    ASSERT(SchedulerGetCurrentTask()->taskId == 3, "Scheduler has wrong task: expected hp1 \r\n");
 
     bwprintf(BWCOM2, "Exitting hp1 \r\n");
     highPriorityTask1.state = Zombie;
 
     status = SchedulerGetNextTask(&nextTask);
-    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->tid);
+    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
     ASSERT(RT_SUCCESS(status), "Getting hp2 failed \r\n");
-    ASSERT(nextTask->tid == 4, "Got wrong task: expected hp2 \r\n");
-    ASSERT(SchedulerGetCurrentTask()->tid == 4, "Scheduler has wrong task: expected hp2 \r\n");
+    ASSERT(nextTask->taskId == 4, "Got wrong task: expected hp2 \r\n");
+    ASSERT(SchedulerGetCurrentTask()->taskId == 4, "Scheduler has wrong task: expected hp2 \r\n");
 
     bwprintf(BWCOM2, "Passing hp2 \r\n");
-    
+
     status = SchedulerGetNextTask(&nextTask);
-    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->tid);
+    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
     ASSERT(RT_SUCCESS(status), "Getting hp2 failed \r\n");
-    ASSERT(nextTask->tid == 4, "Got wrong task: expected hp2 \r\n");
-    ASSERT(SchedulerGetCurrentTask()->tid == 4, "Scheduler has wrong task: expected hp2 \r\n");
+    ASSERT(nextTask->taskId == 4, "Got wrong task: expected hp2 \r\n");
+    ASSERT(SchedulerGetCurrentTask()->taskId == 4, "Scheduler has wrong task: expected hp2 \r\n");
 
     bwprintf(BWCOM2, "Exitting hp2 \r\n");
     highPriorityTask2.state = Zombie;
 
     status = SchedulerGetNextTask(&nextTask);
-    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->tid);
+    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
     ASSERT(RT_SUCCESS(status), "Getting lp1 failed \r\n");
-    ASSERT(nextTask->tid == 1, "Got wrong task: expected lp1 \r\n");
-    ASSERT(SchedulerGetCurrentTask()->tid == 1, "Scheduler has wrong task: expected hp1 \r\n");
+    ASSERT(nextTask->taskId == 1, "Got wrong task: expected lp1 \r\n");
+    ASSERT(SchedulerGetCurrentTask()->taskId == 1, "Scheduler has wrong task: expected hp1 \r\n");
 
     bwprintf(BWCOM2, "Passing lp1 \r\n");
 
     status = SchedulerGetNextTask(&nextTask);
-    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->tid);
+    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
     ASSERT(RT_SUCCESS(status), "Getting lp2 failed \r\n");
-    ASSERT(nextTask->tid == 2, "Got wrong task: expected lp2 \r\n");
-    ASSERT(SchedulerGetCurrentTask()->tid == 2, "Scheduler has wrong task: expected lp2 \r\n");
+    ASSERT(nextTask->taskId == 2, "Got wrong task: expected lp2 \r\n");
+    ASSERT(SchedulerGetCurrentTask()->taskId == 2, "Scheduler has wrong task: expected lp2 \r\n");
 
     bwprintf(BWCOM2, "Passing lp2 \r\n");
 
     status = SchedulerGetNextTask(&nextTask);
-    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->tid);
+    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
     ASSERT(RT_SUCCESS(status), "Getting lp1 failed \r\n");
-    ASSERT(nextTask->tid == 1, "Got wrong task: expected lp1 \r\n");
-    ASSERT(SchedulerGetCurrentTask()->tid == 1, "Scheduler has wrong task: expected lp1 \r\n");
+    ASSERT(nextTask->taskId == 1, "Got wrong task: expected lp1 \r\n");
+    ASSERT(SchedulerGetCurrentTask()->taskId == 1, "Scheduler has wrong task: expected lp1 \r\n");
 
     bwprintf(BWCOM2, "Exitting lp1 \r\n");
     lowPriorityTask1.state = Zombie;
 
     status = SchedulerGetNextTask(&nextTask);
-    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->tid);
+    bwprintf(BWCOM2, "Got task %d \r\n", nextTask->taskId);
     ASSERT(RT_SUCCESS(status), "Getting lp2 failed \r\n");
-    ASSERT(nextTask->tid == 2, "Got wrong task: expected lp2 \r\n");
-    ASSERT(SchedulerGetCurrentTask()->tid == 2, "Scheduler has wrong task: expected lp2 \r\n");
+    ASSERT(nextTask->taskId == 2, "Got wrong task: expected lp2 \r\n");
+    ASSERT(SchedulerGetCurrentTask()->taskId == 2, "Scheduler has wrong task: expected lp2 \r\n");
 
     bwprintf(BWCOM2, "Exitting lp2 \r\n");
     lowPriorityTask2.state = Zombie;

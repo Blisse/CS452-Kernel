@@ -7,8 +7,18 @@
 #include <rtosc/assert.h>
 
 #define ERROR_PRIORITY_INVALID          -1
-#define ERROR_OUT_OF_TASK_DESCRIPTORS   -2
-#define ERROR_OUT_OF_STACK_SPACE        -3
+#define ERROR_OUT_OF_SPACE              -2
+
+static
+inline
+BOOLEAN
+TaskIsPriorityValid
+    (
+        IN TASK_PRIORITY priority
+    )
+{
+    return (SystemPriority <= priority) && (priority < NumPriority);
+}
 
 VOID
 TaskInit
@@ -31,15 +41,6 @@ TaskInit
     //       adding the start function to TASK_DESCRIPTOR
 }
 
-BOOLEAN
-TaskIsPriorityValid
-    (
-        IN TASK_PRIORITY priority
-    )
-{
-    return (0 <= priority) && (priority < NumPriority);
-}
-
 INT
 TaskCreate
     (
@@ -58,17 +59,18 @@ TaskCreate
 
     if (RT_FAILURE(StackGet(&stack)))
     {
-        return ERROR_OUT_OF_STACK_SPACE;
+        return ERROR_OUT_OF_SPACE;
     }
 
-    if (RT_FAILURE(TaskDescriptorCreate(parentTaskId, priority, startFunc, stack, taskDescriptor)))
+    if (RT_FAILURE(TaskDescriptorCreate(parentTaskId, priority, startFunc, &stack, taskDescriptor)))
     {
-        return ERROR_OUT_OF_TASK_DESCRIPTORS;
+        return ERROR_OUT_OF_SPACE;
     }
 
     return (*taskDescriptor)->taskId;
 }
 
+inline
 BOOLEAN
 TaskValidate
     (

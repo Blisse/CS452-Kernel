@@ -21,8 +21,9 @@ StackGet
         STACK* stack
     );
 
+inline
 RT_STATUS
 StackReturn
     (
-        STACK stack
+        STACK* stack
     );

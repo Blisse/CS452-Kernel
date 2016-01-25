@@ -40,16 +40,16 @@ typedef struct _TASK_DESCRIPTOR
     STACK stack;
 } TASK_DESCRIPTOR;
 
+#define TaskGetStackPointer(task) ((task)->stackPointer)
+#define TaskGetPriority(task) ((task)->priority)
+#define TaskGetState(task) ((task)->state)
+#define TaskGetTaskId(task) ((task)->taskId)
+#define TaskGetParentTaskId(task) ((task)->parentTaskId)
+
 VOID
 TaskDescriptorInit
     (
         VOID
-    );
-
-VOID
-TaskDescriptorReset
-    (
-        IN TASK_DESCRIPTOR* td
     );
 
 RT_STATUS
@@ -58,7 +58,7 @@ TaskDescriptorCreate
         IN INT parentTaskId,
         IN TASK_PRIORITY priority,
         IN TASK_START_FUNC startFunc,
-        IN STACK stack,
+        IN STACK* stack,
         OUT TASK_DESCRIPTOR** td
     );
 

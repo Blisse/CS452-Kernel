@@ -5,6 +5,46 @@
 #include "task.h"
 #include "trap.h"
 
+INT
+SystemGetCurrentTaskId
+    (
+        VOID
+    )
+{
+    return 0;
+}
+
+INT
+SystemGetCurrentParentTaskId
+    (
+        VOID
+    )
+{
+    return 0;
+}
+
+VOID
+SystemDestroyCurrentTask
+    (
+        VOID
+    )
+{
+}
+
+INT
+SystemCreateTask
+    (
+        IN INT priority,
+        IN TASK_START_FUNC startFunc
+    )
+{
+    TASK_DESCRIPTOR* td;
+
+    TaskCreate(SystemGetCurrentTaskId(), priority, startFunc, &td);
+
+    return 0;
+}
+
 extern
 VOID
 InitTask
@@ -74,44 +114,4 @@ KernelRun
             ASSERT(FALSE, "Scheduling failed \r\n");
         }
     }
-}
-
-INT
-SystemCreateTask
-    (
-        IN INT priority,
-        IN TASK_START_FUNC startFunc
-    )
-{
-    TASK_DESCRIPTOR* td;
-
-    TaskCreate(SystemGetCurrentTaskId(), priority, startFunc, &td);
-
-    return 0;
-}
-
-INT
-SystemGetCurrentTaskId
-    (
-        VOID
-    )
-{
-    return 0;
-}
-
-INT
-SystemGetCurrentParentTaskId
-    (
-        VOID
-    )
-{
-    return 0;
-}
-
-VOID
-SystemDestroyCurrentTask
-    (
-        VOID
-    )
-{
 }
