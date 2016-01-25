@@ -21,8 +21,6 @@ KernelInit
     SyscallInit();
     TaskInit();
     TrapInstallHandler();
-
-    SystemCreateTask(SystemPriority, InitTask);
 }
 
 inline
@@ -35,12 +33,28 @@ KernelExit
     g_exit = TRUE;
 }
 
+inline
+VOID
+KernelCreateFirstUserTask
+    (
+        VOID
+    )
+{
+    TASK_DESCRIPTOR* td;
+
+    TaskCreate(0, MediumPriority, InitTask, &td);
+
+    SchedulerAddTask(td);
+}
+
 VOID
 KernelRun
     (
         VOID
     )
 {
+    KernelCreateFirstUserTask();
+
     while(!g_exit)
     {
         TASK_DESCRIPTOR* nextTd;
