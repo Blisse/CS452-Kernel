@@ -5,13 +5,7 @@
 #include "syscall.h"
 #include "task.h"
 #include "trap.h"
-
-extern
-VOID
-InitTask
-    (
-        VOID
-    );
+#include "init.h"
 
 static BOOLEAN g_exit;
 

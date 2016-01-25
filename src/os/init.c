@@ -1,19 +1,7 @@
+#include "init.h"
+
 #include "rtos.h"
 #include <bwio/bwio.h>
-
-extern
-INT
-GetCPSR
-    (
-        VOID
-    );
-
-extern
-UINT*
-GetSP
-    (
-        VOID
-    );
 
 VOID
 InitTask
@@ -21,19 +9,8 @@ InitTask
         VOID
     )
 {
-    bwprintf(BWCOM2, "User CPSR is: %d \r\n", GetCPSR());
-    bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
-    Pass();
+    bwprintf(BWCOM2, "Init Task Running...\r\n");
+    bwprintf(BWCOM2, "FirstUserTask: exiting\r\n");
 
-    bwprintf(BWCOM2, "User CPSR is: %d \r\n", GetCPSR());
-    bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
-    Pass();
-
-    bwprintf(BWCOM2, "User CPSR is: %d \r\n", GetCPSR());
-    bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
-    Pass();
-
-    bwprintf(BWCOM2, "About to call my tid \r\n");
-    bwprintf(BWCOM2, "My tid is %d \r\n", MyTid());
-    Pass();
+    Exit();
 }
