@@ -24,9 +24,9 @@ typedef enum _TASK_PRIORITY
 
 typedef enum _TASK_STATE
 {
-    Ready = 0,
-    Running,
-    Zombie
+    ReadyState = 0,
+    RunningState,
+    ZombieState
 } TASK_STATE;
 
 typedef struct _TASK_DESCRIPTOR

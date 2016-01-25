@@ -26,11 +26,17 @@ SystemCreateTask
         IN TASK_START_FUNC startFunc
     )
 {
+    INT status;
     TASK_DESCRIPTOR* td;
 
-    TaskCreate(SystemGetCurrentTaskId(), priority, startFunc, &td);
+    status = TaskCreate(SystemGetCurrentTaskId(), priority, startFunc, &td);
 
-    return 0;
+    if (status > 0)
+    {
+        SchedulerAddTask(td);
+    }
+
+    return status;
 }
 
 INT
@@ -39,7 +45,7 @@ SystemGetCurrentTaskId
         VOID
     )
 {
-    return 4;
+    return SchedulerGetCurrentTask()->taskId;
 }
 
 INT
@@ -48,7 +54,7 @@ SystemGetCurrentParentTaskId
         VOID
     )
 {
-    return 2;
+    return SchedulerGetCurrentTask()->parentTaskId;
 }
 
 VOID

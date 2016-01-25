@@ -41,6 +41,7 @@ include_directories(
     "inc"
     "inc/common"
     "inc/rt"
+    "inc/rtos"
     "src/kernel"
     "src/os"
     )

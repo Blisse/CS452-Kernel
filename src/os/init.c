@@ -1,19 +1,22 @@
+#include "init.h"
+
 #include "rtos.h"
 #include <bwio/bwio.h>
 
-extern
-INT
-GetCPSR
+VOID
+UserTask
     (
         VOID
-    );
+    )
+{
+    bwprintf(BWCOM2, "UserTask: task id %d\r\n", MyTid());
 
-extern
-UINT*
-GetSP
-    (
-        VOID
-    );
+    Pass();
+
+    bwprintf(BWCOM2, "UserTask: task id %d\r\n", MyTid());
+
+    Exit();
+}
 
 VOID
 InitTask
@@ -21,19 +24,31 @@ InitTask
         VOID
     )
 {
-    bwprintf(BWCOM2, "User CPSR is: %d \r\n", GetCPSR());
-    bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
-    Pass();
+    bwprintf(BWCOM2, "FirstUserTask: starting\r\n");
 
-    bwprintf(BWCOM2, "User CPSR is: %d \r\n", GetCPSR());
-    bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
-    Pass();
+    int priority = MyTid();
 
-    bwprintf(BWCOM2, "User CPSR is: %d \r\n", GetCPSR());
-    bwprintf(BWCOM2, "User SP is: %d \r\n", GetSP());
-    Pass();
+    bwprintf(BWCOM2, "FirstUserTask: task id %d\r\n", priority);
 
-    bwprintf(BWCOM2, "About to call my tid \r\n");
-    bwprintf(BWCOM2, "My tid is %d \r\n", MyTid());
-    Pass();
+    int userTaskId;
+
+    userTaskId = Create(priority-1, UserTask);
+
+    bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
+
+    userTaskId = Create(priority-1, UserTask);
+
+    bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
+
+    userTaskId = Create(priority+1, UserTask);
+
+    bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
+
+    userTaskId = Create(priority+1, UserTask);
+
+    bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
+
+    bwprintf(BWCOM2, "FirstUserTask: exiting\r\n");
+
+    Exit();
 }

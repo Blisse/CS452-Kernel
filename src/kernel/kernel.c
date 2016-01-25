@@ -5,13 +5,7 @@
 #include "syscall.h"
 #include "task.h"
 #include "trap.h"
-
-extern
-VOID
-InitTask
-    (
-        VOID
-    );
+#include "init.h"
 
 static BOOLEAN g_exit;
 
@@ -27,8 +21,6 @@ KernelInit
     SyscallInit();
     TaskInit();
     TrapInstallHandler();
-
-    SystemCreateTask(SystemPriority, InitTask);
 }
 
 inline
@@ -41,12 +33,28 @@ KernelExit
     g_exit = TRUE;
 }
 
+inline
+VOID
+KernelCreateFirstUserTask
+    (
+        VOID
+    )
+{
+    TASK_DESCRIPTOR* td;
+
+    TaskCreate(0, MediumPriority, InitTask, &td);
+
+    SchedulerAddTask(td);
+}
+
 VOID
 KernelRun
     (
         VOID
     )
 {
+    KernelCreateFirstUserTask();
+
     while(!g_exit)
     {
         TASK_DESCRIPTOR* nextTd;
@@ -56,20 +64,20 @@ KernelRun
         {
             ASSERT(TaskValidate(nextTd), "Invalid task!  This likely indicates a buffer overflow \r\n");
 
-            nextTd->state = Running;
+            nextTd->state = RunningState;
 
             // Return to user mode
             TrapReturn(nextTd->stackPointer);
 
             // This will execute once we return back to kernel mode
             // Update the task that just ran
-            nextTd->state = Ready;
+            nextTd->state = ReadyState;
             TaskUpdate(nextTd);
         }
         else if(STATUS_NOT_FOUND == status)
         {
             // No more tasks to run, quit the system
-            g_exit = TRUE;
+            KernelExit();
         }
         else
         {
