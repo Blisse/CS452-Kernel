@@ -31,10 +31,6 @@ TaskInit
     ASSERT(RT_SUCCESS(status), "Failed to initialize stack manager. \r\n");
 
     TaskDescriptorInit();
-
-    // TODO: Make a TaskBootstrap function.  Ask Taylor for
-    //       more details if you need.  This would require
-    //       adding the start function to TASK_DESCRIPTOR
 }
 
 INT
