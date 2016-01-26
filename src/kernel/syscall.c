@@ -1,5 +1,6 @@
 #include "syscall.h"
 
+#include <rtosc/assert.h>
 #include "scheduler.h"
 
 #define NUM_SYSCALLS 5
@@ -38,7 +39,8 @@ SystemCreateTask
 
     if (status > 0)
     {
-        SchedulerAddTask(td);
+        VERIFY(RT_SUCCESS(SchedulerAddTask(td)), 
+               "New task failed to be added to scheduler \r\n");
     }
 
     return status;

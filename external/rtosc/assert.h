@@ -5,6 +5,7 @@
 #ifdef NDEBUG
 
 #define ASSERT(expr, msg)
+#define VERIFY(expr, msg) (expr)
 
 #else
 
@@ -18,5 +19,6 @@ assert
     );
 
 #define ASSERT(expr, msg) assert(expr, msg, __LINE__, __FILE__)
+#define VERIFY(expr, msg) ASSERT(expr, msg)
 
 #endif

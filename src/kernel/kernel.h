@@ -8,13 +8,6 @@ KernelInit
         VOID
     );
 
-inline
-VOID
-KernelExit
-    (
-        VOID
-    );
-
 VOID
 KernelRun
     (
