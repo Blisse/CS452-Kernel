@@ -51,7 +51,7 @@ KernelRun
 
         if(RT_SUCCESS(status))
         {
-            ASSERT(TaskValidate(nextTd), "Invalid task!  This likely indicates a buffer overflow \r\n");
+            ASSERT(TaskValidate(nextTd), "Invalid task!  This likely indicates a stack overflow \r\n");
 
             nextTd->state = RunningState;
 

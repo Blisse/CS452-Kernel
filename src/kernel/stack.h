@@ -4,7 +4,7 @@
 
 typedef struct _STACK
 {
-    INT id;
+    UINT id;
     UINT* top;
     UINT size;
 } STACK;
@@ -26,4 +26,11 @@ RT_STATUS
 StackReturn
     (
         STACK* stack
+    );
+
+inline
+BOOLEAN
+StackVerify
+    (
+        IN STACK* stack
     );

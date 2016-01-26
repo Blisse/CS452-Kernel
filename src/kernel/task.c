@@ -32,8 +32,6 @@ TaskInit
 
     TaskDescriptorInit();
 
-    // Set up canaries
-
     // TODO: Make a TaskBootstrap function.  Ask Taylor for
     //       more details if you need.  This would require
     //       adding the start function to TASK_DESCRIPTOR
@@ -75,8 +73,7 @@ TaskValidate
         IN TASK_DESCRIPTOR* task
     )
 {
-    // TODO: Check canary
-    return TRUE;
+    return StackVerify(&task->stack);
 }
 
 inline
