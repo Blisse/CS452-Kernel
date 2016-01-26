@@ -1,16 +1,14 @@
+function(add_c_test TEST_NAME TEST_MAIN TEST_DEPENDENCIES)
+    add_c_executable(${TEST_NAME} "${TEST_MAIN}" "${TEST_DEPENDENCIES}")
+    add_test(NAME ${TEST_NAME} COMMAND $<TARGET_FILE:${TEST_NAME}>)
+endfunction()
 
-add_c_executable(${EXE_TEST_BUFFER} "test_buffer_main.c" "${LIB_RTOSC}")
-add_test(NAME ${EXE_TEST_BUFFER} COMMAND $<TARGET_FILE:${EXE_TEST_BUFFER}>)
-
-add_c_executable(${EXE_TEST_STRING} "test_string_main.c" "${LIB_RTOSC}")
-add_test(NAME ${EXE_TEST_STRING} COMMAND $<TARGET_FILE:${EXE_TEST_STRING}>)
+add_c_test("${EXE_TEST_BUFFER}" "test_buffer_main.c" "${LIB_RTOSC}")
+add_c_test("${EXE_TEST_STRING}" "test_string_main.c" "${LIB_RTOSC}")
 
 if (NOT LOCAL)
 
-    add_c_executable(${EXE_TEST_SCHEDULER} "test_scheduler_main.c" "${LIB_KERNEL}")
-    add_test(NAME ${EXE_TEST_SCHEDULER} COMMAND $<TARGET_FILE:${EXE_TEST_SCHEDULER}>)
-
-    add_c_executable(${EXE_TEST_TASK_DESCRIPTOR} "test_task_descriptor_main.c" "${LIB_KERNEL}")
-    add_test(NAME ${EXE_TEST_TASK_DESCRIPTOR} COMMAND $<TARGET_FILE:${EXE_TEST_TASK_DESCRIPTOR}>)
+    add_c_test("${EXE_TEST_SCHEDULER}" "test_scheduler_main.c" "${LIB_KERNEL}")
+    add_c_test("${EXE_TEST_TASK_DESCRIPTOR}" "test_task_descriptor_main.c" "${LIB_KERNEL}")
 
 endif()
