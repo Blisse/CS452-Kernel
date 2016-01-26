@@ -90,13 +90,21 @@ function(add_c_library LIBRARY_NAME LIBRARY_SOURCES LIBRARY_DEPENDENCIES)
     else()
         set_target_properties("${LIBRARY_NAME}" PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "${ARGV3}")
     endif()
-endfunction(add_c_library)
+endfunction()
 
-function(add_c_executable LIBRARY_NAME LIBRARY_SOURCES LIBRARY_DEPENDENCIES)
-    add_executable("${LIBRARY_NAME}" "${LIBRARY_SOURCES}")
-    target_link_libraries("${LIBRARY_NAME}" "${LIBRARY_DEPENDENCIES}")
-    set_target_properties("${LIBRARY_NAME}" PROPERTIES LINKER_LANGUAGE C)
-endfunction(add_c_executable)
+function(add_c_executable EXEC_NAME EXEC_SOURCES EXEC_DEPENDENCIES)
+    add_executable("${EXEC_NAME}" "${EXEC_SOURCES}")
+    target_link_libraries("${EXEC_NAME}" "${EXEC_DEPENDENCIES}")
+    set_target_properties("${EXEC_NAME}" PROPERTIES LINKER_LANGUAGE C)
+    add_custom_command(
+        TARGET "${EXEC_NAME}"
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME}"
+            "/u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}"
+        COMMENT "Copying ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME} to /u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}"
+        )
+endfunction()
 
 # build directories
 add_subdirectory("external")
