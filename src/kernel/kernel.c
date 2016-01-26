@@ -34,28 +34,15 @@ KernelpExit
     g_exit = TRUE;
 }
 
-static
-inline
-VOID
-KernelpCreateFirstUserTask
-    (
-        VOID
-    )
-{
-    TASK_DESCRIPTOR* td;
-
-    TaskCreate(0, MediumPriority, InitTask, &td);
-
-    SchedulerAddTask(td);
-}
-
 VOID
 KernelRun
     (
         VOID
     )
 {
-    KernelpCreateFirstUserTask();
+    // Temporary for K1
+    // Afterwards, set init task to SystemPriority
+    SystemCreateTask(MediumPriority, InitTask);
 
     while(!g_exit)
     {

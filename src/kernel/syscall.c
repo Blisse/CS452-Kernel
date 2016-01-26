@@ -28,8 +28,10 @@ SystemCreateTask
 {
     INT status;
     TASK_DESCRIPTOR* td;
+    TASK_DESCRIPTOR* currentTask = SchedulerGetCurrentTask();
+    INT parentTaskId = currentTask == NULL ? 0 : currentTask->taskId;
 
-    status = TaskCreate(SchedulerGetCurrentTask()->taskId, 
+    status = TaskCreate(parentTaskId, 
                         priority, 
                         startFunc, 
                         &td);

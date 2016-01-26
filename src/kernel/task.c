@@ -1,8 +1,6 @@
 #include "task.h"
 #include "arm.h"
-#include "scheduler.h"
 #include "stack.h"
-#include "task_descriptor.h"
 
 #include <rtosc/assert.h>
 

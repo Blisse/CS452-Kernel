@@ -3,7 +3,7 @@
 static UINT g_nextFreeTaskId;
 static TASK_DESCRIPTOR g_taskDescriptors[NUM_TASK_DESCRIPTORS];
 
-#define TASK_INITIAL_CSPR   0x10
+#define TASK_INITIAL_CPSR   0x10
 
 static
 inline
@@ -27,9 +27,10 @@ TaskDescriptorInit
         VOID
     )
 {
-    g_nextFreeTaskId = 1;
-
     UINT i;
+
+    g_nextFreeTaskId = 1;
+    
     for(i = 0; i < NUM_TASK_DESCRIPTORS; i++)
     {
         TaskDescriptorReset(&g_taskDescriptors[i]);
@@ -49,7 +50,7 @@ TaskDescriptorUpdateStack
     UINT* stackPointer = ((UINT*) ptr_add(stack->top, stack->size)) - sizeof(UINT);
 
     *(stackPointer - 10) = (UINT) startFunc;
-    *(stackPointer - 11) = TASK_INITIAL_CSPR;
+    *(stackPointer - 11) = TASK_INITIAL_CPSR;
     stackPointer -= 12;
 
     td->stack = *stack;
@@ -85,6 +86,7 @@ TaskDescriptorGetZombie
 
             return STATUS_SUCCESS;
         }
+
         idx = (idx + 1) % NUM_TASK_DESCRIPTORS;
     }
 
@@ -161,6 +163,7 @@ TaskDescriptorGet
 
             return STATUS_SUCCESS;
         }
+        
         idx = (idx + 1) % NUM_TASK_DESCRIPTORS;
     }
 

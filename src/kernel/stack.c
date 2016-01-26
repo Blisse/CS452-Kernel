@@ -1,6 +1,5 @@
 #include "stack.h"
 
-#include <bwio/bwio.h>
 #include <rtosc/buffer.h>
 #include "task.h"
 
@@ -17,11 +16,12 @@ StackInit
         VOID
     )
 {
-    RtCircularBufferInit(&g_AvailableStacksQueue, g_AvailableStacksBuffer, sizeof(g_AvailableStacksBuffer));
-
-    RT_STATUS status;
     UINT i;
-    for(i = 0; i < NUM_TASK_DESCRIPTORS; i++)
+    RT_STATUS status = STATUS_SUCCESS;    
+
+    RtCircularBufferInit(&g_AvailableStacksQueue, g_AvailableStacksBuffer, sizeof(g_AvailableStacksBuffer));
+    
+    for(i = 0; i < NUM_TASK_DESCRIPTORS && RT_SUCCESS(status); i++)
     {
         if ((STACK_ADDRESS_START + (STACK_SIZE * i)) > STACK_ADDRESS_END)
         {
@@ -29,11 +29,6 @@ StackInit
         }
 
         status = RtCircularBufferAdd(&g_AvailableStacksQueue, &i, sizeof(i));
-
-        if (RT_FAILURE(status))
-        {
-            return status;
-        }
     }
 
     return status;
@@ -45,10 +40,10 @@ StackGet
         STACK* stack
     )
 {
-    RT_STATUS status;
     INT stackId;
-
-    status = RtCircularBufferGetAndRemove(&g_AvailableStacksQueue, &stackId, sizeof(stackId));
+    RT_STATUS status = RtCircularBufferGetAndRemove(&g_AvailableStacksQueue, 
+                                                    &stackId, 
+                                                    sizeof(stackId));
 
     if (RT_SUCCESS(status))
     {
