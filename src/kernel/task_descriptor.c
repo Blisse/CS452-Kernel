@@ -1,9 +1,11 @@
 #include "task_descriptor.h"
 
-static UINT g_nextFreeTaskId;
-static TASK_DESCRIPTOR g_taskDescriptors[NUM_TASK_DESCRIPTORS];
+#include "rtos.h"
 
 #define TASK_INITIAL_CPSR   0x10
+
+static UINT g_nextFreeTaskId;
+static TASK_DESCRIPTOR g_taskDescriptors[NUM_TASK_DESCRIPTORS];
 
 static
 inline
@@ -49,6 +51,7 @@ TaskDescriptorUpdateStack
 {
     UINT* stackPointer = ((UINT*) ptr_add(stack->top, stack->size)) - sizeof(UINT);
 
+    *stackPointer = (UINT) Exit;
     *(stackPointer - 10) = (UINT) startFunc;
     *(stackPointer - 11) = TASK_INITIAL_CPSR;
     stackPointer -= 12;

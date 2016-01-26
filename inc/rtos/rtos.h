@@ -10,19 +10,12 @@
 #define MEDIUM_PRIORITY 2
 #define LOW_PRIORITY 3
 
-typedef
-VOID
-(*TASK_START_FUNC)
-    (
-        VOID
-    );
-
 extern
 INT
 Create
     (
         IN INT priority, 
-        IN TASK_START_FUNC start
+        IN VOID (*code)()
     );
 
 extern

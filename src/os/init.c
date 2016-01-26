@@ -17,8 +17,6 @@ UserTask
     Pass();
 
     bwprintf(BWCOM2, "%d %d\r\n", myTid, myParentTid);
-
-    Exit();
 }
 
 VOID
@@ -42,6 +40,4 @@ InitTask
     bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
 
     bwprintf(BWCOM2, "FirstUserTask: exiting\r\n");
-
-    Exit();
 }
