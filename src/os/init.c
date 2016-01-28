@@ -3,6 +3,10 @@
 #include "rtos.h"
 #include <bwio/bwio.h>
 
+#define HIGH_PRIORITY       1
+#define MEDIUM_PRIORITY     2
+#define LOW_PRIORITY        3
+
 VOID
 UserTask
     (
