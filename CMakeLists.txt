@@ -104,6 +104,12 @@ function(add_c_executable EXEC_NAME EXEC_SOURCES EXEC_DEPENDENCIES)
             "/u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}"
         COMMENT "Copying ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME} to /u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}"
         )
+    add_custom_command(
+        TARGET "${EXEC_NAME}"
+        POST_BUILD
+        COMMAND chmod 777 "/u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}"
+        COMMENT "chmod 777 /u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}"
+        )
 endfunction()
 
 # build directories
