@@ -25,7 +25,10 @@ Exit:
 
 .globl Send
 Send:
+    stmfd sp!, {r4}
+    ldr r4, [sp, #4]
     swi 5
+    ldmfd sp!, {r4}
     bx lr
 
 .globl Receive

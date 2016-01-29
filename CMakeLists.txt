@@ -103,14 +103,14 @@ function(add_c_executable EXEC_NAME EXEC_SOURCES EXEC_DEPENDENCIES)
                 POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                     "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME}"
-                    "/u/cs452/tftp/ARM/tstark/shared/${EXEC_NAME}"
-                COMMENT "Copying ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME} to /u/cs452/tftp/ARM/tstark/shared/${EXEC_NAME}"
+                    "/u/cs452/tftp/ARM/tstark/${EXEC_NAME}"
+                COMMENT "Copying ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME} to /u/cs452/tftp/ARM/tstark/${EXEC_NAME}"
                 )
             add_custom_command(
                 TARGET "${EXEC_NAME}"
                 POST_BUILD
-                COMMAND chmod 777 "/u/cs452/tftp/ARM/tstark/shared/${EXEC_NAME}"
-                COMMENT "chmod 777 /u/cs452/tftp/ARM/tstark/shared/${EXEC_NAME}"
+                COMMAND chmod 777 "/u/cs452/tftp/ARM/tstark/${EXEC_NAME}"
+                COMMENT "chmod 777 /u/cs452/tftp/ARM/tstark/${EXEC_NAME}"
                 )
         else()
             add_custom_command(

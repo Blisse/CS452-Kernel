@@ -38,6 +38,7 @@ SystemCreateTask
     TASK_DESCRIPTOR* currentTask = SchedulerGetCurrentTask();
     INT parentTaskId = currentTask == NULL ? 0 : currentTask->taskId;
 
+    bwprintf(BWCOM2, "Create called...\r\n");
     status = TaskCreate(parentTaskId,
                         priority,
                         startFunc,
@@ -98,8 +99,8 @@ SystemSendMessage
         IN INT replyLength
     )
 {
-    // bwprintf(BWCOM2, "Send with : %d - %d - %d - %d - %d \r\n", taskId, message, messageLength, reply, replyLength);
-
+    bwprintf(BWCOM2, "Send with : %d - %d - %d - %d - %d \r\n", taskId, *((UINT*)message), messageLength, reply, replyLength);
+    /*
     TASK_DESCRIPTOR* senderTd = SchedulerGetCurrentTask();
 
     TASK_DESCRIPTOR* receiverTd;
@@ -128,8 +129,9 @@ SystemSendMessage
 
         VERIFY(RT_SUCCESS(SchedulerAddTask(receiverTd)), "Failed to add task to scheduler\r\n");
     }
+    */
 
-    return -1;
+    return 0;
 }
 
 INT
@@ -140,8 +142,8 @@ SystemReceiveMessage
         IN INT messageLength
     )
 {
-    // bwprintf(BWCOM2, "Receive with : %d - %d - %d \r\n", taskId, message, messageLength);
-
+    bwprintf(BWCOM2, "Receive with : %d - %d - %d \r\n", taskId, message, messageLength);
+    /*
     TASK_DESCRIPTOR* receiverTd = SchedulerGetCurrentTask();
 
     TASK_MESSAGE receivedMessage;
@@ -162,6 +164,8 @@ SystemReceiveMessage
     *taskId = receivedMessage.senderId;
     RtMemcpy(message, receivedMessage.message, messageLength);
     return receivedMessage.messageLength;
+    */
+    return 0;
 }
 
 INT
@@ -172,8 +176,8 @@ SystemReplyMessage
         IN INT replyLength
     )
 {
-    // bwprintf(BWCOM2, "Reply with : %d - %d - %d \r\n", taskId, reply, replyLength);
-
+    bwprintf(BWCOM2, "Reply with : %d - %d - %d \r\n", taskId, reply, replyLength);
+    /*
     TASK_DESCRIPTOR* senderTd;
     if (RT_FAILURE(TaskDescriptorGet(taskId, &senderTd)))
     {
@@ -194,6 +198,6 @@ SystemReplyMessage
     senderTd->state = ReadyState;
     TaskDescriptorSetReturnValue(senderTd, replyLength);
     VERIFY(RT_SUCCESS(SchedulerAddTask(senderTd)), "Failed to add task to scheduler\r\n");
-
+    */
     return 0;
 }
