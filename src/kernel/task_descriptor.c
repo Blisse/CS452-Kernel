@@ -1,6 +1,5 @@
 #include "task_descriptor.h"
 
-#include "buffer.h"
 #include "rtos.h"
 
 #define TASK_INITIAL_CPSR   0x10
@@ -89,7 +88,7 @@ TaskDescriptorCreate
 
     if (RT_SUCCESS(status))
     {
-        TASK_DESCRIPTOR* newTd = TaskDescriptorGet(id);
+        TASK_DESCRIPTOR* newTd = TaskDescriptorIndex(id);
 
         newTd->taskId = id;
         newTd->parentTaskId = parentTaskId;
@@ -97,6 +96,8 @@ TaskDescriptorCreate
         newTd->priority = priority;
 
         TaskDescriptorpInitializeStack(newTd, stack, startFunc);
+
+        RtCircularBufferInit(&newTd->messages, newTd->messagesBuffer, sizeof(newTd->messagesBuffer));
 
         *td = newTd;
     }
@@ -128,10 +129,70 @@ TaskDescriptorDestroy
 
 inline
 TASK_DESCRIPTOR*
-TaskDescriptorGet
+TaskDescriptorIndex
     (
         IN INT taskId
     )
 {
     return &g_taskDescriptors[taskId % NUM_TASK_DESCRIPTORS];
+}
+
+inline
+RT_STATUS
+TaskDescriptorGet
+    (
+        IN INT taskId,
+        OUT TASK_DESCRIPTOR** td
+    )
+{
+    TASK_DESCRIPTOR* getTd = TaskDescriptorIndex(taskId);
+
+    if (getTd->taskId == taskId)
+    {
+        *td = getTd;
+        return STATUS_SUCCESS;
+    }
+
+    return STATUS_NOT_FOUND;
+}
+
+inline
+RT_STATUS
+TaskDescriptorMessagePush
+    (
+        IN TASK_DESCRIPTOR* td,
+        IN INT senderId,
+        IN PVOID message,
+        IN INT messageLength
+    )
+{
+    TASK_MESSAGE taskMessage;
+
+    taskMessage.senderId = senderId;
+    taskMessage.message = message;
+    taskMessage.messageLength = messageLength;
+
+    return RtCircularBufferAdd(&td->messages, &taskMessage, sizeof(taskMessage));
+}
+
+inline
+RT_STATUS
+TaskDescriptorMessagePop
+    (
+        IN TASK_DESCRIPTOR* td,
+        OUT TASK_MESSAGE* message
+    )
+{
+    return RtCircularBufferGetAndRemove(&td->messages, message, sizeof(*message));
+}
+
+inline
+VOID
+TaskDescriptorSetReturnValue
+    (
+        IN TASK_DESCRIPTOR* td,
+        INT returnValue
+    )
+{
+    *(td->stackPointer + 1) = returnValue;
 }

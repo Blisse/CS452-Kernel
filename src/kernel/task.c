@@ -30,7 +30,9 @@ TaskInit
 
     ASSERT(RT_SUCCESS(status), "Failed to initialize stack manager. \r\n");
 
-    TaskDescriptorInit();
+    status = TaskDescriptorInit();
+
+    ASSERT(RT_SUCCESS(status), "Failed to initialize task descriptors. \r\n");
 }
 
 INT
