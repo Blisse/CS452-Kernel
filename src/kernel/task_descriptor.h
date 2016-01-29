@@ -35,7 +35,6 @@ typedef struct _TASK_DESCRIPTOR
     INT parentTaskId;
     TASK_STATE state;
     TASK_PRIORITY priority;
-    TASK_START_FUNC startFunc;
     UINT* stackPointer;
     STACK stack;
 } TASK_DESCRIPTOR;
@@ -68,6 +67,7 @@ TaskDescriptorDestroy
         IN INT taskId
     );
 
+inline
 RT_STATUS
 TaskDescriptorGet
     (

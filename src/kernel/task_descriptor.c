@@ -1,10 +1,13 @@
 #include "task_descriptor.h"
 
+#include "buffer.h"
 #include "rtos.h"
 
 #define TASK_INITIAL_CPSR   0x10
 
-static UINT g_nextFreeTaskId;
+static INT g_taskDescriptorIds[NUM_TASK_DESCRIPTORS + 1];
+static RT_CIRCULAR_BUFFER g_taskDescriptorIdQueue;
+
 static TASK_DESCRIPTOR g_taskDescriptors[NUM_TASK_DESCRIPTORS];
 
 static
@@ -19,11 +22,10 @@ TaskDescriptorReset
     td->parentTaskId = -1;
     td->state = ZombieState;
     td->priority = IdlePriority;
-    td->startFunc = NULLPTR;
     td->stackPointer = NULLPTR;
 }
 
-VOID
+RT_STATUS
 TaskDescriptorInit
     (
         VOID
@@ -31,18 +33,27 @@ TaskDescriptorInit
 {
     UINT i;
 
-    g_nextFreeTaskId = 1;
-    
     for(i = 0; i < NUM_TASK_DESCRIPTORS; i++)
     {
         TaskDescriptorReset(&g_taskDescriptors[i]);
     }
+
+    RtCircularBufferInit(&g_taskDescriptorIdQueue, g_taskDescriptorIds, sizeof(g_taskDescriptorIds));
+
+    int status = STATUS_SUCCESS;
+
+    for(i = 0; i < NUM_TASK_DESCRIPTORS && RT_SUCCESS(status); i++)
+    {
+        status = RtCircularBufferAdd(&g_taskDescriptorIdQueue, &i, sizeof(i));
+    }
+
+    return status;
 }
 
 static
 inline
 VOID
-TaskDescriptorUpdateStack
+TaskDescriptorpInitializeStack
     (
         IN TASK_DESCRIPTOR* td,
         IN STACK* stack,
@@ -60,42 +71,6 @@ TaskDescriptorUpdateStack
     td->stackPointer = stackPointer;
 }
 
-static
-inline
-BOOLEAN
-TaskDescriptorIsZombie
-    (
-        IN TASK_DESCRIPTOR* td
-    )
-{
-    return (td->state == ZombieState);
-}
-
-static
-RT_STATUS
-TaskDescriptorGetZombie
-    (
-        OUT TASK_DESCRIPTOR** td
-    )
-{
-    UINT i;
-    UINT idx = g_nextFreeTaskId % NUM_TASK_DESCRIPTORS;
-
-    for(i = 0; i < NUM_TASK_DESCRIPTORS; i++)
-    {
-        if (TaskDescriptorIsZombie(&g_taskDescriptors[idx]))
-        {
-            *td = &g_taskDescriptors[idx];
-
-            return STATUS_SUCCESS;
-        }
-
-        idx = (idx + 1) % NUM_TASK_DESCRIPTORS;
-    }
-
-    return STATUS_NOT_FOUND;
-}
-
 RT_STATUS
 TaskDescriptorCreate
     (
@@ -107,23 +82,23 @@ TaskDescriptorCreate
     )
 {
     RT_STATUS status;
-    TASK_DESCRIPTOR* zombieTd;
 
-    status = TaskDescriptorGetZombie(&zombieTd);
+    INT id;
+
+    status = RtCircularBufferGetAndRemove(&g_taskDescriptorIdQueue, &id, sizeof(id));
 
     if (RT_SUCCESS(status))
     {
-        zombieTd->taskId = g_nextFreeTaskId;
-        zombieTd->parentTaskId = parentTaskId;
-        zombieTd->state = ReadyState;
-        zombieTd->priority = priority;
-        zombieTd->startFunc = startFunc;
+        TASK_DESCRIPTOR* newTd = TaskDescriptorGet(id);
 
-        TaskDescriptorUpdateStack(zombieTd, stack, startFunc);
+        newTd->taskId = id;
+        newTd->parentTaskId = parentTaskId;
+        newTd->state = ReadyState;
+        newTd->priority = priority;
 
-        g_nextFreeTaskId += 1;
+        TaskDescriptorpInitializeStack(newTd, stack, startFunc);
 
-        *td = zombieTd;
+        *td = newTd;
     }
 
     return status;
@@ -135,40 +110,28 @@ TaskDescriptorDestroy
         IN INT taskId
     )
 {
-    RT_STATUS status;
     TASK_DESCRIPTOR* td;
 
-    status = TaskDescriptorGet(taskId, &td);
+    RT_STATUS status = TaskDescriptorGet(taskId, &td);
 
     if (RT_SUCCESS(status))
     {
+        taskId += NUM_TASK_DESCRIPTORS;
+
+        status = RtCircularBufferAdd(&g_taskDescriptorIdQueue, &taskId, sizeof(taskId));
+
         TaskDescriptorReset(td);
     }
 
     return status;
 }
 
-RT_STATUS
+inline
+TASK_DESCRIPTOR*
 TaskDescriptorGet
     (
-        IN INT taskId,
-        OUT TASK_DESCRIPTOR** td
+        IN INT taskId
     )
 {
-    UINT i;
-    UINT idx = taskId % NUM_TASK_DESCRIPTORS;
-
-    for(i = 0; i < NUM_TASK_DESCRIPTORS; i++)
-    {
-        if (g_taskDescriptors[idx].taskId == taskId)
-        {
-            *td = &g_taskDescriptors[idx];
-
-            return STATUS_SUCCESS;
-        }
-        
-        idx = (idx + 1) % NUM_TASK_DESCRIPTORS;
-    }
-
-    return STATUS_NOT_FOUND;
+    return &g_taskDescriptors[taskId % NUM_TASK_DESCRIPTORS];
 }
