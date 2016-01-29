@@ -22,3 +22,18 @@ Pass:
 Exit:
     swi 4
     bx lr
+
+.globl Send
+Send:
+    swi 5
+    bx lr
+
+.globl Receive
+Receive:
+    swi 6
+    bx lr
+
+.globl Reply
+Reply:
+    swi 7
+    bx lr

@@ -3,7 +3,7 @@
 #include <rtosc/assert.h>
 #include "scheduler.h"
 
-#define NUM_SYSCALLS 5
+#define NUM_SYSCALLS 8
 
 UINT g_systemCallTable[NUM_SYSCALLS];
 
@@ -18,6 +18,9 @@ SyscallInit
     g_systemCallTable[2] = (UINT) SystemGetCurrentParentTaskId;
     g_systemCallTable[3] = (UINT) SystemPassCurrentTask;
     g_systemCallTable[4] = (UINT) SystemDestroyCurrentTask;
+    g_systemCallTable[5] = (UINT) SystemSendMessage;
+    g_systemCallTable[6] = (UINT) SystemReceiveMessage;
+    g_systemCallTable[7] = (UINT) SystemReplyMessage;
 }
 
 INT

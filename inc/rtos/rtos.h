@@ -45,3 +45,32 @@ Exit
     (
         VOID
     );
+
+extern
+INT
+Send
+    (
+        IN INT taskId,
+        IN PVOID message,
+        IN INT messageLength,
+        IN PVOID reply,
+        IN INT replyLength
+    );
+
+extern
+INT
+Receive
+    (
+        OUT INT* taskId,
+        OUT PVOID message,
+        IN INT messageLength
+    );
+
+extern
+INT
+Reply
+    (
+        IN INT taskId,
+        IN PVOID reply,
+        IN INT replyLength
+    );

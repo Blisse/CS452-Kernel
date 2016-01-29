@@ -39,3 +39,29 @@ SystemDestroyCurrentTask
     (
         VOID
     );
+
+INT
+SystemSendMessage
+    (
+        IN INT taskId,
+        IN PVOID message,
+        IN INT messageLength,
+        IN PVOID reply,
+        IN INT replyLength
+    );
+
+INT
+SystemReceiveMessage
+    (
+        OUT INT* taskId,
+        IN PVOID message,
+        IN INT messageLength
+    );
+
+INT
+SystemReplyMessage
+    (
+        IN INT taskId,
+        IN PVOID reply,
+        IN INT replyLength
+    );
