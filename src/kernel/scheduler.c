@@ -35,7 +35,7 @@ SchedulerGetNextTask
     TASK_DESCRIPTOR* nextTd;
     RT_STATUS status = RtPriorityQueueGet(&g_priorityQueue, &nextTd);
 
-    if(NULL != g_currentTd && ZombieState != TaskGetState(g_currentTd))
+    if(NULL != g_currentTd && ReadyState == TaskGetState(g_currentTd))
     {
         if(RT_SUCCESS(status) && 
            TaskGetPriority(nextTd) <= TaskGetPriority(g_currentTd))
