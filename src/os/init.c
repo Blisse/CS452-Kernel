@@ -1,7 +1,7 @@
 #include "init.h"
 
-#include "rtos.h"
 #include <bwio/bwio.h>
+#include <rtos.h>
 
 #define HIGH_PRIORITY       1
 #define MEDIUM_PRIORITY     2
@@ -24,6 +24,50 @@ UserTask
 }
 
 VOID
+SendTask
+    (
+        VOID
+    )
+{
+    INT myTid = MyTid();
+    INT myParentTid = MyParentTid();
+
+    bwprintf(BWCOM2, "Send Task %d %d\r\n", myTid, myParentTid);
+
+    INT i;
+    for (i = 0; i < 10; i++)
+    {
+        int reply;
+        Send(3, &i, sizeof(i), &reply, sizeof(reply));
+
+        bwprintf(BWCOM2, "%d Send \r\n", i);
+    }
+}
+
+VOID
+ReceiveTask
+    (
+        VOID
+    )
+{
+    INT myTid = MyTid();
+    INT myParentTid = MyParentTid();
+
+    bwprintf(BWCOM2, "Receive Task %d %d\r\n", myTid, myParentTid);
+
+    INT i;
+    for (i = 0; i < 10; i++)
+    {
+        int senderId;
+        int message;
+        Receive(&senderId, &message, sizeof(message));
+        Reply(senderId, &i, sizeof(i));
+
+        bwprintf(BWCOM2, "%d Receive & Reply \r\n", i);
+    }
+}
+
+VOID
 InitTask
     (
         VOID
@@ -31,16 +75,10 @@ InitTask
 {
     INT userTaskId;
 
-    userTaskId = Create(LOW_PRIORITY, UserTask);
+    userTaskId = Create(LOW_PRIORITY, SendTask);
     bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
 
-    userTaskId = Create(LOW_PRIORITY, UserTask);
-    bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
-
-    userTaskId = Create(HIGH_PRIORITY, UserTask);
-    bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
-
-    userTaskId = Create(HIGH_PRIORITY, UserTask);
+    userTaskId = Create(LOW_PRIORITY, ReceiveTask);
     bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
 
     bwprintf(BWCOM2, "FirstUserTask: exiting\r\n");

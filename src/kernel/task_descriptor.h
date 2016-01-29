@@ -27,6 +27,9 @@ typedef enum _TASK_STATE
 {
     ReadyState = 0,
     RunningState,
+    SendBlockedState,
+    ReceiveBlockedState,
+    ReplyBlockedState,
     ZombieState
 } TASK_STATE;
 
