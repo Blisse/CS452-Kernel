@@ -41,9 +41,11 @@ TaskDescriptorInit
 
     int status = STATUS_SUCCESS;
 
+    INT id;
     for(i = 0; i < NUM_TASK_DESCRIPTORS && RT_SUCCESS(status); i++)
     {
-        status = RtCircularBufferAdd(&g_taskDescriptorIdQueue, &i, sizeof(i));
+        id = i+1;
+        status = RtCircularBufferAdd(&g_taskDescriptorIdQueue, &id, sizeof(id));
     }
 
     return status;

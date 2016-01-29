@@ -98,7 +98,7 @@ SystemSendMessage
         IN INT replyLength
     )
 {
-    bwprintf(BWCOM2, "Send with : %d - %d - %d - %d - %d", taskId, message, messageLength, reply, replyLength);
+    // bwprintf(BWCOM2, "Send with : %d - %d - %d - %d - %d \r\n", taskId, message, messageLength, reply, replyLength);
 
     TASK_DESCRIPTOR* senderTd = SchedulerGetCurrentTask();
 
@@ -140,7 +140,7 @@ SystemReceiveMessage
         IN INT messageLength
     )
 {
-    bwprintf(BWCOM2, "Receive with : %d - %d - %d", taskId, message, messageLength);
+    // bwprintf(BWCOM2, "Receive with : %d - %d - %d \r\n", taskId, message, messageLength);
 
     TASK_DESCRIPTOR* receiverTd = SchedulerGetCurrentTask();
 
@@ -172,7 +172,7 @@ SystemReplyMessage
         IN INT replyLength
     )
 {
-    bwprintf(BWCOM2, "Reply with : %d - %d - %d", taskId, reply, replyLength);
+    // bwprintf(BWCOM2, "Reply with : %d - %d - %d \r\n", taskId, reply, replyLength);
 
     TASK_DESCRIPTOR* senderTd;
     if (RT_FAILURE(TaskDescriptorGet(taskId, &senderTd)))

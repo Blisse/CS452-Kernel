@@ -35,12 +35,14 @@ SendTask
     bwprintf(BWCOM2, "Send Task %d %d\r\n", myTid, myParentTid);
 
     INT i;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 3; i++)
     {
+        bwprintf(BWCOM2, "%d Send Begin \r\n", i);
+
         int reply;
         Send(3, &i, sizeof(i), &reply, sizeof(reply));
 
-        bwprintf(BWCOM2, "%d Send \r\n", i);
+        bwprintf(BWCOM2, "%d Send End\r\n", i);
     }
 }
 
@@ -56,14 +58,19 @@ ReceiveTask
     bwprintf(BWCOM2, "Receive Task %d %d\r\n", myTid, myParentTid);
 
     INT i;
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 3; i++)
     {
         int senderId;
         int message;
+        bwprintf(BWCOM2, "%d Receive & Reply Start \r\n", i);
+
         Receive(&senderId, &message, sizeof(message));
+
+        bwprintf(BWCOM2, "%d Received Message %d \r\n", i, message);
+
         Reply(senderId, &i, sizeof(i));
 
-        bwprintf(BWCOM2, "%d Receive & Reply \r\n", i);
+        bwprintf(BWCOM2, "%d Receive & Reply End \r\n", i);
     }
 }
 
