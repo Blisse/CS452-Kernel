@@ -1,67 +1,60 @@
 #include "init.h"
 
 #include <bwio/bwio.h>
+#include "nameserver.h"
 #include <rtos.h>
 
-#define HIGH_PRIORITY       1
-#define MEDIUM_PRIORITY     2
-#define LOW_PRIORITY        3
+#define RPS_SERVER_NAME "RpsServer"
 
+static
 VOID
-UserTask
+RpsClientTask
     (
         VOID
     )
 {
-    INT myTid = MyTid();
-    INT myParentTid = MyParentTid();
+    INT rpsServerTaskId = WhoIs(RPS_SERVER_NAME);
+    INT message = MyTid();
+    INT reply;
 
-    bwprintf(BWCOM2, "%d %d\r\n", myTid, myParentTid);
+    bwprintf(BWCOM2, "Client sending %d to server \r\n", message);
 
-    Pass();
+    Send(rpsServerTaskId,
+         &message, 
+         sizeof(message),
+         &reply, 
+         sizeof(reply));
 
-    bwprintf(BWCOM2, "%d %d\r\n", myTid, myParentTid);
+    bwprintf(BWCOM2, "Client received %d from server \r\n", reply);
 }
 
+static
 VOID
-SendTask
+RpsServerHandleClient
     (
         VOID
     )
 {
-    INT i;
+    INT message;
+    INT sender;
 
-    for (i = 0; i < 3; i++)
-    {
-        INT reply;
-        INT bytesReceived;
+    Receive(&sender, &message, sizeof(message));
 
-        bytesReceived = Send(2, &i, sizeof(i), &reply, sizeof(reply));
+    bwprintf(BWCOM2, "Server received %d from client \r\n", message);
 
-        bwprintf(BWCOM2, "Reply of length %d.  Contains %d \r\n", bytesReceived, reply);
-    }
+    Reply(sender, &message, sizeof(message));
 }
 
+static
 VOID
-ReceiveTask
+RpsServerTask
     (
         VOID
     )
 {
-    INT i;
-
-    for (i = 4; i < 7; i++)
-    {
-        INT senderId;
-        INT message;
-        INT bytesReceived;
-
-        bytesReceived = Receive(&senderId, &message, sizeof(message));
-
-        bwprintf(BWCOM2, "Received %d bytes from %d containing %d \r\n", bytesReceived, senderId, message);
-
-        Reply(senderId, &i, sizeof(i));
-    }
+    RegisterAs(RPS_SERVER_NAME);
+    RpsServerHandleClient();
+    RpsServerHandleClient();
 }
 
 VOID
@@ -70,13 +63,11 @@ InitTask
         VOID
     )
 {
-    INT userTaskId;
+    // Name server MUST be created first, as its id is hard coded
+    Create(MEDIUM_PRIORITY, NameServerTask);
 
-    userTaskId = Create(LOW_PRIORITY, SendTask);
-    bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
-
-    userTaskId = Create(LOW_PRIORITY, ReceiveTask);
-    bwprintf(BWCOM2, "Created: %d\r\n", userTaskId);
-
-    bwprintf(BWCOM2, "FirstUserTask: exiting\r\n");
+    // Start the game of rock-paper-scissors
+    Create(MEDIUM_PRIORITY, RpsServerTask);
+    Create(LOW_PRIORITY, RpsClientTask);
+    Create(LOW_PRIORITY, RpsClientTask);
 }
