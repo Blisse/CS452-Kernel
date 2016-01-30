@@ -10,6 +10,13 @@ IpcInitializeMailbox
         IN TASK_DESCRIPTOR* td
     );
 
+inline
+VOID
+IpcDrainMailbox
+    (
+        IN TASK_DESCRIPTOR* td
+    );
+
 RT_STATUS
 IpcSend
     (

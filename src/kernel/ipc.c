@@ -3,6 +3,8 @@
 #include <rtosc/string.h>
 #include "scheduler.h"
 
+#define ERROR_TRANSACTION_NOT_FINISHED -3
+
 #define MAILBOX_SIZE NUM_TASK_DESCRIPTORS
 
 typedef struct _PENDING_MESSAGE 
@@ -24,6 +26,32 @@ IpcInitializeMailbox
     RtCircularBufferInit(&td->mailbox,
                          g_mailboxes[td->taskId % NUM_TASK_DESCRIPTORS], 
                          MAILBOX_SIZE);
+}
+
+inline
+VOID
+IpcDrainMailbox
+    (
+        IN TASK_DESCRIPTOR* td
+    )
+{
+    while(!RtCircularBufferIsEmpty(&td->mailbox))
+    {
+        PENDING_MESSAGE pendingMessage;
+        RT_STATUS status = RtCircularBufferGetAndRemove(&td->mailbox, 
+                                                        &pendingMessage, 
+                                                        sizeof(pendingMessage));
+
+        if(RT_SUCCESS(status))
+        {
+            TASK_DESCRIPTOR* from = pendingMessage.from;
+
+            // The Send-Receive-Reply transaction could not be completed
+            TaskSetReturnValue(from, ERROR_TRANSACTION_NOT_FINISHED);
+            from->state = ReadyState;
+            SchedulerAddTask(from);
+        }
+    }
 }
 
 RT_STATUS
