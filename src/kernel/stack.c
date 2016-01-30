@@ -3,14 +3,13 @@
 #include <rtosc/buffer.h>
 #include "task.h"
 
-#define CANARY 0x12341234
-
 #define STACK_SIZE  0x10000
 #define STACK_ADDRESS_START 0x00400000
 #define STACK_ADDRESS_END   0x01F00000
 
-static INT g_AvailableStacksBuffer[NUM_TASK_DESCRIPTORS + 1];
-static RT_CIRCULAR_BUFFER g_AvailableStacksQueue;
+static STACK g_stacks[NUM_TASK_DESCRIPTORS];
+static STACK* g_availableStacksBuffer[NUM_TASK_DESCRIPTORS + 1];
+static RT_CIRCULAR_BUFFER g_availableStacksQueue;
 
 static
 UINT*
@@ -31,43 +30,22 @@ StackInit
     UINT i;
     RT_STATUS status = STATUS_SUCCESS;    
 
-    RtCircularBufferInit(&g_AvailableStacksQueue, 
-                         g_AvailableStacksBuffer, 
-                         sizeof(g_AvailableStacksBuffer));
+    RtCircularBufferInit(&g_availableStacksQueue, 
+                         g_availableStacksBuffer, 
+                         sizeof(g_availableStacksBuffer));
     
     for(i = 0; i < NUM_TASK_DESCRIPTORS && RT_SUCCESS(status); i++)
     {
-        UINT* stackAddr = StackpCalculateAddress(i);
+        STACK* stack = &g_stacks[i];
+        stack->top = StackpCalculateAddress(i);
+        stack->size = STACK_SIZE;
 
-        if (stackAddr > (UINT*) STACK_ADDRESS_END)
+        if (stack->top > (UINT*) STACK_ADDRESS_END)
         {
             return STATUS_STACK_SPACE_OVERFLOW;
         }
 
-        *stackAddr = CANARY;
-
-        status = RtCircularBufferAdd(&g_AvailableStacksQueue, &i, sizeof(i));
-    }
-
-    return status;
-}
-
-RT_STATUS
-StackGet
-    (
-        STACK* stack
-    )
-{
-    UINT stackId;
-    RT_STATUS status = RtCircularBufferGetAndRemove(&g_AvailableStacksQueue, 
-                                                    &stackId, 
-                                                    sizeof(stackId));
-
-    if (RT_SUCCESS(status))
-    {
-        stack->id = stackId;
-        stack->top = StackpCalculateAddress(stackId);
-        stack->size = STACK_SIZE;
+        status = StackDeallocate(stack);
     }
 
     return status;
@@ -75,20 +53,22 @@ StackGet
 
 inline
 RT_STATUS
-StackReturn
+StackAllocate
+    (
+        OUT STACK** stack
+    )
+{
+    return RtCircularBufferGetAndRemove(&g_availableStacksQueue, 
+                                        stack, 
+                                        sizeof(*stack));
+}
+
+inline
+RT_STATUS
+StackDeallocate
     (
         STACK* stack
     )
 {
-    return RtCircularBufferAdd(&g_AvailableStacksQueue, &stack->id, sizeof(stack->id));
-}
-
-inline
-BOOLEAN
-StackVerify
-    (
-        IN STACK* stack
-    )
-{
-    return CANARY == *stack->top;
+    return RtCircularBufferAdd(&g_availableStacksQueue, &stack, sizeof(stack));
 }

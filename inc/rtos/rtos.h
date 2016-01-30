@@ -10,6 +10,8 @@
 #define MEDIUM_PRIORITY 2
 #define LOW_PRIORITY 3
 
+#define SUCCESSFUL(x) ((x) >= 0)
+
 extern
 INT
 Create

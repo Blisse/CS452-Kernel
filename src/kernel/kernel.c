@@ -1,13 +1,30 @@
 #include "kernel.h"
 
+#include "init.h"
 #include <rtosc/assert.h>
 #include "scheduler.h"
 #include "syscall.h"
 #include "task.h"
 #include "trap.h"
-#include "init.h"
 
 static BOOLEAN g_exit;
+
+static
+inline
+RT_STATUS
+KernelCreateTask
+    (
+        IN TASK_PRIORITY priority, 
+        IN TASK_START_FUNC startFunc
+    )
+{
+    TASK_DESCRIPTOR* unused;
+
+    return TaskCreate(SchedulerGetCurrentTask(), 
+                      priority, 
+                      startFunc,
+                      &unused);
+}
 
 VOID
 KernelInit
@@ -21,6 +38,9 @@ KernelInit
     SyscallInit();
     TaskInit();
     TrapInstallHandler();
+
+    VERIFY(RT_SUCCESS(KernelCreateTask(SystemPriority, InitTask)), 
+           "Failed to create the init task \r\n");
 }
 
 static
@@ -40,10 +60,6 @@ KernelRun
         VOID
     )
 {
-    // Temporary for K1
-    // Afterwards, set init task to SystemPriority
-    SystemCreateTask(MediumPriority, InitTask);
-
     while(!g_exit)
     {
         TASK_DESCRIPTOR* nextTd;

@@ -4,7 +4,6 @@
 
 typedef struct _STACK
 {
-    UINT id;
     UINT* top;
     UINT size;
 } STACK;
@@ -15,22 +14,16 @@ StackInit
         VOID
     );
 
+inline
 RT_STATUS
-StackGet
+StackAllocate
     (
-        STACK* stack
+        OUT STACK** stack
     );
 
 inline
 RT_STATUS
-StackReturn
-    (
-        STACK* stack
-    );
-
-inline
-BOOLEAN
-StackVerify
+StackDeallocate
     (
         IN STACK* stack
     );

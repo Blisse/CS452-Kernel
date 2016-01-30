@@ -1,14 +1,184 @@
 #include "syscall.h"
 
-#include <bwio/bwio.h>
+#include "ipc.h"
 #include <rtosc/assert.h>
-#include <rtosc/string.h>
 #include "scheduler.h"
-#include "task_descriptor.h"
+#include "task.h"
+
+#define ERROR_SUCCESS 0
+#define ERROR_PRIORITY_INVALID -1
+#define ERROR_OUT_OF_SPACE -2
+#define ERROR_INVALID_TASK -1
+#define ERROR_DEAD_TASK -2
+#define ERROR_TASK_NOT_REPLY_BLOCKED -3
 
 #define NUM_SYSCALLS 8
 
 UINT g_systemCallTable[NUM_SYSCALLS];
+
+static
+INT
+SystemCreateTask
+    (
+        IN INT priority,
+        IN TASK_START_FUNC startFunc
+    )
+{
+    TASK_DESCRIPTOR* td;
+    RT_STATUS status = TaskCreate(SchedulerGetCurrentTask(),
+                                  priority,
+                                  startFunc,
+                                  &td);
+    
+    switch(status)
+    {
+        case STATUS_SUCCESS:
+            return td->taskId;
+
+        case STATUS_INVALID_PARAMETER:
+            return ERROR_PRIORITY_INVALID;
+
+        case STATUS_BUFFER_TOO_SMALL:
+            return ERROR_OUT_OF_SPACE;
+
+        default:
+            ASSERT(FALSE, "Unknown task creation status \r\n");
+            return 0;
+    }
+}
+
+static
+INT
+SystemGetCurrentTaskId
+    (
+        VOID
+    )
+{
+    return SchedulerGetCurrentTask()->taskId;
+}
+
+static
+INT
+SystemGetCurrentParentTaskId
+    (
+        VOID
+    )
+{
+    return SchedulerGetCurrentTask()->parentTaskId;
+}
+
+static
+VOID
+SystemPassCurrentTask
+    (
+        VOID
+    )
+{
+    // This is intentionally left blank - it is a NOP
+}
+
+static
+VOID
+SystemDestroyCurrentTask
+    (
+        VOID
+    )
+{
+    TaskDestroy(SchedulerGetCurrentTask());
+}
+
+static
+INT
+SystemSendMessage
+    (
+        IN INT taskId,
+        IN PVOID message,
+        IN INT messageLength,
+        IN PVOID reply,
+        IN INT replyLength
+    )
+{
+    TASK_DESCRIPTOR* from = SchedulerGetCurrentTask();
+    TASK_DESCRIPTOR* to;
+    RT_STATUS status = TaskDescriptorGet(taskId, &to);
+    
+    if(RT_SUCCESS(status))
+    {
+        status = IpcSend(from, to, message, messageLength, reply, replyLength);
+    }
+
+    switch(status)
+    {
+        case STATUS_SUCCESS:
+            return status;
+
+        case STATUS_INVALID_PARAMETER:
+            return ERROR_INVALID_TASK;
+
+        case STATUS_NOT_FOUND:
+            return ERROR_DEAD_TASK;
+
+        default:
+            ASSERT(FALSE, "Unknown message send status");
+            return 0;
+    }
+}
+
+static
+INT
+SystemReceiveMessage
+    (
+        OUT INT* senderId,
+        OUT PVOID buffer,
+        IN INT bufferLength
+    )
+{
+    TASK_DESCRIPTOR* currentTask = SchedulerGetCurrentTask();
+    INT bytesReceived;
+
+    VERIFY(RT_SUCCESS(IpcReceive(currentTask, senderId, buffer, bufferLength, &bytesReceived)),
+           "Failed to initiate ipc receive call \r\n");
+
+    return bytesReceived;
+}
+
+static
+INT
+SystemReplyMessage
+    (
+        IN INT taskId,
+        IN PVOID reply,
+        IN INT replyLength
+    )
+{
+    TASK_DESCRIPTOR* from = SchedulerGetCurrentTask();
+    TASK_DESCRIPTOR* to;
+    RT_STATUS status = TaskDescriptorGet(taskId, &to);
+
+    if(RT_SUCCESS(status))
+    {
+        status = IpcReply(from, to, reply, replyLength);
+    }
+
+    switch(status)
+    {
+        case STATUS_SUCCESS:
+            return ERROR_SUCCESS;
+
+        case STATUS_INVALID_PARAMETER:
+            return ERROR_INVALID_TASK;
+
+        case STATUS_NOT_FOUND:
+            return ERROR_DEAD_TASK;
+
+        case STATUS_INVALID_STATE:
+            return ERROR_TASK_NOT_REPLY_BLOCKED;
+
+        default:
+            ASSERT(FALSE, "Unknown message reply status");
+            return 0;
+    }
+}
 
 VOID
 SyscallInit
@@ -24,180 +194,4 @@ SyscallInit
     g_systemCallTable[5] = (UINT) SystemSendMessage;
     g_systemCallTable[6] = (UINT) SystemReceiveMessage;
     g_systemCallTable[7] = (UINT) SystemReplyMessage;
-}
-
-INT
-SystemCreateTask
-    (
-        IN INT priority,
-        IN TASK_START_FUNC startFunc
-    )
-{
-    INT status;
-    TASK_DESCRIPTOR* td;
-    TASK_DESCRIPTOR* currentTask = SchedulerGetCurrentTask();
-    INT parentTaskId = currentTask == NULL ? 0 : currentTask->taskId;
-
-    bwprintf(BWCOM2, "Create called...\r\n");
-    status = TaskCreate(parentTaskId,
-                        priority,
-                        startFunc,
-                        &td);
-
-    if (status > 0)
-    {
-        VERIFY(RT_SUCCESS(SchedulerAddTask(td)),
-               "New task failed to be added to scheduler \r\n");
-    }
-
-    return status;
-}
-
-INT
-SystemGetCurrentTaskId
-    (
-        VOID
-    )
-{
-    return SchedulerGetCurrentTask()->taskId;
-}
-
-INT
-SystemGetCurrentParentTaskId
-    (
-        VOID
-    )
-{
-    return SchedulerGetCurrentTask()->parentTaskId;
-}
-
-VOID
-SystemPassCurrentTask
-    (
-        VOID
-    )
-{
-    // This is intentionally left blank - it is a NOP
-}
-
-VOID
-SystemDestroyCurrentTask
-    (
-        VOID
-    )
-{
-    TaskDescriptorDestroy(SchedulerGetCurrentTask()->taskId);
-}
-
-INT
-SystemSendMessage
-    (
-        IN INT taskId,
-        IN PVOID message,
-        IN INT messageLength,
-        IN PVOID reply,
-        IN INT replyLength
-    )
-{
-    bwprintf(BWCOM2, "Send with : %d - %d - %d - %d - %d \r\n", taskId, *((UINT*)message), messageLength, reply, replyLength);
-    /*
-    TASK_DESCRIPTOR* senderTd = SchedulerGetCurrentTask();
-
-    TASK_DESCRIPTOR* receiverTd;
-    if (RT_FAILURE(TaskDescriptorGet(taskId, &receiverTd)))
-    {
-        return -1;
-    }
-
-    if (RT_FAILURE(TaskDescriptorMessagePush(receiverTd, senderTd->taskId, message, messageLength)))
-    {
-        return -1;
-    }
-
-    senderTd->replyMessageBuffer = reply;
-    senderTd->replyMessageLength = replyLength;
-    senderTd->state = ReceiveBlockedState;
-
-    if (receiverTd->state == SendBlockedState)
-    {
-        senderTd->state = ReplyBlockedState;
-
-        receiverTd->state = ReadyState;
-        *(receiverTd->receiveMessageSenderId) = senderTd->taskId;
-        RtMemcpy(receiverTd->receiveMessageBuffer, message, receiverTd->receiveMessageLength);
-        TaskDescriptorSetReturnValue(receiverTd, messageLength);
-
-        VERIFY(RT_SUCCESS(SchedulerAddTask(receiverTd)), "Failed to add task to scheduler\r\n");
-    }
-    */
-
-    return 0;
-}
-
-INT
-SystemReceiveMessage
-    (
-        OUT INT* taskId,
-        OUT PVOID message,
-        IN INT messageLength
-    )
-{
-    bwprintf(BWCOM2, "Receive with : %d - %d - %d \r\n", taskId, message, messageLength);
-    /*
-    TASK_DESCRIPTOR* receiverTd = SchedulerGetCurrentTask();
-
-    TASK_MESSAGE receivedMessage;
-    if (RT_FAILURE(TaskDescriptorMessagePop(receiverTd, &receivedMessage)))
-    {
-        return -1;
-    }
-
-    TASK_DESCRIPTOR* senderTd;
-    if (RT_FAILURE(TaskDescriptorGet(receivedMessage.senderId, &senderTd)))
-    {
-        receiverTd->state = SendBlockedState;
-        return -1;
-    }
-
-    senderTd->state = ReplyBlockedState;
-
-    *taskId = receivedMessage.senderId;
-    RtMemcpy(message, receivedMessage.message, messageLength);
-    return receivedMessage.messageLength;
-    */
-    return 0;
-}
-
-INT
-SystemReplyMessage
-    (
-        IN INT taskId,
-        IN PVOID reply,
-        IN INT replyLength
-    )
-{
-    bwprintf(BWCOM2, "Reply with : %d - %d - %d \r\n", taskId, reply, replyLength);
-    /*
-    TASK_DESCRIPTOR* senderTd;
-    if (RT_FAILURE(TaskDescriptorGet(taskId, &senderTd)))
-    {
-        return -1;
-    }
-
-    if (senderTd->state != ReplyBlockedState)
-    {
-        return -1;
-    }
-
-    if (senderTd->replyMessageLength < replyLength)
-    {
-        return -1;
-    }
-
-    RtMemcpy(senderTd->replyMessageBuffer, reply, replyLength);
-    senderTd->state = ReadyState;
-    TaskDescriptorSetReturnValue(senderTd, replyLength);
-    VERIFY(RT_SUCCESS(SchedulerAddTask(senderTd)), "Failed to add task to scheduler\r\n");
-    */
-    return 0;
 }

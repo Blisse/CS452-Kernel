@@ -29,20 +29,16 @@ SendTask
         VOID
     )
 {
-    INT myTid = MyTid();
-    INT myParentTid = MyParentTid();
-
-    bwprintf(BWCOM2, "Send Task %d %d\r\n", myTid, myParentTid);
-
     INT i;
+
     for (i = 0; i < 3; i++)
     {
-        bwprintf(BWCOM2, "%d Send Begin \r\n", i);
+        INT reply;
+        INT bytesReceived;
 
-        int reply;
-        Send(3, &i, sizeof(i), &reply, sizeof(reply));
+        bytesReceived = Send(2, &i, sizeof(i), &reply, sizeof(reply));
 
-        bwprintf(BWCOM2, "%d Send End\r\n", i);
+        bwprintf(BWCOM2, "Reply of length %d.  Contains %d \r\n", bytesReceived, reply);
     }
 }
 
@@ -52,25 +48,19 @@ ReceiveTask
         VOID
     )
 {
-    INT myTid = MyTid();
-    INT myParentTid = MyParentTid();
-
-    bwprintf(BWCOM2, "Receive Task %d %d\r\n", myTid, myParentTid);
-
     INT i;
-    for (i = 0; i < 3; i++)
+
+    for (i = 4; i < 7; i++)
     {
-        int senderId;
-        int message;
-        bwprintf(BWCOM2, "%d Receive & Reply Start \r\n", i);
+        INT senderId;
+        INT message;
+        INT bytesReceived;
 
-        Receive(&senderId, &message, sizeof(message));
+        bytesReceived = Receive(&senderId, &message, sizeof(message));
 
-        bwprintf(BWCOM2, "%d Received Message %d \r\n", i, message);
+        bwprintf(BWCOM2, "Received %d bytes from %d containing %d \r\n", bytesReceived, senderId, message);
 
         Reply(senderId, &i, sizeof(i));
-
-        bwprintf(BWCOM2, "%d Receive & Reply End \r\n", i);
     }
 }
 

@@ -28,7 +28,7 @@ TrapReturn:
 
     /* Switch back to supervisor mode */
     msr cpsr_c, #0xD3
-    
+
     /* Jump back to user mode */
     msr spsr, r2
     movs pc, r3
@@ -36,6 +36,9 @@ TrapReturn:
 .globl TrapEntry
 TrapEntry:
     /* Store registers we are about to clobber */
+    /* If there is a 5th system call parameter, it will be in R4 */
+    /* This will push R4 on to the stack, which is where GCC expects */
+    /* the 5th parameter to be anyway */
     stmfd sp!, {r4-r6, lr}
 
     /* Grab the swi instruction */
