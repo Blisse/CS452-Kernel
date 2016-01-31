@@ -1,5 +1,7 @@
 set(SRC_KERNEL
     "arm.asm"
+    "cache.asm"
+    "ipc.c"
     "kernel.c"
     "priority_queue.c"
     "scheduler.c"

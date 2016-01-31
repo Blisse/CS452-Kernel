@@ -162,5 +162,5 @@ RtCircularBufferSize
         IN RT_CIRCULAR_BUFFER* buffer
     )
 {
-    return (buffer->back - buffer->front) % buffer->capacity;
+    return (buffer->back - buffer->front + buffer->capacity) % buffer->capacity;
 }

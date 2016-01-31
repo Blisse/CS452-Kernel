@@ -2,8 +2,9 @@
 
 #include "rt.h"
 
+extern
 VOID
-SyscallInit
+CacheInit
     (
         VOID
     );

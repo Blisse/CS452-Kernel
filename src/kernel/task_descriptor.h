@@ -1,9 +1,10 @@
 #pragma once
 
+#include <rtosc/buffer.h>
 #include "rt.h"
 #include "stack.h"
 
-#define NUM_TASK_DESCRIPTORS    64
+#define NUM_TASK_DESCRIPTORS 64
 
 typedef
 VOID
@@ -26,48 +27,57 @@ typedef enum _TASK_STATE
 {
     ReadyState = 0,
     RunningState,
+    SendBlockedState,
+    ReceiveBlockedState,
+    ReplyBlockedState,
     ZombieState
 } TASK_STATE;
 
-typedef struct _TASK_DESCRIPTOR
+typedef struct _TASK_RECEIVE_BUFFER
 {
+    INT* senderId;
+    PVOID buffer;
+    INT bufferLength;
+} TASK_RECEIVE_BUFFER;
+
+typedef struct _TASK_DESCRIPTOR {
     INT taskId;
-    INT parentTaskId;
+    TASK_RECEIVE_BUFFER receiveBuffer;
+    RT_CIRCULAR_BUFFER mailbox;
     TASK_STATE state;
     TASK_PRIORITY priority;
-    TASK_START_FUNC startFunc;
     UINT* stackPointer;
-    STACK stack;
+    STACK* stack;
+    INT parentTaskId;
 } TASK_DESCRIPTOR;
 
-#define TaskGetStackPointer(task) ((task)->stackPointer)
-#define TaskGetPriority(task) ((task)->priority)
-#define TaskGetState(task) ((task)->state)
-#define TaskGetTaskId(task) ((task)->taskId)
-#define TaskGetParentTaskId(task) ((task)->parentTaskId)
+#define TaskDescriptorGetStackPointer(task) ((task)->stackPointer)
+#define TaskDescriptorGetPriority(task) ((task)->priority)
+#define TaskDescriptorGetState(task) ((task)->state)
+#define TaskDescriptorGetTaskId(task) ((task)->taskId)
+#define TaskDescriptorGetParentTaskId(task) ((task)->parentTaskId)
 
-VOID
+RT_STATUS
 TaskDescriptorInit
     (
         VOID
     );
 
+inline
 RT_STATUS
-TaskDescriptorCreate
+TaskDescriptorAllocate
     (
-        IN INT parentTaskId,
-        IN TASK_PRIORITY priority,
-        IN TASK_START_FUNC startFunc,
-        IN STACK* stack,
         OUT TASK_DESCRIPTOR** td
     );
 
+inline
 RT_STATUS
-TaskDescriptorDestroy
+TaskDescriptorDeallocate
     (
-        IN INT taskId
+        IN TASK_DESCRIPTOR* td
     );
 
+inline
 RT_STATUS
 TaskDescriptorGet
     (

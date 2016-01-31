@@ -16,7 +16,7 @@ TrapInstallHandler:
 TrapReturn:
     /* Store kernel state */
     stmfd sp!, {r4-r12, lr}
-
+    
     /* Switch to system mode */
     msr cpsr_c, #0xDF
 
@@ -35,24 +35,11 @@ TrapReturn:
 
 .globl TrapEntry
 TrapEntry:
-    /* Store function parameters that we are about to clobber */
-    stmfd sp!, {r2, r3}
-
-    /* User CPSR is in SPSR, and User PC is in LR */
-    mrs r2, spsr
-    mov r3, lr
-
-    /* Switch to system mode */
-    msr cpsr_c, #0xDF
-
-    /* Store user registers */
-    stmfd sp!, {r2-r12, lr}
-
-    /* Switch back to supervisor mode */
-    msr cpsr_c, #0xD3
-
-    /* Restore clobbered function parameters */
-    ldmfd sp!, {r2, r3}
+    /* Store registers we are about to clobber */
+    /* If there is a 5th system call parameter, it will be in R4 */
+    /* This will push R4 on to the stack, which is where GCC expects */
+    /* the 5th parameter to be anyway */
+    stmfd sp!, {r4-r6, lr}
 
     /* Grab the swi instruction */
     ldr r4, [lr, #-4]
@@ -66,10 +53,10 @@ TrapEntry:
     mul r6, r5, r4
 
     /* Grab the system call table */
-    ldr r7, =g_systemCallTable
+    ldr r4, =g_systemCallTable
 
     /* Grab the system call from the system call table */
-    ldr r8, [r7, r6]
+    ldr r4, [r4, r6]
 
     /* Make the system call */
     /* Return value will be in r0 */
@@ -77,13 +64,23 @@ TrapEntry:
              The mov from pc to lr takes in to consideration the 
              processor pipeline. */
     mov lr, pc
-    mov pc, r8
+    mov pc, r4
+
+    /* Restore clobbered registers */
+    /* Put the LR in to R3 early as an optimization */
+    ldmfd sp!, {r4-r6, lr}
+
+    /* User CPSR is in SPSR */
+    mrs r2, spsr
+
+    /* User PC is in LR */
+    mov r3, lr
 
     /* Switch to system mode */
     msr cpsr_c, #0xDF
 
-    /* Store the system call return value on the user's stack */
-    stmfd sp!, {r0}
+    /* Store user registers */
+    stmfd sp!, {r0, r2-r12, lr}
 
     /* Switch back to supervisor mode */
     msr cpsr_c, #0xD3
