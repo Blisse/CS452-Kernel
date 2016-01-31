@@ -1,5 +1,6 @@
 #include "kernel.h"
 
+#include "cache.h"
 #include "init.h"
 #include <rtosc/assert.h>
 #include "scheduler.h"
@@ -34,6 +35,7 @@ KernelInit
 {
     g_exit = FALSE;
 
+    CacheInit();
     SchedulerInit();
     SyscallInit();
     TaskInit();
