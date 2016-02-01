@@ -11,7 +11,7 @@ IopDeviceWrite
     )
 {
     CHAR byte;
-    RT_STATUS status = RtCircularBufferGet(&device->writeBuffer, &byte, sizeof(byte));
+    RT_STATUS status = RtCircularBufferPeek(&device->writeBuffer, &byte, sizeof(byte));
 
     if(RT_SUCCESS(status))
     {
@@ -20,7 +20,7 @@ IopDeviceWrite
         if(RT_SUCCESS(status))
         {
             device->status = IoWritePending;
-            status = RtCircularBufferRemove(&device->writeBuffer, sizeof(byte));
+            status = RtCircularBufferPop(&device->writeBuffer, sizeof(byte));
         }
         else if(STATUS_DEVICE_NOT_READY == status)
         {
@@ -64,7 +64,7 @@ IoWrite
         IN UINT length
     )
 {
-    RT_STATUS status = RtCircularBufferAdd(&device->writeBuffer, buffer, length);
+    RT_STATUS status = RtCircularBufferPush(&device->writeBuffer, buffer, length);
 
     if(RT_SUCCESS(status) &&
        IoDeviceIsReady(device))
@@ -125,7 +125,7 @@ IoRead
         UINT readBufferSize = RtCircularBufferSize(&device->readBuffer);
         UINT bytesToRead = min(requestedBytes, readBufferSize);
 
-        status = RtCircularBufferGetAndRemove(&device->readBuffer, buffer, bytesToRead);
+        status = RtCircularBufferPeekAndPop(&device->readBuffer, buffer, bytesToRead);
 
         if(RT_SUCCESS(status))
         {
@@ -148,7 +148,7 @@ IoReceiveData
         IN UINT length
     )
 {
-    RT_STATUS status = RtCircularBufferAdd(&device->readBuffer, buffer, length);
+    RT_STATUS status = RtCircularBufferPush(&device->readBuffer, buffer, length);
     ASSERT(RT_SUCCESS(status), "Buffering data received from io device failed\n");
     UNREFERENCED_PARAMETER(status);
 }

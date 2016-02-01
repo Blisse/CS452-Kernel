@@ -30,8 +30,8 @@ StackInit
     UINT i;
     RT_STATUS status = STATUS_SUCCESS;    
 
-    RtCircularBufferInit(&g_availableStacksQueue, 
-                         g_availableStacksBuffer, 
+    RtCircularBufferInit(&g_availableStacksQueue,
+                         g_availableStacksBuffer,
                          sizeof(g_availableStacksBuffer));
     
     for(i = 0; i < NUM_TASK_DESCRIPTORS && RT_SUCCESS(status); i++)
@@ -58,8 +58,8 @@ StackAllocate
         OUT STACK** stack
     )
 {
-    return RtCircularBufferGetAndRemove(&g_availableStacksQueue, 
-                                        stack, 
+    return RtCircularBufferPeekAndPop(&g_availableStacksQueue,
+                                        stack,
                                         sizeof(*stack));
 }
 
@@ -70,5 +70,5 @@ StackDeallocate
         STACK* stack
     )
 {
-    return RtCircularBufferAdd(&g_availableStacksQueue, &stack, sizeof(stack));
+    return RtCircularBufferPush(&g_availableStacksQueue, &stack, sizeof(stack));
 }

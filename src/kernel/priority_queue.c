@@ -10,8 +10,8 @@ RtPriorityQueueInit
 
     for(i = 0; i < NumPriority; i++)
     {
-        RtCircularBufferInit(&priorityQueue->queues[i], 
-                             priorityQueue->buffers[i], 
+        RtCircularBufferInit(&priorityQueue->queues[i],
+                             priorityQueue->buffers[i],
                              sizeof(priorityQueue->buffers[i]));
     }
 }
@@ -24,8 +24,8 @@ RtPriorityQueueAdd
         IN TASK_DESCRIPTOR* td
     )
 {
-    return RtCircularBufferAdd(&priorityQueue->queues[td->priority], 
-                               &td, 
+    return RtCircularBufferPush(&priorityQueue->queues[td->priority],
+                               &td,
                                sizeof(td));
 }
 
@@ -44,8 +44,8 @@ RtPriorityQueueGet
 
         if(!RtCircularBufferIsEmpty(queue))
         {
-            return RtCircularBufferGet(queue, 
-                                       td, 
+            return RtCircularBufferPeek(queue,
+                                       td,
                                        sizeof(*td));
         }
     }
@@ -61,6 +61,6 @@ RtPriorityQueueRemove
         IN TASK_DESCRIPTOR* td
     )
 {
-    return RtCircularBufferRemove(&priorityQueue->queues[td->priority],
+    return RtCircularBufferPop(&priorityQueue->queues[td->priority],
                                   sizeof(td));
 }

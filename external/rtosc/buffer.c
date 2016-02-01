@@ -17,7 +17,7 @@ RtCircularBufferInit
 }
 
 RT_STATUS
-RtCircularBufferAdd
+RtCircularBufferPush
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN PVOID sourceBuffer,
@@ -61,7 +61,7 @@ RtCircularBufferAdd
 }
 
 RT_STATUS
-RtCircularBufferGet
+RtCircularBufferPeek
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN PVOID targetBuffer,
@@ -103,7 +103,7 @@ RtCircularBufferGet
 
 inline
 RT_STATUS
-RtCircularBufferRemove
+RtCircularBufferPop
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN UINT bytesToRemove
@@ -123,18 +123,18 @@ RtCircularBufferRemove
 }
 
 RT_STATUS
-RtCircularBufferGetAndRemove
+RtCircularBufferPeekAndPop
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN PVOID targetBuffer,
         IN UINT bytesToRemove
     )
 {
-    RT_STATUS status = RtCircularBufferGet(buffer, targetBuffer, bytesToRemove);
+    RT_STATUS status = RtCircularBufferPeek(buffer, targetBuffer, bytesToRemove);
 
     if(RT_SUCCESS(status))
     {
-        status = RtCircularBufferRemove(buffer, bytesToRemove);
+        status = RtCircularBufferPop(buffer, bytesToRemove);
     }
 
     return status;
