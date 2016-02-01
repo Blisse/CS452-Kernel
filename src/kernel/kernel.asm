@@ -1,6 +1,5 @@
 @ This function is passed 1 parameter
-@ R0 contains the current task
-@ R1 contains the user's PC
+@ R0 contains the user's PC
 .globl KernelSaveUserContext
 KernelSaveUserContext:
     /* User CPSR is in SPSR */
@@ -10,7 +9,7 @@ KernelSaveUserContext:
     msr cpsr_c, #0xDF
 
     /* Store user registers */
-    stmfd sp!, {r1, r3-r12, lr}
+    stmfd sp!, {r0, r3-r12, lr}
 
     /* Leave room for a return value (if one exists) */
     sub sp, sp, #4
@@ -20,6 +19,11 @@ KernelSaveUserContext:
 
     /* Switch back to supervisor mode */
     msr cpsr_c, #0xD3
+
+    /* Get the current task */
+    stmfd sp!, {lr}
+    bl SchedulerGetCurrentTask
+    ldmfd sp!, {lr}
 
     /* Update the current task's stack pointer */
     /* The current task is in R0 */

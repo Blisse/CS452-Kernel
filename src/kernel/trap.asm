@@ -12,27 +12,18 @@ TrapInstallHandler:
 
 .globl TrapEnter
 TrapEnter:
-    /* Save the function parameters on stack */
-    stmfd sp!, {r0-r3}
+    /* Save the function parameters on the stack */
+    stmfd sp!, {r0-r3, lr}
 
-    /* Save the user's pc */
-    stmfd sp!, {lr}
-
-    /* Find the current task */
-    bl SchedulerGetCurrentTask
-
-    /* Retrieve the user's pc from the stack */
-    ldmfd sp, {r1}
+    /* KernelSaveUserContext expects the user's pc in r0 */
+    mov r0, lr
 
     /* Save user state */
     /* r4-r12 can now be used without needing to save */
     bl KernelSaveUserContext
 
-    /* Pop the user's pc off the stack */
-    ldmfd sp!, {lr}
-
     /* Pop the function parameters off the stack */
-    ldmfd sp!, {r0-r3}
+    ldmfd sp!, {r0-r3, lr}
 
     /* Put the 5th system call parameter on the stack */
     /* This is where gcc is expecting to find it */
