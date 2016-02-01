@@ -1,7 +1,7 @@
 #include "task_descriptor.h"
 
 static TASK_DESCRIPTOR g_taskDescriptors[NUM_TASK_DESCRIPTORS];
-static INT g_taskDescriptorIds[NUM_TASK_DESCRIPTORS + 1];
+static INT g_taskDescriptorIds[NUM_TASK_DESCRIPTORS];
 static RT_CIRCULAR_BUFFER g_taskDescriptorIdQueue;
 
 RT_STATUS

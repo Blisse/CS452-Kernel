@@ -8,7 +8,7 @@
 #define STACK_ADDRESS_END   0x01F00000
 
 static STACK g_stacks[NUM_TASK_DESCRIPTORS];
-static STACK* g_availableStacksBuffer[NUM_TASK_DESCRIPTORS + 1];
+static STACK* g_availableStacksBuffer[NUM_TASK_DESCRIPTORS];
 static RT_CIRCULAR_BUFFER g_availableStacksQueue;
 
 static
