@@ -7,6 +7,7 @@ typedef struct _RT_CIRCULAR_BUFFER {
     UINT capacity;
     UINT front;
     UINT back;
+    UINT size;
 } RT_CIRCULAR_BUFFER;
 
 VOID
