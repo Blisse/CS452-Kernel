@@ -1,8 +1,9 @@
 #include "nameserver.h"
 
+#include <rtos.h>
+
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
-#include "rtos.h"
 
 #define NAME_SERVER_TID 1
 #define NAME_SERVER_HASH_TABLE_SIZE 100

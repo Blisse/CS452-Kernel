@@ -1,9 +1,9 @@
 set(SRC_OS
+    "rtos.asm"
     "init.c"
     "io.c"
     "nameserver.c"
     "object.c"
-    "rtos.asm"
     "uart.c"
     )
 

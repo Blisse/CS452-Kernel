@@ -1,8 +1,9 @@
 #include "kernel.h"
 
-#include "cache.h"
-#include "init.h"
+#include <init.h>
 #include <rtosc/assert.h>
+
+#include "cache.h"
 #include "scheduler.h"
 #include "syscall.h"
 #include "task.h"
