@@ -46,3 +46,21 @@ TaskSetReturnValue
         IN TASK_DESCRIPTOR* td, 
         IN INT returnValue
     );
+
+inline
+VOID
+TaskStoreAsyncParameter
+    (
+        IN TASK_DESCRIPTOR* td, 
+        IN PVOID parameter, 
+        IN UINT size
+    );
+
+inline
+VOID
+TaskRetrieveAsyncParameter
+    (
+        IN TASK_DESCRIPTOR* td, 
+        IN PVOID parameter, 
+        IN UINT size
+    );

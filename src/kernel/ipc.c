@@ -14,6 +14,13 @@ typedef struct _PENDING_MESSAGE
     INT messageLength;
 } PENDING_MESSAGE;
 
+typedef struct _PENDING_RECEIVE
+{
+    INT* senderId;
+    PVOID buffer;
+    INT bufferLength;
+} PENDING_RECEIVE;
+
 static PENDING_MESSAGE g_mailboxes[NUM_TASK_DESCRIPTORS][MAILBOX_SIZE];
 
 inline
@@ -69,15 +76,20 @@ IpcSend
 
     if(to->state == SendBlockedState)
     {
+        PENDING_RECEIVE pendingReceive;
+        INT length;
+
+        TaskRetrieveAsyncParameter(to, &pendingReceive, sizeof(pendingReceive));
+
         // Figure out how many bytes we actually want to copy
         // TODO: We should probably do something if there are excess bytes
-        INT length = min(messageLength, to->receiveBuffer.bufferLength);
+        length = min(messageLength, pendingReceive.bufferLength);
 
         // Perform the copy
-        RtMemcpy(to->receiveBuffer.buffer, message, length);
+        RtMemcpy(pendingReceive.buffer, message, length);
 
         // Finish the Receive() system call
-        *(to->receiveBuffer.senderId) = from->taskId;
+        *(pendingReceive.senderId) = from->taskId;
         TaskSetReturnValue(to, length);
 
         // Update states and reschedule the target task
@@ -87,11 +99,7 @@ IpcSend
     }
     else
     {
-        PENDING_MESSAGE pendingMessage = {
-            from, 
-            message, 
-            messageLength
-        };
+        PENDING_MESSAGE pendingMessage = { from, message, messageLength };
 
         // Store the message so it can be picked up later
         from->state = ReceiveBlockedState;
@@ -102,9 +110,10 @@ IpcSend
 
     if(RT_SUCCESS(status))
     {
-        from->receiveBuffer.buffer = replyBuffer;
-        from->receiveBuffer.bufferLength = replyBufferLength;
-    }    
+        PENDING_RECEIVE pendingReceive = { NULL, replyBuffer, replyBufferLength };
+
+        TaskStoreAsyncParameter(from, &pendingReceive, sizeof(pendingReceive));
+    }
 
     return status;
 }
@@ -150,10 +159,11 @@ IpcReceive
     }
     else
     {
+        PENDING_RECEIVE pendingReceive = { sendingTaskId, buffer, bufferLength };
+
+        TaskStoreAsyncParameter(td, &pendingReceive, sizeof(pendingReceive));
+
         status = STATUS_SUCCESS;
-        td->receiveBuffer.senderId = sendingTaskId;
-        td->receiveBuffer.buffer = buffer;
-        td->receiveBuffer.bufferLength = bufferLength;
         td->state = SendBlockedState;
         *bytesReceived = 0;
     }
@@ -174,12 +184,17 @@ IpcReply
 
     if(to->state == ReplyBlockedState)
     {
+        PENDING_RECEIVE pendingReceive;
+        INT length;
+
+        TaskRetrieveAsyncParameter(to, &pendingReceive, sizeof(pendingReceive));
+
         // Figure out how many bytes we actually want to copy
         // TODO: We should probably do something if there are excess bytes
-        INT length = min(messageLength, to->receiveBuffer.bufferLength);
+        length = min(messageLength, pendingReceive.bufferLength);
 
         // Perform the copy
-        RtMemcpy(to->receiveBuffer.buffer, message, length);
+        RtMemcpy(pendingReceive.buffer, message, length);
 
         // Finish the Send() system call
         TaskSetReturnValue(to, length);

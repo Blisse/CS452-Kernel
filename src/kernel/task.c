@@ -2,7 +2,9 @@
 
 #include "ipc.h"
 #include <rtosc/assert.h>
+#include <rtosc/string.h>
 #include <rtos.h>
+
 #include "scheduler.h"
 #include "stack.h"
 
@@ -127,7 +129,7 @@ inline
 VOID
 TaskUpdateStackPointer
     (
-        IN TASK_DESCRIPTOR* task, 
+        IN TASK_DESCRIPTOR* task,
         IN UINT* stackPointer
     )
 {
@@ -138,9 +140,37 @@ inline
 VOID
 TaskSetReturnValue
     (
-        IN TASK_DESCRIPTOR* td, 
+        IN TASK_DESCRIPTOR* td,
         IN INT returnValue
     )
 {
     *(td->stackPointer) = returnValue;
+}
+
+inline
+VOID
+TaskStoreAsyncParameter
+    (
+        IN TASK_DESCRIPTOR* td,
+        IN PVOID parameter,
+        IN UINT size
+    )
+{
+    RtMemcpy(ptr_add(td->stackPointer, -1 * (size + 1)),
+             parameter,
+             size);
+}
+
+inline
+VOID
+TaskRetrieveAsyncParameter
+    (
+        IN TASK_DESCRIPTOR* td,
+        IN PVOID parameter,
+        IN UINT size
+    )
+{
+    RtMemcpy(parameter,
+             ptr_add(td->stackPointer, -1 * (size + 1)),
+             size);
 }

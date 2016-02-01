@@ -33,16 +33,8 @@ typedef enum _TASK_STATE
     ZombieState
 } TASK_STATE;
 
-typedef struct _TASK_RECEIVE_BUFFER
-{
-    INT* senderId;
-    PVOID buffer;
-    INT bufferLength;
-} TASK_RECEIVE_BUFFER;
-
 typedef struct _TASK_DESCRIPTOR {
     INT taskId;
-    TASK_RECEIVE_BUFFER receiveBuffer;
     RT_CIRCULAR_BUFFER mailbox;
     TASK_STATE state;
     TASK_PRIORITY priority;
