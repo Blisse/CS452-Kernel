@@ -4,42 +4,39 @@ TrapInstallHandler:
     mov r0, #0x00000028
 
     /* Load the address of the software interrupt handler */
-    ldr r1, =TrapEntry
+    ldr r1, =TrapEnter
 
     /* Install interrupt handler to interrupt controller */
     str r1, [r0] 
     bx lr
 
-@ This function is passed 2 parameters
-@ R0 contains the user's stack
-.globl TrapReturn
-TrapReturn:
-    /* Store kernel state */
-    stmfd sp!, {r4-r12, lr}
-    
-    /* Switch to system mode */
-    msr cpsr_c, #0xDF
+.globl TrapEnter
+TrapEnter:
+    /* Save the function parameters on stack */
+    stmfd sp!, {r0-r3}
 
-    /* Restore user's stack pointer */
-    mov sp, r0
+    /* Save the user's pc */
+    stmfd sp!, {lr}
 
-    /* Restore the user state */
-    ldmfd sp!, {r0, r2-r12, lr}
+    /* Find the current task */
+    bl SchedulerGetCurrentTask
 
-    /* Switch back to supervisor mode */
-    msr cpsr_c, #0xD3
+    /* Retrieve the user's pc from the stack */
+    ldmfd sp, {r1}
 
-    /* Jump back to user mode */
-    msr spsr, r2
-    movs pc, r3
+    /* Save user state */
+    /* r4-r12 can now be used without needing to save */
+    bl KernelSaveUserContext
 
-.globl TrapEntry
-TrapEntry:
-    /* Store registers we are about to clobber */
-    /* If there is a 5th system call parameter, it will be in R4 */
-    /* This will push R4 on to the stack, which is where GCC expects */
-    /* the 5th parameter to be anyway */
-    stmfd sp!, {r4-r6, lr}
+    /* Pop the user's pc off the stack */
+    ldmfd sp!, {lr}
+
+    /* Pop the function parameters off the stack */
+    ldmfd sp!, {r0-r3}
+
+    /* Put the 5th system call parameter on the stack */
+    /* This is where gcc is expecting to find it */
+    stmfd sp!, {r4}
 
     /* Grab the swi instruction */
     ldr r4, [lr, #-4]
@@ -66,25 +63,22 @@ TrapEntry:
     mov lr, pc
     mov pc, r4
 
-    /* Restore clobbered registers */
-    /* Put the LR in to R3 early as an optimization */
-    ldmfd sp!, {r4-r6, lr}
+    /* Remove 5th system call parameter from stack */
+    add sp, sp, #4
 
-    /* User CPSR is in SPSR */
-    mrs r2, spsr
+    /* Move the system call result so it doesn't get clobbered */
+    mov r4, r0
 
-    /* User PC is in LR */
-    mov r3, lr
+    /* Find the current task */
+    bl SchedulerGetCurrentTask
 
-    /* Switch to system mode */
-    msr cpsr_c, #0xDF
+    /* Setup the function call parameters */
+    mov r1, r4
 
-    /* Store user registers */
-    stmfd sp!, {r0, r2-r12, lr}
+    /* Store the system call result on the user's stack */
+    /* The current stack is in r0 */
+    /* The system call return value is in r1 */
+    bl TaskSetReturnValue
 
-    /* Switch back to supervisor mode */
-    msr cpsr_c, #0xD3
-
-    /* Restore kernel state */
-    /* This will jump back to whoever called TrapReturn() */
-    ldmfd sp!, {r4-r12, pc}
+    /* Enter the kernel */
+    b KernelEnter

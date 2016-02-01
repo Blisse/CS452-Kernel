@@ -6,7 +6,6 @@
 #include "cache.h"
 #include "scheduler.h"
 #include "syscall.h"
-#include "task.h"
 #include "trap.h"
 
 static BOOLEAN g_exit;
@@ -75,11 +74,7 @@ KernelRun
             nextTd->state = RunningState;
 
             // Return to user mode
-            TrapReturn(nextTd->stackPointer);
-
-            // This will execute once we return back to kernel mode
-            // Update the task that just ran
-            TaskUpdate(nextTd);
+            KernelLeave(nextTd->stackPointer);
 
             // The task may have transitioned to a new state
             // due to interrupts, Exit(), etc.  Don't update
