@@ -13,17 +13,20 @@ TrapInstallHandler:
 .globl TrapEnter
 TrapEnter:
     /* Save the function parameters on the stack */
-    stmfd sp!, {r0-r3, lr}
+    stmfd sp!, {r0-r3}
 
-    /* KernelSaveUserContext expects the user's pc in r0 */
-    mov r0, lr
+    /* KernelSaveUserContext expects the user's pc on the stack */
+    stmfd sp!, {lr}
 
     /* Save user state */
     /* r4-r12 can now be used without needing to save */
     bl KernelSaveUserContext
 
+    /* Restore user's pc - we need it for the swi instruction */
+    ldmfd sp!, {lr}
+
     /* Pop the function parameters off the stack */
-    ldmfd sp!, {r0-r3, lr}
+    ldmfd sp!, {r0-r3}
 
     /* Put the 5th system call parameter on the stack */
     /* This is where gcc is expecting to find it */

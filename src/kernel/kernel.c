@@ -72,10 +72,10 @@ KernelRun
             ASSERT(TaskValidate(nextTd), "Invalid task!  This likely indicates a stack overflow \r\n");
 
             nextTd->state = RunningState;
-
+            
             // Return to user mode
             KernelLeave(nextTd->stackPointer);
-
+            
             // The task may have transitioned to a new state
             // due to interrupts, Exit(), etc.  Don't update
             // the state unless nothing happened to the task

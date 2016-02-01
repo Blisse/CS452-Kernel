@@ -48,10 +48,10 @@ TaskpSetupStack
 {
     UINT* stackPointer = ((UINT*) ptr_add(stack->top, stack->size)) - sizeof(UINT);
 
-    *stackPointer = (UINT) Exit;
-    *(stackPointer - 10) = TASK_INITIAL_CPSR;
-    *(stackPointer - 11) = (UINT) startFunc;
-    stackPointer -= 12;
+    *stackPointer = TASK_INITIAL_CPSR;
+    *(stackPointer - 1) = (UINT) startFunc;
+    *(stackPointer - 2) = (UINT) Exit;
+    stackPointer -= 15;
 
     return stackPointer;
 }

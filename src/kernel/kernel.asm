@@ -1,21 +1,36 @@
 @ This function is passed 1 parameter
-@ R0 contains the user's PC
+@ User's PC is passed on the kernel stack
 .globl KernelSaveUserContext
 KernelSaveUserContext:
+    /* Store registers we are about to clobber */
+    stmfd sp!, {r0, r1}
+
+    /* Load the user's PC from the kernel stack */
+    ldr r0, [sp, #8]
+
     /* User CPSR is in SPSR */
-    mrs r3, spsr
+    mrs r1, spsr
+
+    /* Switch to system mode */
+    msr cpsr_c, #0xDF
+
+    /* Store user's PC and CPSR */
+    stmfd sp!, {r0, r1}
+    
+    /* Switch back to supervisor mode */
+    msr cpsr_c, #0xD3
+
+    /* Restore clobbered registers */
+    ldmfd sp!, {r0, r1}
 
     /* Switch to system mode */
     msr cpsr_c, #0xDF
 
     /* Store user registers */
-    stmfd sp!, {r0, r3-r12, lr}
-
-    /* Leave room for a return value (if one exists) */
-    sub sp, sp, #4
-
+    stmfd sp!, {r0-r12, lr}
+    
     /* Save pointer to user's stack */
-    mov r1, sp
+    mov r4, sp
 
     /* Switch back to supervisor mode */
     msr cpsr_c, #0xD3
@@ -28,6 +43,7 @@ KernelSaveUserContext:
     /* Update the current task's stack pointer */
     /* The current task is in R0 */
     /* The new stack pointer is in R1 */
+    mov r1, r4
     b TaskUpdateStackPointer
 
 @ This function is passed 1 parameter
@@ -44,14 +60,32 @@ KernelLeave:
     mov sp, r0
 
     /* Restore the user state */
-    ldmfd sp!, {r0, r2-r12, lr}
+    ldmfd sp!, {r0-r12, lr}    
 
     /* Switch back to supervisor mode */
     msr cpsr_c, #0xD3
 
+    /* Store registers we are about to clobber */
+    stmfd sp!, {r0, r1}
+
+    /* Switch to system mode */
+    msr cpsr_c, #0xDF
+
+    /* Restore user's PC and CPSR */
+    ldmfd sp!, {r0, r1}
+
+    /* Switch back to supervisor mode */
+    msr cpsr_c, #0xD3
+
+    /* Store user PC and CPSR back to their original locations */
+    mov lr, r0
+    msr spsr, r1
+
+    /* Restore clobbered registers */
+    ldmfd sp!, {r0, r1}
+
     /* Jump back to user mode */
-    msr spsr, r3
-    movs pc, r2
+    movs pc, lr
 
 .globl KernelEnter
 KernelEnter:
