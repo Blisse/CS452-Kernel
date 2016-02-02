@@ -1,6 +1,7 @@
 set(SRC_UTILITIES
     "assert.c"
     "buffer.c"
+    "linked_list.c"
     "string.c"
     )
 

@@ -1,5 +1,5 @@
 #include <bwio/bwio.h>
-#include <rtosc/assert.c>
+#include <rtosc/assert.h>
 #include "rt.h"
 #include "scheduler.h"
 #include "task.h"
