@@ -21,6 +21,7 @@ typedef enum _TASK_STATE
     SendBlockedState,
     ReceiveBlockedState,
     ReplyBlockedState,
+    EventBlockedState,
     ZombieState
 } TASK_STATE;
 

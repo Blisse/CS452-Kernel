@@ -1,6 +1,7 @@
 #include "interrupt.h"
 
 #include <rtosc/assert.h>
+#include "scheduler.h"
 #include <ts7200.h>
 
 #define TIMER_CONTROL(timerBase) ((volatile UINT*)((timerBase) + CRTL_OFFSET))
@@ -25,6 +26,76 @@ InterruptInstallHandler
         VOID
     );
 
+static TASK_DESCRIPTOR* g_eventHandlers[NumEvent];
+
+static
+VOID
+InterruptSignalEvent
+    (
+        IN INTERRUPT_EVENT event, 
+        IN INT returnValue
+    )
+{
+    TASK_DESCRIPTOR* handler = g_eventHandlers[event];
+
+    // Unblock the handler
+    handler->state = ReadyState;
+    TaskSetReturnValue(handler, returnValue);
+    SchedulerAddTask(handler);
+
+    g_eventHandlers[event] = NULL;
+}
+
+static
+inline
+BOOLEAN
+InterruptIsValidEvent
+    (
+        IN INTERRUPT_EVENT event
+    )
+{
+    return ClockEvent <= event && event < NumEvent;
+}
+
+static
+inline
+BOOLEAN
+InterruptIsEventAvailable
+    (
+        IN INTERRUPT_EVENT event
+    )
+{
+    return g_eventHandlers[event] == NULL;
+}
+
+RT_STATUS
+InterruptAwaitEvent
+    (
+        IN TASK_DESCRIPTOR* td, 
+        IN INTERRUPT_EVENT event
+    )
+{
+    if(InterruptIsValidEvent(event))
+    {
+        if(InterruptIsEventAvailable(event))
+        {
+            g_eventHandlers[event] = td;
+            td->state = EventBlockedState;
+
+            return STATUS_SUCCESS;
+        }
+        else
+        {
+            ASSERT(FALSE, "Multiple clients waiting on event");
+            return STATUS_INVALID_PARAMETER;
+        }
+    }
+    else
+    {
+        return STATUS_INVALID_PARAMETER;
+    }
+}
+
 static
 inline
 VOID
@@ -37,7 +108,7 @@ InterruptHandleClock
     *TIMER_CLEAR(TIMER2_BASE) = TRUE;
 
     // Handle the interrupt
-    // TODO
+    InterruptSignalEvent(ClockEvent, STATUS_SUCCESS);
 }
 
 VOID
@@ -84,7 +155,13 @@ InterruptInit
         VOID
     )
 {
-    // Install our interrupt handler
+    UINT i;
+
+    for(i = 0; i < NumEvent; i++)
+    {
+        g_eventHandlers[i] = NULL;
+    }
+
     InterruptInstallHandler();
 }
 
@@ -94,7 +171,6 @@ InterruptEnable
         VOID
     )
 {
-    // Setup interrupt handlers
     InterruptSetupTimer();
 }
 
@@ -105,14 +181,4 @@ InterruptDisable
     )
 {
     *VIC_INTERRUPT_DISABLE(VIC1_BASE) = 0xFFFFFFFF;
-}
-
-RT_STATUS
-InterruptAwait
-    (
-        IN TASK_DESCRIPTOR* td, 
-        IN INT event
-    )
-{
-    return STATUS_SUCCESS;
 }
