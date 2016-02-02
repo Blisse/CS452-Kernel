@@ -15,15 +15,18 @@ TrapEnter:
     /* Save the function parameters on the stack */
     stmfd sp!, {r0-r3}
 
-    /* KernelSaveUserContext expects the user's pc on the stack */
-    stmfd sp!, {lr}
+    /* KernelSaveUserContext expects the user's pc and spsr on the stack */
+    mov r0, lr
+    mrs r1, spsr
+    stmfd sp!, {r0, r1}
 
     /* Save user state */
     /* r4-r12 can now be used without needing to save */
     bl KernelSaveUserContext
 
     /* Restore user's pc - we need it for the swi instruction */
-    ldmfd sp!, {lr}
+    ldmfd sp!, {r0, r1}
+    mov lr, r0
 
     /* Pop the function parameters off the stack */
     ldmfd sp!, {r0-r3}

@@ -4,6 +4,9 @@
 #include <rtosc/assert.h>
 
 #include "cache.h"
+#include "interrupt.h"
+
+#include "cache.h"
 #include "scheduler.h"
 #include "syscall.h"
 #include "trap.h"
@@ -15,14 +18,14 @@ inline
 RT_STATUS
 KernelCreateTask
     (
-        IN TASK_PRIORITY priority, 
+        IN TASK_PRIORITY priority,
         IN TASK_START_FUNC startFunc
     )
 {
     TASK_DESCRIPTOR* unused;
 
-    return TaskCreate(SchedulerGetCurrentTask(), 
-                      priority, 
+    return TaskCreate(SchedulerGetCurrentTask(),
+                      priority,
                       startFunc,
                       &unused);
 }
@@ -36,12 +39,13 @@ KernelInit
     g_exit = FALSE;
 
     CacheInit();
+    InterruptInit();
     SchedulerInit();
     SyscallInit();
     TaskInit();
     TrapInstallHandler();
 
-    VERIFY(RT_SUCCESS(KernelCreateTask(SystemPriority, InitTask)), 
+    VERIFY(RT_SUCCESS(KernelCreateTask(SystemPriority, InitTask)),
            "Failed to create the init task \r\n");
 }
 
@@ -62,6 +66,8 @@ KernelRun
         VOID
     )
 {
+    InterruptEnable();
+
     while(!g_exit)
     {
         TASK_DESCRIPTOR* nextTd;
@@ -72,10 +78,10 @@ KernelRun
             ASSERT(TaskValidate(nextTd), "Invalid task!  This likely indicates a stack overflow \r\n");
 
             nextTd->state = RunningState;
-            
+
             // Return to user mode
             KernelLeave(nextTd->stackPointer);
-            
+
             // The task may have transitioned to a new state
             // due to interrupts, Exit(), etc.  Don't update
             // the state unless nothing happened to the task
@@ -94,4 +100,6 @@ KernelRun
             ASSERT(FALSE, "Scheduling failed \r\n");
         }
     }
+
+    InterruptDisable();
 }

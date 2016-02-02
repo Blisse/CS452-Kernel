@@ -1,6 +1,8 @@
 set(SRC_KERNEL
     "arm.asm"
     "cache.asm"
+    "interrupt.asm"
+    "interrupt.c"
     "ipc.c"
     "kernel.asm"
     "kernel.c"

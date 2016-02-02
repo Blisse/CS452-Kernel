@@ -1,15 +1,14 @@
-@ This function is passed 1 parameter
+@ This function is passed 2 parameters
 @ User's PC is passed on the kernel stack
+@ SPSR is passed on the kernel stack
 .globl KernelSaveUserContext
 KernelSaveUserContext:
     /* Store registers we are about to clobber */
     stmfd sp!, {r0, r1}
 
-    /* Load the user's PC from the kernel stack */
+    /* Load the user's PC and SPSR from the kernel stack */
     ldr r0, [sp, #8]
-
-    /* User CPSR is in SPSR */
-    mrs r1, spsr
+    ldr r1, [sp, #12]
 
     /* Switch to system mode */
     msr cpsr_c, #0xDF
@@ -52,7 +51,7 @@ KernelSaveUserContext:
 KernelLeave:
     /* Store kernel state */
     stmfd sp!, {r4-r12, lr}
-    
+
     /* Switch to system mode */
     msr cpsr_c, #0xDF
 
