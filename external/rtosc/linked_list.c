@@ -323,6 +323,8 @@ RtLinkedListInsertBetween
     return status;
 }
 
+static
+inline
 BOOLEAN
 RtLinkedListpFind
     (

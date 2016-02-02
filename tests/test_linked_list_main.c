@@ -1,7 +1,8 @@
+#include <rtosc/linked_list.h>
+
 #include <bwio/bwio.h>
 #include <rtosc/assert.h>
 #include <rtosc/buffer.h>
-#include <rtosc/linked_list.h>
 #include <rt.h>
 
 #define TEST_BUFFER_SIZE 8

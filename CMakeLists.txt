@@ -45,6 +45,7 @@ include_directories(
     "inc/rtos"
     "src/kernel"
     "src/os"
+    "src/os/tasks"
     )
 
 # compile options
