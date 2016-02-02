@@ -6,8 +6,9 @@
 
 typedef struct _RT_PRIORITY_QUEUE
 {
-    TASK_DESCRIPTOR* buffers[NumPriority][NUM_TASK_DESCRIPTORS];
-    RT_CIRCULAR_BUFFER queues[NumPriority];
+    TASK_DESCRIPTOR* buffers[NUM_PRIORITY][NUM_TASK_DESCRIPTORS + 1];
+    RT_CIRCULAR_BUFFER queues[NUM_PRIORITY];
+    UINT bitmask;
 } RT_PRIORITY_QUEUE;
 
 VOID
@@ -35,6 +36,5 @@ inline
 RT_STATUS
 RtPriorityQueueRemove
     (
-        IN RT_PRIORITY_QUEUE* priorityQueue,
-        IN TASK_DESCRIPTOR* td
+        IN RT_PRIORITY_QUEUE* priorityQueue
     );

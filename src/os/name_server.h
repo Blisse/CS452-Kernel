@@ -1,6 +1,9 @@
 #pragma once
 
 #include "rt.h"
+#include "rtos.h"
+
+#define NAME_SERVER_PRIORITY PRIORITY_29
 
 VOID
 NameServerTask

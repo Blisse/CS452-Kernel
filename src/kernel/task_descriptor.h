@@ -5,6 +5,7 @@
 #include "stack.h"
 
 #define NUM_TASK_DESCRIPTORS 64
+#define NUM_PRIORITY 32
 
 typedef
 VOID
@@ -12,16 +13,6 @@ VOID
     (
         VOID
     );
-
-typedef enum _TASK_PRIORITY
-{
-    SystemPriority = 0, // Reserved for system tasks (e.g. init task)
-    HighPriority, // Interrupt tasks
-    MediumPriority, // Interactive tasks
-    LowPriority, // Computation tasks
-    IdlePriority, // Reserved for the idle task
-    NumPriority
-} TASK_PRIORITY;
 
 typedef enum _TASK_STATE
 {
@@ -34,13 +25,13 @@ typedef enum _TASK_STATE
 } TASK_STATE;
 
 typedef struct _TASK_DESCRIPTOR {
-    INT taskId;
-    RT_CIRCULAR_BUFFER mailbox;
-    TASK_STATE state;
-    TASK_PRIORITY priority;
     UINT* stackPointer;
-    STACK* stack;
+    INT taskId;
     INT parentTaskId;
+    UINT priority;
+    TASK_STATE state;
+    RT_CIRCULAR_BUFFER mailbox;
+    STACK* stack;    
 } TASK_DESCRIPTOR;
 
 #define TaskDescriptorGetStackPointer(task) ((task)->stackPointer)

@@ -32,10 +32,13 @@ inline
 BOOLEAN
 TaskpIsPriorityValid
     (
-        IN TASK_PRIORITY priority
+        IN UINT priority
     )
 {
-    return (SystemPriority <= priority) && (priority < NumPriority);
+    // Check to see if priority is a power of 2
+    // This code is courtesy of:
+    // http://graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
+    return priority && !(priority & (priority - 1));
 }
 
 static
@@ -61,7 +64,7 @@ RT_STATUS
 TaskCreate
     (
         IN TASK_DESCRIPTOR* parent,
-        IN TASK_PRIORITY priority,
+        IN UINT priority,
         IN TASK_START_FUNC startFunc,
         OUT TASK_DESCRIPTOR** td
     )

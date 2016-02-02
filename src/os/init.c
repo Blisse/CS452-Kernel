@@ -1,6 +1,8 @@
 #include "init.h"
 
-#include <rtos.h>
+#include <bwio/bwio.h>
+#include "nameserver.h"
+#include <rtosc/assert.h>
 
 #include "name_server.h"
 #include "rps.h"
@@ -12,7 +14,7 @@ InitTask
     )
 {
     // Name server MUST be created first, as its id is hard coded
-    Create(MEDIUM_PRIORITY, NameServerTask);
+    Create(NAME_SERVER_PRIORITY, NameServerTask);
 
     // Start the game of rock-paper-scissors
     RpsInit();

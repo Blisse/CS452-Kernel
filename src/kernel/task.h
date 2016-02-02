@@ -13,7 +13,7 @@ RT_STATUS
 TaskCreate
     (
         IN TASK_DESCRIPTOR* parent,
-        IN TASK_PRIORITY priority,
+        IN UINT priority,
         IN TASK_START_FUNC startFunc,
         OUT TASK_DESCRIPTOR** td
     );
