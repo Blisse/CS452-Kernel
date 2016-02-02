@@ -22,17 +22,15 @@ TrapEnter:
     /* Switch to system mode to get at the user's stack */
     msr cpsr_c, #0xDF
 
-    /* Store user cpsr and pc */
-    /* These are stored first so that we have easy access to the */
-    /* task's r0.  r0 is important since it's the task's return value */
-    stmfd sp!, {r0-r1}
-
     /* Store the task's context */
     stmfd sp!, {r4-r12, lr}
 
     /* We don't actually need to store r0-r4, but the interrupt handler does */
     /* Make it look like we stored stuff, for compatibility */
     sub sp, sp, #16
+
+    /* Store user cpsr and pc */
+    stmfd sp!, {r0-r1}
 
     /* Store the user's sp as we will need to use it */
     /* This saves us from having to make another mode switch */

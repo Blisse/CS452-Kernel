@@ -9,7 +9,8 @@
 #include "stack.h"
 
 #define CANARY 0x12341234
-#define TASK_INITIAL_CPSR   0x10
+#define TASK_INITIAL_CPSR 0x10
+#define RETURN_VALUE_OFFSET 8
 
 VOID
 TaskInit
@@ -48,9 +49,9 @@ TaskpSetupStack
 {
     UINT* stackPointer = ((UINT*) ptr_add(stack->top, stack->size)) - sizeof(UINT);
 
-    *stackPointer = TASK_INITIAL_CPSR;
-    *(stackPointer - 1) = (UINT) startFunc;
-    *(stackPointer - 2) = (UINT) Exit;
+    *stackPointer = (UINT) Exit;
+    *(stackPointer - 14) = TASK_INITIAL_CPSR;
+    *(stackPointer - 15) = (UINT) startFunc;
     stackPointer -= 15;
 
     return stackPointer;
@@ -144,7 +145,7 @@ TaskSetReturnValue
         IN INT returnValue
     )
 {
-    *(td->stackPointer) = returnValue;
+    *(UINT*)(ptr_add(td->stackPointer, RETURN_VALUE_OFFSET)) = returnValue;
 }
 
 inline
