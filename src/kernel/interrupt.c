@@ -1,6 +1,5 @@
 #include "interrupt.h"
 
-#include <bwio/bwio.h>
 #include <rtosc/assert.h>
 #include <ts7200.h>
 
@@ -26,8 +25,6 @@ InterruptInstallHandler
         VOID
     );
 
-static UINT g_numInterrupts;
-
 static
 inline
 VOID
@@ -40,9 +37,7 @@ InterruptHandleClock
     *TIMER_CLEAR(TIMER2_BASE) = TRUE;
 
     // Handle the interrupt
-    g_numInterrupts++;
-    bwprintf(BWCOM2, "%d\r\n", g_numInterrupts);
-
+    // TODO
 }
 
 VOID
@@ -89,8 +84,6 @@ InterruptInit
         VOID
     )
 {
-    g_numInterrupts = 0;
-
     // Install our interrupt handler
     InterruptInstallHandler();
 }
@@ -112,4 +105,14 @@ InterruptDisable
     )
 {
     *VIC_INTERRUPT_DISABLE(VIC1_BASE) = 0xFFFFFFFF;
+}
+
+RT_STATUS
+InterruptAwait
+    (
+        IN TASK_DESCRIPTOR* td, 
+        IN INT event
+    )
+{
+    return STATUS_SUCCESS;
 }

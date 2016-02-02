@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rt.h"
+#include "task_descriptor.h"
 
 VOID
 InterruptInit
@@ -18,4 +19,11 @@ VOID
 InterruptDisable
     (
         VOID
+    );
+
+RT_STATUS
+InterruptAwait
+    (
+        IN TASK_DESCRIPTOR* td, 
+        IN INT event
     );

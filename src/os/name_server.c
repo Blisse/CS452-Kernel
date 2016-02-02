@@ -5,7 +5,7 @@
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
 
-#define NAME_SERVER_TID 1
+#define NAME_SERVER_TID 2
 #define NAME_SERVER_HASH_TABLE_SIZE 100
 
 #define ERROR_SUCCESS 0

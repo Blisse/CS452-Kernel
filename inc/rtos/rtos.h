@@ -2,12 +2,14 @@
 
 #include "rt.h"
 
+#define SUCCESSFUL(x) ((x) >= 0)
+
 /************************************
  *          TASK API                *
  ************************************/
 
 #define IDLE_PRIORITY 0x1 /* Reserved for idle task */
-#define PRIORITY_1 0x2
+#define LOWEST_PRIORITY 0x2
 #define PRIORITY_2 0x4
 #define PRIORITY_3 0x8
 #define PRIORITY_4 0x10
@@ -36,10 +38,8 @@
 #define PRIORITY_27 0x8000000
 #define PRIORITY_28 0x10000000
 #define PRIORITY_29 0x20000000
-#define PRIORITY_30 0x40000000
+#define HIGHEST_PRIORITY 0x40000000
 #define SYSTEM_PRIORITY 0x80000000 /* Reserved for system tasks */
-
-#define SUCCESSFUL(x) ((x) >= 0)
 
 extern
 INT
@@ -108,4 +108,17 @@ Reply
         IN INT taskId,
         IN PVOID reply,
         IN INT replyLength
+    );
+
+/************************************
+ *          EVENT API               *
+ ************************************/
+
+#define EVENT_CLOCK 0
+
+ extern
+ INT
+ AwaitEvent
+    (
+        INT eventType
     );
