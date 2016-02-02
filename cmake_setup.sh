@@ -3,7 +3,7 @@
 rm -rf local
 mkdir local
 cd local
-cmake -DLOCAL=ON -DCMAKE_BUILD_TYPE=DEBUG ..
+cmake -DCMAKE_BUILD_TYPE=DEBUG -DLOCAL=ON ..
 
 cd ..
 
