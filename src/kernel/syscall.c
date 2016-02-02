@@ -97,7 +97,7 @@ SystemSendMessage
         IN PVOID reply,
         IN INT replyLength
     )
-{
+{    
     TASK_DESCRIPTOR* from = SchedulerGetCurrentTask();
     TASK_DESCRIPTOR* to;
     RT_STATUS status = TaskDescriptorGet(taskId, &to);

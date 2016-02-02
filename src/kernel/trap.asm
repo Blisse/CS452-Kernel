@@ -12,34 +12,60 @@ TrapInstallHandler:
 
 .globl TrapEnter
 TrapEnter:
-    /* Save the function parameters on the stack */
-    stmfd sp!, {r0-r3}
+    /* Store system call parameters */
+    stmfd sp!, {r0-r4, lr}
 
-    /* KernelSaveUserContext expects the user's pc and spsr on the stack */
+    /* Grab user cpsr and pc */
     mov r0, lr
     mrs r1, spsr
-    stmfd sp!, {r0, r1}
 
-    /* Save user state */
-    /* r4-r12 can now be used without needing to save */
-    bl KernelSaveUserContext
+    /* Switch to system mode to get at the user's stack */
+    msr cpsr_c, #0xDF
 
-    /* Restore user's pc - we need it for the swi instruction */
-    ldmfd sp!, {r0, r1}
-    mov lr, r0
+    /* Store user cpsr and pc */
+    /* These are stored first so that we have easy access to the */
+    /* task's r0.  r0 is important since it's the task's return value */
+    stmfd sp!, {r0-r1}
 
-    /* Pop the function parameters off the stack */
-    ldmfd sp!, {r0-r3}
+    /* Store the task's context */
+    stmfd sp!, {r4-r12, lr}
+
+    /* We don't actually need to store r0-r4, but the interrupt handler does */
+    /* Make it look like we stored stuff, for compatibility */
+    sub sp, sp, #16
+
+    /* Store the user's sp as we will need to use it */
+    /* This saves us from having to make another mode switch */
+    mov r4, sp
+
+    /* Switch back to supervisor mode */
+    msr cpsr_c, #0xD3
+
+    /* Get the current task */
+    bl SchedulerGetCurrentTask
+
+    /* We need the current task later, so store it for efficiency */
+    mov r10, r0
+
+    /* Move stack pointer to the correct location */
+    mov r1, r4
+
+    /* Update the current task's stack pointer */
+    /* Current task is in r0 */
+    /* New stack pointer is in r1 */
+    bl TaskUpdateStackPointer
+
+    /* Restore system call parameters */
+    ldmfd sp!, {r0-r4, lr}
 
     /* Put the 5th system call parameter on the stack */
-    /* This is where gcc is expecting to find it */
+    /* This is where gcc expects to find it */
     stmfd sp!, {r4}
 
-    /* Grab the swi instruction */
+    /* Grab the swi instruciton */
     ldr r4, [lr, #-4]
 
     /* Isolate the system call number */
-    /* Take the complement of the mask, then perform an "AND" */
     bic r4, r4, #0xFF000000
 
     /* Convert system call number to table offset */
@@ -60,22 +86,16 @@ TrapEnter:
     mov lr, pc
     mov pc, r4
 
-    /* Remove 5th system call parameter from stack */
+    /* Remove the 5th system call parameter from the stack */
     add sp, sp, #4
 
-    /* Move the system call result so it doesn't get clobbered */
-    mov r4, r0
+    /* Move current task and return value to correct locations */
+    mov r1, r0 /* Return value is now in r1 */
+    mov r0, r10 /* Current task is now in r0 */
 
-    /* Find the current task */
-    bl SchedulerGetCurrentTask
-
-    /* Setup the function call parameters */
-    mov r1, r4
-
-    /* Store the system call result on the user's stack */
-    /* The current stack is in r0 */
-    /* The system call return value is in r1 */
+    /* Store the system call result on the task's stack */
     bl TaskSetReturnValue
 
-    /* Enter the kernel */
-    b KernelEnter
+    /* Restore kernel state */
+    /* This will jump back to whoever called KernelLeave() */
+    ldmfd sp!, {r4-r12, pc}
