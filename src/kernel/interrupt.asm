@@ -29,6 +29,10 @@ InterruptEnter:
     /* Store task context */
     stmfd sp!, {r0-r12, lr}
 
+    /* Store the user's sp as we will need to use it */
+    /* This saves us from having to make another mode switch */
+    mov r4, sp
+
     /* Switch to irq mode */
     msr cpsr_c, #0xD2
 
@@ -37,17 +41,10 @@ InterruptEnter:
     sub r0, lr, #4
     mrs r1, spsr
 
-    /* Switch to system mode to get at the user's stack */
-    msr cpsr_c, #0xDF
-
     /* Store user cpsr and pc */
-    stmfd sp!, {r0-r1}
+    stmfd r4!, {r0-r1}
 
-    /* Store the user's sp as we will need to use it */
-    /* This saves us from having to make another mode switch */
-    mov r4, sp
-
-    /* Switch to supervisor mode */
+    /* Switch to supervisor mode to handle the interrupt */
     msr cpsr_c, #0xD3
 
     /* Get the current task */
