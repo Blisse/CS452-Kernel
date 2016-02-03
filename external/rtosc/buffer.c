@@ -13,10 +13,11 @@ RtCircularBufferInit
     buffer->capacity = capacity;
     buffer->front = 0;
     buffer->back = 0;
+    buffer->size = 0;
 }
 
 RT_STATUS
-RtCircularBufferAdd
+RtCircularBufferPush
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN PVOID sourceBuffer,
@@ -25,7 +26,7 @@ RtCircularBufferAdd
 {
     RT_STATUS status;
 
-    if(bytesToAdd + RtCircularBufferSize(buffer) < buffer->capacity)
+    if((buffer->size + bytesToAdd) <= buffer->capacity)
     {
         UINT newBack = (buffer->back + bytesToAdd) % buffer->capacity;
 
@@ -47,6 +48,8 @@ RtCircularBufferAdd
         }
 
         buffer->back = newBack;
+        buffer->size += bytesToAdd;
+
         status = STATUS_SUCCESS;
     }
     else
@@ -58,7 +61,7 @@ RtCircularBufferAdd
 }
 
 RT_STATUS
-RtCircularBufferGet
+RtCircularBufferPeek
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN PVOID targetBuffer,
@@ -67,7 +70,7 @@ RtCircularBufferGet
 {
     RT_STATUS status;
 
-    if(bytesToRemove <= RtCircularBufferSize(buffer))
+    if(bytesToRemove <= buffer->size)
     {
         UINT newFront = (buffer->front + bytesToRemove) % buffer->capacity;
 
@@ -100,15 +103,17 @@ RtCircularBufferGet
 
 inline
 RT_STATUS
-RtCircularBufferRemove
+RtCircularBufferPop
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN UINT bytesToRemove
     )
 {
-    if(bytesToRemove <= RtCircularBufferSize(buffer))
+    if(bytesToRemove <= buffer->size)
     {
         buffer->front = (buffer->front + bytesToRemove) % buffer->capacity;
+        buffer->size -= bytesToRemove;
+
         return STATUS_SUCCESS;
     }
     else
@@ -118,18 +123,18 @@ RtCircularBufferRemove
 }
 
 RT_STATUS
-RtCircularBufferGetAndRemove
+RtCircularBufferPeekAndPop
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN PVOID targetBuffer,
         IN UINT bytesToRemove
     )
 {
-    RT_STATUS status = RtCircularBufferGet(buffer, targetBuffer, bytesToRemove);
+    RT_STATUS status = RtCircularBufferPeek(buffer, targetBuffer, bytesToRemove);
 
     if(RT_SUCCESS(status))
     {
-        status = RtCircularBufferRemove(buffer, bytesToRemove);
+        status = RtCircularBufferPop(buffer, bytesToRemove);
     }
 
     return status;
@@ -142,7 +147,7 @@ RtCircularBufferIsEmpty
         IN RT_CIRCULAR_BUFFER* buffer
     )
 {
-    return buffer->front == buffer->back;
+    return (buffer->size == 0);
 }
 
 inline
@@ -152,7 +157,7 @@ RtCircularBufferIsFull
         IN RT_CIRCULAR_BUFFER* buffer
     )
 {
-    return buffer->front == ((buffer->back + 1) % buffer->capacity);
+    return (buffer->size == buffer->capacity);
 }
 
 inline
@@ -162,5 +167,5 @@ RtCircularBufferSize
         IN RT_CIRCULAR_BUFFER* buffer
     )
 {
-    return (buffer->back - buffer->front + buffer->capacity) % buffer->capacity;
+    return buffer->size;
 }

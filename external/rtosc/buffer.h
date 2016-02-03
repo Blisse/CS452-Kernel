@@ -7,6 +7,7 @@ typedef struct _RT_CIRCULAR_BUFFER {
     UINT capacity;
     UINT front;
     UINT back;
+    UINT size;
 } RT_CIRCULAR_BUFFER;
 
 VOID
@@ -18,7 +19,7 @@ RtCircularBufferInit
     );
 
 RT_STATUS
-RtCircularBufferAdd
+RtCircularBufferPush
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN PVOID sourceBuffer,
@@ -26,7 +27,7 @@ RtCircularBufferAdd
     );
 
 RT_STATUS
-RtCircularBufferGet
+RtCircularBufferPeek
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN PVOID targetBuffer,
@@ -35,14 +36,14 @@ RtCircularBufferGet
 
 inline
 RT_STATUS
-RtCircularBufferRemove
+RtCircularBufferPop
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN UINT bytesToRemove
     );
 
 RT_STATUS
-RtCircularBufferGetAndRemove
+RtCircularBufferPeekAndPop
     (
         IN RT_CIRCULAR_BUFFER* buffer,
         IN PVOID targetBuffer,

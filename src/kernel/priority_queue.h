@@ -6,7 +6,7 @@
 
 typedef struct _RT_PRIORITY_QUEUE
 {
-    TASK_DESCRIPTOR* buffers[NumPriority][NUM_TASK_DESCRIPTORS + 1];
+    TASK_DESCRIPTOR* buffers[NumPriority][NUM_TASK_DESCRIPTORS];
     RT_CIRCULAR_BUFFER queues[NumPriority];
 } RT_PRIORITY_QUEUE;
 

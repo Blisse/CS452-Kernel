@@ -3,7 +3,7 @@
 #include "arm.h"
 #include "ipc.h"
 #include <rtosc/assert.h>
-#include "rtos.h"
+#include <rtos.h>
 #include "scheduler.h"
 #include "stack.h"
 

@@ -1,7 +1,7 @@
 #include "task_descriptor.h"
 
 static TASK_DESCRIPTOR g_taskDescriptors[NUM_TASK_DESCRIPTORS];
-static INT g_taskDescriptorIds[NUM_TASK_DESCRIPTORS + 1];
+static INT g_taskDescriptorIds[NUM_TASK_DESCRIPTORS];
 static RT_CIRCULAR_BUFFER g_taskDescriptorIdQueue;
 
 RT_STATUS
@@ -22,7 +22,7 @@ TaskDescriptorInit
         // Initialize to -1 incase someone tries to send this task a message
         td->taskId = -1;
 
-        status = RtCircularBufferAdd(&g_taskDescriptorIdQueue, &i, sizeof(i));
+        status = RtCircularBufferPush(&g_taskDescriptorIdQueue, &i, sizeof(i));
     }
 
     return status;
@@ -36,8 +36,8 @@ TaskDescriptorAllocate
     )
 {
     INT taskId;
-    RT_STATUS status = RtCircularBufferGetAndRemove(&g_taskDescriptorIdQueue, 
-                                                    &taskId, 
+    RT_STATUS status = RtCircularBufferPeekAndPop(&g_taskDescriptorIdQueue,
+                                                    &taskId,
                                                     sizeof(taskId));
 
     if (RT_SUCCESS(status))
@@ -61,7 +61,7 @@ TaskDescriptorDeallocate
 {
     INT newTaskId = td->taskId + NUM_TASK_DESCRIPTORS;
 
-    return RtCircularBufferAdd(&g_taskDescriptorIdQueue, &newTaskId, sizeof(newTaskId));
+    return RtCircularBufferPush(&g_taskDescriptorIdQueue, &newTaskId, sizeof(newTaskId));
 }
 
 inline

@@ -38,8 +38,8 @@ IpcDrainMailbox
     while(!RtCircularBufferIsEmpty(&td->mailbox))
     {
         PENDING_MESSAGE pendingMessage;
-        RT_STATUS status = RtCircularBufferGetAndRemove(&td->mailbox, 
-                                                        &pendingMessage, 
+        RT_STATUS status = RtCircularBufferPeekAndPop(&td->mailbox,
+                                                        &pendingMessage,
                                                         sizeof(pendingMessage));
 
         if(RT_SUCCESS(status))
@@ -95,8 +95,8 @@ IpcSend
 
         // Store the message so it can be picked up later
         from->state = ReceiveBlockedState;
-        status = RtCircularBufferAdd(&to->mailbox, 
-                                     &pendingMessage, 
+        status = RtCircularBufferPush(&to->mailbox,
+                                     &pendingMessage,
                                      sizeof(pendingMessage));
     }
 
@@ -125,8 +125,8 @@ IpcReceive
     {
         PENDING_MESSAGE pendingMessage;
 
-        status = RtCircularBufferGetAndRemove(&td->mailbox, 
-                                              &pendingMessage, 
+        status = RtCircularBufferPeekAndPop(&td->mailbox,
+                                              &pendingMessage,
                                               sizeof(pendingMessage));
 
         if(RT_SUCCESS(status))
