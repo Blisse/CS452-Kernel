@@ -13,6 +13,8 @@ typedef INT RT_STATUS;
 #define STATUS_NOT_FOUND -6
 #define STATUS_STACK_SPACE_OVERFLOW -7
 #define STATUS_INVALID_STATE -8
+#define STATUS_BUFFER_EMPTY -9
+#define STATUS_BUFFER_FULL -10
 
 #define RT_SUCCESS(status) (STATUS_SUCCESS == (status))
 #define RT_FAILURE(status) (!RT_SUCCESS(status))

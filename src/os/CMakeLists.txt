@@ -1,11 +1,13 @@
 set(SRC_OS
-    "rtos.asm"
-    "init.c"
-    "io.c"
-    "nameserver.c"
-    "object.c"
-    "uart.c"
+    ${CMAKE_CURRENT_SOURCE_DIR}/rtos.asm
+    ${CMAKE_CURRENT_SOURCE_DIR}/init.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/io.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/name_server.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/object.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/uart.c
     )
+
+add_subdirectory("tasks")
 
 add_c_library(
     "${LIB_OS}"

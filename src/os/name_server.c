@@ -1,4 +1,4 @@
-#include "nameserver.h"
+#include "name_server.h"
 
 #include <rtos.h>
 
@@ -77,8 +77,8 @@ inline
 BOOLEAN
 NameServerpInsert
     (
-        IN NAME_SERVER_ENTRY* hashTable, 
-        IN STRING key, 
+        IN NAME_SERVER_ENTRY* hashTable,
+        IN STRING key,
         IN INT value
     )
 {
@@ -108,7 +108,7 @@ BOOLEAN
 NameServerpFind
     (
         IN NAME_SERVER_ENTRY* hashTable,
-        IN STRING key, 
+        IN STRING key,
         OUT INT* value
     )
 {
@@ -123,7 +123,7 @@ NameServerpFind
         if(RtStrEqual(key, entry->key))
         {
             *value = entry->value;
-            
+
             return TRUE;
         }
     }
@@ -153,7 +153,7 @@ NameServerTask
         switch(request.type)
         {
             case RegisterRequest:
-                success = NameServerpInsert(hashTable, 
+                success = NameServerpInsert(hashTable,
                                             request.name,
                                             senderTaskId);
 
@@ -161,8 +161,8 @@ NameServerTask
                 break;
 
             case WhoIsRequest:
-                success = NameServerpFind(hashTable, 
-                                          request.name, 
+                success = NameServerpFind(hashTable,
+                                          request.name,
                                           &response);
 
                 if(!success)
@@ -186,7 +186,7 @@ inline
 INT
 SendNameServerRequest
     (
-        NAME_SERVER_REQUEST_TYPE type, 
+        NAME_SERVER_REQUEST_TYPE type,
         STRING name
     )
 {

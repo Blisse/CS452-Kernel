@@ -32,6 +32,7 @@ set(ALL_LIBS "-l${LIB_KERNEL} -l${LIB_OS} -l${LIB_RTOSC} -l${LIB_BWIO}")
 set(EXE_RTOS "rtos.elf")
 set(EXE_TEST_SCHEDULER "tscheduler.elf")
 set(EXE_TEST_BUFFER "tbuffer")
+set(EXE_TEST_LINKED_LIST "tlinkedlist")
 set(EXE_TEST_STRING "tstring")
 set(EXE_TEST_TASK_DESCRIPTOR "ttaskdescriptor")
 
@@ -44,6 +45,7 @@ include_directories(
     "inc/rtos"
     "src/kernel"
     "src/os"
+    "src/os/tasks"
     )
 
 # compile options
@@ -63,6 +65,8 @@ if(LOCAL)
 else()
     set(CMAKE_C_COMPILER "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc")
     set(CMAKE_C_FLAGS "-fPIC -Wall -Werror -mcpu=arm920t -mfloat-abi=soft")
+    set(CMAKE_C_FLAGS_DEBUG "-O0 -DNLOCAL")
+    set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -DNLOCAL")
 
     set(CMAKE_C_ARCHIVE_CREATE "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ar rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
     set(CMAKE_C_ARCHIVE_FINISH "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ranlib <TARGET>")
