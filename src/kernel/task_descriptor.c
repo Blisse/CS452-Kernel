@@ -103,3 +103,14 @@ TaskDescriptorGet
         return STATUS_INVALID_PARAMETER;
     }
 }
+
+inline
+RT_STATUS
+TaskDescriptorPriorityIsHigherOrEqualPriority
+    (
+        IN TASK_DESCRIPTOR* ta,
+        IN TASK_DESCRIPTOR* tb
+    )
+{
+    return (ta->priority >= tb->priority);
+}
