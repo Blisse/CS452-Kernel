@@ -72,7 +72,7 @@ RtPriorityQueueAdd
 {
     UINT index = Power2Log2(td->priority);
     RT_CIRCULAR_BUFFER* queue = &priorityQueue->queues[index];
-    RT_STATUS status = RtCircularBufferAdd(queue, &td, sizeof(td));
+    RT_STATUS status = RtCircularBufferPush(queue, &td, sizeof(td));
 
     if(RT_SUCCESS(status))
     {
@@ -94,7 +94,7 @@ RtPriorityQueueGet
         UINT index = Log2(priorityQueue->bitmask);
         RT_CIRCULAR_BUFFER* queue = &priorityQueue->queues[index];
 
-        return RtCircularBufferGet(queue, td, sizeof(*td));
+        return RtCircularBufferPeek(queue, td, sizeof(*td));
     }
     else
     {
@@ -113,7 +113,7 @@ RtPriorityQueueRemove
     {
         UINT index = Log2(priorityQueue->bitmask);
         RT_CIRCULAR_BUFFER* queue = &priorityQueue->queues[index];
-        RT_STATUS status = RtCircularBufferRemove(queue, sizeof(TASK_DESCRIPTOR*));
+        RT_STATUS status = RtCircularBufferPop(queue, sizeof(TASK_DESCRIPTOR*));
 
         if(RT_SUCCESS(status) &&
            RtCircularBufferIsEmpty(queue))
