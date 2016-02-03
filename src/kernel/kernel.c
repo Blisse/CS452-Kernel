@@ -4,9 +4,11 @@
 #include <rtosc/assert.h>
 
 #include "cache.h"
+#include "interrupt.h"
+
+#include "cache.h"
 #include "scheduler.h"
 #include "syscall.h"
-#include "task.h"
 #include "trap.h"
 
 static BOOLEAN g_exit;
@@ -16,14 +18,14 @@ inline
 RT_STATUS
 KernelCreateTask
     (
-        IN TASK_PRIORITY priority, 
+        IN UINT priority,
         IN TASK_START_FUNC startFunc
     )
 {
     TASK_DESCRIPTOR* unused;
 
-    return TaskCreate(SchedulerGetCurrentTask(), 
-                      priority, 
+    return TaskCreate(SchedulerGetCurrentTask(),
+                      priority,
                       startFunc,
                       &unused);
 }
@@ -37,12 +39,13 @@ KernelInit
     g_exit = FALSE;
 
     CacheInit();
+    InterruptInit();
     SchedulerInit();
     SyscallInit();
     TaskInit();
     TrapInstallHandler();
 
-    VERIFY(RT_SUCCESS(KernelCreateTask(SystemPriority, InitTask)), 
+    VERIFY(RT_SUCCESS(KernelCreateTask(SYSTEM_PRIORITY, InitTask)),
            "Failed to create the init task \r\n");
 }
 
@@ -63,6 +66,8 @@ KernelRun
         VOID
     )
 {
+    InterruptEnable();
+
     while(!g_exit)
     {
         TASK_DESCRIPTOR* nextTd;
@@ -75,11 +80,7 @@ KernelRun
             nextTd->state = RunningState;
 
             // Return to user mode
-            TrapReturn(nextTd->stackPointer);
-
-            // This will execute once we return back to kernel mode
-            // Update the task that just ran
-            TaskUpdate(nextTd);
+            KernelLeave(nextTd->stackPointer);
 
             // The task may have transitioned to a new state
             // due to interrupts, Exit(), etc.  Don't update
@@ -99,4 +100,6 @@ KernelRun
             ASSERT(FALSE, "Scheduling failed \r\n");
         }
     }
+
+    InterruptDisable();
 }

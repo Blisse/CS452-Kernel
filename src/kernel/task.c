@@ -1,14 +1,16 @@
 #include "task.h"
 
-#include "arm.h"
 #include "ipc.h"
 #include <rtosc/assert.h>
+#include <rtosc/string.h>
 #include <rtos.h>
+
 #include "scheduler.h"
 #include "stack.h"
 
 #define CANARY 0x12341234
-#define TASK_INITIAL_CPSR   0x10
+#define TASK_INITIAL_CPSR 0x10
+#define RETURN_VALUE_OFFSET 8
 
 VOID
 TaskInit
@@ -30,10 +32,13 @@ inline
 BOOLEAN
 TaskpIsPriorityValid
     (
-        IN TASK_PRIORITY priority
+        IN UINT priority
     )
 {
-    return (SystemPriority <= priority) && (priority < NumPriority);
+    // Check to see if priority is a power of 2
+    // This code is courtesy of:
+    // http://graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2
+    return priority && !(priority & (priority - 1));
 }
 
 static
@@ -48,9 +53,9 @@ TaskpSetupStack
     UINT* stackPointer = ((UINT*) ptr_add(stack->top, stack->size)) - sizeof(UINT);
 
     *stackPointer = (UINT) Exit;
-    *(stackPointer - 10) = (UINT) startFunc;
-    *(stackPointer - 11) = TASK_INITIAL_CPSR;
-    stackPointer -= 12;
+    *(stackPointer - 14) = TASK_INITIAL_CPSR;
+    *(stackPointer - 15) = (UINT) startFunc;
+    stackPointer -= 15;
 
     return stackPointer;
 }
@@ -59,7 +64,7 @@ RT_STATUS
 TaskCreate
     (
         IN TASK_DESCRIPTOR* parent,
-        IN TASK_PRIORITY priority,
+        IN UINT priority,
         IN TASK_START_FUNC startFunc,
         OUT TASK_DESCRIPTOR** td
     )
@@ -126,21 +131,50 @@ TaskValidate
 
 inline
 VOID
-TaskUpdate
+TaskUpdateStackPointer
     (
-        IN TASK_DESCRIPTOR* task
+        IN TASK_DESCRIPTOR* task,
+        IN UINT* stackPointer
     )
 {
-    task->stackPointer = GetUserSP();
+    task->stackPointer = stackPointer;
 }
 
 inline
 VOID
 TaskSetReturnValue
     (
-        IN TASK_DESCRIPTOR* td, 
+        IN TASK_DESCRIPTOR* td,
         IN INT returnValue
     )
 {
-    *(td->stackPointer) = returnValue;
+    *(UINT*)(ptr_add(td->stackPointer, RETURN_VALUE_OFFSET)) = returnValue;
+}
+
+inline
+VOID
+TaskStoreAsyncParameter
+    (
+        IN TASK_DESCRIPTOR* td,
+        IN PVOID parameter,
+        IN UINT size
+    )
+{
+    RtMemcpy(ptr_add(td->stackPointer, -1 * (size + 1)),
+             parameter,
+             size);
+}
+
+inline
+VOID
+TaskRetrieveAsyncParameter
+    (
+        IN TASK_DESCRIPTOR* td,
+        IN PVOID parameter,
+        IN UINT size
+    )
+{
+    RtMemcpy(parameter,
+             ptr_add(td->stackPointer, -1 * (size + 1)),
+             size);
 }

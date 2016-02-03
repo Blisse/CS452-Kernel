@@ -38,9 +38,9 @@ SchedulerGetNextTask
     if(NULL != g_currentTd && ReadyState == TaskDescriptorGetState(g_currentTd))
     {
         if(RT_SUCCESS(status) && 
-           TaskDescriptorGetPriority(nextTd) <= TaskDescriptorGetPriority(g_currentTd))
+           TaskDescriptorGetPriority(nextTd) >= TaskDescriptorGetPriority(g_currentTd))
         {
-            status = RtPriorityQueueRemove(&g_priorityQueue, nextTd);
+            status = RtPriorityQueueRemove(&g_priorityQueue);
 
             if(RT_SUCCESS(status))
             {
@@ -60,7 +60,7 @@ SchedulerGetNextTask
     }
     else if(RT_SUCCESS(status))
     {
-        status = RtPriorityQueueRemove(&g_priorityQueue, nextTd);
+        status = RtPriorityQueueRemove(&g_priorityQueue);
 
         if(RT_SUCCESS(status))
         {

@@ -4,48 +4,66 @@ TrapInstallHandler:
     mov r0, #0x00000028
 
     /* Load the address of the software interrupt handler */
-    ldr r1, =TrapEntry
+    ldr r1, =TrapEnter
 
     /* Install interrupt handler to interrupt controller */
     str r1, [r0] 
     bx lr
 
-@ This function is passed 2 parameters
-@ R0 contains the user's stack
-.globl TrapReturn
-TrapReturn:
-    /* Store kernel state */
-    stmfd sp!, {r4-r12, lr}
-    
-    /* Switch to system mode */
+.globl TrapEnter
+TrapEnter:
+    /* Store system call parameters */
+    stmfd sp!, {r0-r4, lr}
+
+    /* Grab user cpsr and pc */
+    mov r0, lr
+    mrs r1, spsr
+
+    /* Switch to system mode to get at the user's stack */
     msr cpsr_c, #0xDF
 
-    /* Restore user's stack pointer */
-    mov sp, r0
+    /* Store the task's context */
+    stmfd sp!, {r4-r12, lr}
 
-    /* Restore the user state */
-    ldmfd sp!, {r0, r2-r12, lr}
+    /* We don't actually need to store r0-r4, but the interrupt handler does */
+    /* Make it look like we stored stuff, for compatibility */
+    sub sp, sp, #16
+
+    /* Store user cpsr and pc */
+    stmfd sp!, {r0-r1}
+
+    /* Store the user's sp as we will need to use it */
+    /* This saves us from having to make another mode switch */
+    mov r4, sp
 
     /* Switch back to supervisor mode */
     msr cpsr_c, #0xD3
 
-    /* Jump back to user mode */
-    msr spsr, r2
-    movs pc, r3
+    /* Get the current task */
+    bl SchedulerGetCurrentTask
 
-.globl TrapEntry
-TrapEntry:
-    /* Store registers we are about to clobber */
-    /* If there is a 5th system call parameter, it will be in R4 */
-    /* This will push R4 on to the stack, which is where GCC expects */
-    /* the 5th parameter to be anyway */
-    stmfd sp!, {r4-r6, lr}
+    /* We need the current task later, so store it for efficiency */
+    mov r10, r0
 
-    /* Grab the swi instruction */
+    /* Move stack pointer to the correct location */
+    mov r1, r4
+
+    /* Update the current task's stack pointer */
+    /* Current task is in r0 */
+    /* New stack pointer is in r1 */
+    bl TaskUpdateStackPointer
+
+    /* Restore system call parameters */
+    ldmfd sp!, {r0-r4, lr}
+
+    /* Put the 5th system call parameter on the stack */
+    /* This is where gcc expects to find it */
+    stmfd sp!, {r4}
+
+    /* Grab the swi instruciton */
     ldr r4, [lr, #-4]
 
     /* Isolate the system call number */
-    /* Take the complement of the mask, then perform an "AND" */
     bic r4, r4, #0xFF000000
 
     /* Convert system call number to table offset */
@@ -66,25 +84,16 @@ TrapEntry:
     mov lr, pc
     mov pc, r4
 
-    /* Restore clobbered registers */
-    /* Put the LR in to R3 early as an optimization */
-    ldmfd sp!, {r4-r6, lr}
+    /* Remove the 5th system call parameter from the stack */
+    add sp, sp, #4
 
-    /* User CPSR is in SPSR */
-    mrs r2, spsr
+    /* Move current task and return value to correct locations */
+    mov r1, r0 /* Return value is now in r1 */
+    mov r0, r10 /* Current task is now in r0 */
 
-    /* User PC is in LR */
-    mov r3, lr
-
-    /* Switch to system mode */
-    msr cpsr_c, #0xDF
-
-    /* Store user registers */
-    stmfd sp!, {r0, r2-r12, lr}
-
-    /* Switch back to supervisor mode */
-    msr cpsr_c, #0xD3
+    /* Store the system call result on the task's stack */
+    bl TaskSetReturnValue
 
     /* Restore kernel state */
-    /* This will jump back to whoever called TrapReturn() */
+    /* This will jump back to whoever called KernelLeave() */
     ldmfd sp!, {r4-r12, pc}

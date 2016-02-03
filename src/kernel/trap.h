@@ -8,10 +8,3 @@ TrapInstallHandler
     (
         VOID
     );
-
-extern
-VOID
-TrapReturn
-    (
-        IN UINT* stack
-    );

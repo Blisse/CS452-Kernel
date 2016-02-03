@@ -2,21 +2,50 @@
 
 #include "rt.h"
 
+#define SUCCESSFUL(x) ((x) >= 0)
+
 /************************************
  *          TASK API                *
  ************************************/
 
-#define HIGH_PRIORITY 1
-#define MEDIUM_PRIORITY 2
-#define LOW_PRIORITY 3
-
-#define SUCCESSFUL(x) ((x) >= 0)
+#define IDLE_PRIORITY 0x1 /* Reserved for idle task */
+#define LOWEST_PRIORITY 0x2
+#define PRIORITY_2 0x4
+#define PRIORITY_3 0x8
+#define PRIORITY_4 0x10
+#define PRIORITY_5 0x20
+#define PRIORITY_6 0x40
+#define PRIORITY_7 0x80
+#define PRIORITY_8 0x100
+#define PRIORITY_9 0x200
+#define PRIORITY_10 0x400
+#define PRIORITY_11 0x800
+#define PRIORITY_12 0x1000
+#define PRIORITY_13 0x2000
+#define PRIORITY_14 0x4000
+#define PRIORITY_15 0x8000
+#define PRIORITY_16 0x10000
+#define PRIORITY_17 0x20000
+#define PRIORITY_18 0x40000
+#define PRIORITY_19 0x80000
+#define PRIORITY_20 0x100000
+#define PRIORITY_21 0x200000
+#define PRIORITY_22 0x400000
+#define PRIORITY_23 0x800000
+#define PRIORITY_24 0x1000000
+#define PRIORITY_25 0x2000000
+#define PRIORITY_26 0x4000000
+#define PRIORITY_27 0x8000000
+#define PRIORITY_28 0x10000000
+#define PRIORITY_29 0x20000000
+#define HIGHEST_PRIORITY 0x40000000
+#define SYSTEM_PRIORITY 0x80000000 /* Reserved for system tasks */
 
 extern
 INT
 Create
     (
-        IN INT priority, 
+        IN UINT priority, 
         IN VOID (*code)()
     );
 
@@ -48,6 +77,10 @@ Exit
         VOID
     );
 
+/************************************
+ *          IPC API                 *
+ ************************************/
+
 extern
 INT
 Send
@@ -75,4 +108,17 @@ Reply
         IN INT taskId,
         IN PVOID reply,
         IN INT replyLength
+    );
+
+/************************************
+ *          EVENT API               *
+ ************************************/
+
+#define EVENT_CLOCK 0
+
+ extern
+ INT
+ AwaitEvent
+    (
+        INT eventType
     );

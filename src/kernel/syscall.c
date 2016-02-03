@@ -1,5 +1,6 @@
 #include "syscall.h"
 
+#include "interrupt.h"
 #include "ipc.h"
 #include <rtosc/assert.h>
 #include "scheduler.h"
@@ -11,8 +12,9 @@
 #define ERROR_INVALID_TASK -1
 #define ERROR_DEAD_TASK -2
 #define ERROR_TASK_NOT_REPLY_BLOCKED -3
+#define ERROR_INVALID_EVENT -1
 
-#define NUM_SYSCALLS 8
+#define NUM_SYSCALLS 9
 
 UINT g_systemCallTable[NUM_SYSCALLS];
 
@@ -20,7 +22,7 @@ static
 INT
 SystemCreateTask
     (
-        IN INT priority,
+        IN UINT priority,
         IN TASK_START_FUNC startFunc
     )
 {
@@ -97,7 +99,7 @@ SystemSendMessage
         IN PVOID reply,
         IN INT replyLength
     )
-{
+{    
     TASK_DESCRIPTOR* from = SchedulerGetCurrentTask();
     TASK_DESCRIPTOR* to;
     RT_STATUS status = TaskDescriptorGet(taskId, &to);
@@ -110,7 +112,7 @@ SystemSendMessage
     switch(status)
     {
         case STATUS_SUCCESS:
-            return status;
+            return ERROR_SUCCESS;
 
         case STATUS_INVALID_PARAMETER:
             return ERROR_INVALID_TASK;
@@ -180,6 +182,29 @@ SystemReplyMessage
     }
 }
 
+static
+INT
+SystemAwaitEvent
+    (
+        IN INTERRUPT_EVENT event
+    )
+{
+    RT_STATUS status = InterruptAwaitEvent(SchedulerGetCurrentTask(), event);
+
+    switch(status)
+    {
+        case STATUS_SUCCESS:
+            return ERROR_SUCCESS;
+
+        case STATUS_INVALID_PARAMETER:
+            return ERROR_INVALID_EVENT;
+
+        default:
+            ASSERT(FALSE, "Unknown await status");
+            return 0;
+    }
+}
+
 VOID
 SyscallInit
     (
@@ -194,4 +219,5 @@ SyscallInit
     g_systemCallTable[5] = (UINT) SystemSendMessage;
     g_systemCallTable[6] = (UINT) SystemReceiveMessage;
     g_systemCallTable[7] = (UINT) SystemReplyMessage;
+    g_systemCallTable[8] = (UINT) SystemAwaitEvent;
 }

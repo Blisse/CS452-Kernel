@@ -1,10 +1,9 @@
 #pragma once
 
-#include <rt.h>
-#include <rtos.h>
+#include "rt.h"
 
 VOID
-InitTask
+IdleTask
     (
         VOID
     );

@@ -40,3 +40,8 @@ Receive:
 Reply:
     swi 7
     bx lr
+
+.globl AwaitEvent
+AwaitEvent:
+    swi 8
+    bx lr

@@ -1,9 +1,10 @@
 #include "init.h"
 
-#include <rtos.h>
-
+#include "clockserver.h"
+#include "idle.h"
 #include "name_server.h"
-#include "rps.h"
+#include <rtosc/assert.h>
+
 
 VOID
 InitTask
@@ -11,9 +12,12 @@ InitTask
         VOID
     )
 {
-    // Name server MUST be created first, as its id is hard coded
-    Create(MEDIUM_PRIORITY, NameServerTask);
+    // The system idle task - nothing else can have this priority
+    Create(IDLE_PRIORITY, IdleTask);
 
-    // Start the game of rock-paper-scissors
-    RpsInit();
+    // Name server MUST be created now, as its id is hard coded
+    Create(NAME_SERVER_PRIORITY, NameServerTask);
+
+    // Now the clock server
+    Create(CLOCK_SERVER_PRIORITY, ClockServerTask);
 }

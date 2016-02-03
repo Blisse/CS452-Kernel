@@ -319,8 +319,7 @@ RpsInit
         VOID
     )
 {
-    // Start the game of rock-paper-scissors
-    Create(MEDIUM_PRIORITY, RpspServerTask);
-    Create(LOW_PRIORITY, RpspClientTask);
-    Create(LOW_PRIORITY, RpspClientTask);
+    Create(PRIORITY_17, RpsServerTask);
+    Create(PRIORITY_16, RpsClientTask);
+    Create(PRIORITY_16, RpsClientTask);
 }
