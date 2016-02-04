@@ -6,6 +6,7 @@ endfunction()
 add_c_test("${EXE_TEST_BUFFER}" "test_buffer_main.c" "${LIB_RTOSC}")
 add_c_test("${EXE_TEST_STRING}" "test_string_main.c" "${LIB_RTOSC}")
 add_c_test("${EXE_TEST_LINKED_LIST}" "test_linked_list_main.c" "${LIB_RTOSC}")
+add_c_test("${EXE_TEST_PRIORITY_QUEUE}" "test_priority_queue_main.c" "${LIB_RTOSC}")
 
 if (NOT LOCAL)
 

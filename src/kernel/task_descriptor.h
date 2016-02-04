@@ -65,7 +65,7 @@ TaskDescriptorGet
 
 inline
 RT_STATUS
-TaskDescriptorPriorityIsHigherOrEqualPriority
+TaskDescriptorPriorityIsHigherOrEqual
     (
         IN TASK_DESCRIPTOR* ta,
         IN TASK_DESCRIPTOR* tb

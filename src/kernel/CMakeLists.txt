@@ -6,7 +6,6 @@ set(SRC_KERNEL
     "ipc.c"
     "kernel.asm"
     "kernel.c"
-    "priority_queue.c"
     "scheduler.c"
     "stack.c"
     "syscall.c"

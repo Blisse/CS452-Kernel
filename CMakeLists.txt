@@ -35,6 +35,7 @@ set(EXE_TEST_BUFFER "tbuffer")
 set(EXE_TEST_LINKED_LIST "tlinkedlist")
 set(EXE_TEST_STRING "tstring")
 set(EXE_TEST_TASK_DESCRIPTOR "ttaskdescriptor")
+set(EXE_TEST_PRIORITY_QUEUE "tpriorityqueue")
 
 # includes
 include_directories(
