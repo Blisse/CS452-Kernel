@@ -11,7 +11,6 @@ typedef struct _RT_LINKED_LIST_NODE {
 } RT_LINKED_LIST_NODE;
 
 typedef struct _RT_LINKED_LIST {
-    UINT capacity;
     UINT size;
     RT_LINKED_LIST_NODE* head;
     RT_LINKED_LIST_NODE* tail;
@@ -20,8 +19,7 @@ typedef struct _RT_LINKED_LIST {
 VOID
 RtLinkedListInit
     (
-        IN RT_LINKED_LIST* list,
-        IN UINT capacity
+        IN RT_LINKED_LIST* list
     );
 
 RT_STATUS
@@ -97,13 +95,6 @@ RtLinkedListRemove
 inline
 BOOLEAN
 RtLinkedListIsEmpty
-    (
-        IN RT_LINKED_LIST* list
-    );
-
-inline
-BOOLEAN
-RtLinkedListIsFull
     (
         IN RT_LINKED_LIST* list
     );

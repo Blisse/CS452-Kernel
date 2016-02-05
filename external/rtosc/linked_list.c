@@ -5,11 +5,9 @@
 VOID
 RtLinkedListInit
     (
-        IN RT_LINKED_LIST* list,
-        IN UINT capacity
+        IN RT_LINKED_LIST* list
     )
 {
-    list->capacity = capacity;
     list->size = 0;
     list->head = NULL;
     list->tail = NULL;
@@ -44,29 +42,23 @@ RtLinkedListPushFront
 {
     RT_STATUS status = STATUS_SUCCESS;
 
-    if (!RtLinkedListIsFull(list))
+    if (RtLinkedListIsEmpty(list))
     {
-        if (RtLinkedListIsEmpty(list))
-        {
-            RtLinkedListpPushEmpty(list, node);
-        }
-        else
-        {
-            RT_LINKED_LIST_NODE* previousHead = list->head;
-
-            node->next = previousHead;
-            node->previous = NULL;
-
-            previousHead->previous = node;
-
-            list->head = node;
-            list->size = list->size + 1;
-        }
+        RtLinkedListpPushEmpty(list, node);
     }
     else
     {
-        status = STATUS_BUFFER_FULL;
+        RT_LINKED_LIST_NODE* previousHead = list->head;
+
+        node->next = previousHead;
+        node->previous = NULL;
+
+        previousHead->previous = node;
+
+        list->head = node;
+        list->size = list->size + 1;
     }
+
     return status;
 }
 
@@ -79,29 +71,23 @@ RtLinkedListPushBack
 {
     RT_STATUS status = STATUS_SUCCESS;
 
-    if (!RtLinkedListIsFull(list))
+    if (RtLinkedListIsEmpty(list))
     {
-        if (RtLinkedListIsEmpty(list))
-        {
-            RtLinkedListpPushEmpty(list, node);
-        }
-        else
-        {
-            RT_LINKED_LIST_NODE* previousTail = list->tail;
-
-            node->next = NULL;
-            node->previous = previousTail;
-
-            previousTail->next = node;
-
-            list->tail = node;
-            list->size = list->size + 1;
-        }
+        RtLinkedListpPushEmpty(list, node);
     }
     else
     {
-        status = STATUS_BUFFER_FULL;
+        RT_LINKED_LIST_NODE* previousTail = list->tail;
+
+        node->next = NULL;
+        node->previous = previousTail;
+
+        previousTail->next = node;
+
+        list->tail = node;
+        list->size = list->size + 1;
     }
+
     return status;
 }
 
@@ -285,41 +271,35 @@ RtLinkedListInsertBetween
 {
     RT_STATUS status = STATUS_SUCCESS;
 
-    if (!RtLinkedListIsFull(list))
+    if (RtLinkedListIsEmpty(list))
     {
-        if (RtLinkedListIsEmpty(list))
-        {
-            RtLinkedListpPushEmpty(list, node);
-        }
-        else if (after == list->head)
-        {
-            status = RtLinkedListPushFront(list, node);
-        }
-        else if (before == list->tail)
-        {
-            status = RtLinkedListPushBack(list, node);
-        }
-        else if (before != NULL && after != NULL)
-        {
-            ASSERT(before->next == after && after->previous == before, "Must insert between two valid nodes");
+        RtLinkedListpPushEmpty(list, node);
+    }
+    else if (after == list->head)
+    {
+        status = RtLinkedListPushFront(list, node);
+    }
+    else if (before == list->tail)
+    {
+        status = RtLinkedListPushBack(list, node);
+    }
+    else if (before != NULL && after != NULL)
+    {
+        ASSERT(before->next == after && after->previous == before, "Must insert between two valid nodes");
 
-            before->next = node;
-            node->next = after;
+        before->next = node;
+        node->next = after;
 
-            node->previous = before;
-            after->previous = node;
+        node->previous = before;
+        after->previous = node;
 
-            list->size = list->size + 1;
-        }
-        else
-        {
-            status = STATUS_NOT_FOUND;
-        }
+        list->size = list->size + 1;
     }
     else
     {
-        status = STATUS_BUFFER_FULL;
+        status = STATUS_NOT_FOUND;
     }
+
     return status;
 }
 
@@ -391,7 +371,6 @@ RtLinkedListRemove
     return status;
 }
 
-
 inline
 BOOLEAN
 RtLinkedListIsEmpty
@@ -400,14 +379,4 @@ RtLinkedListIsEmpty
     )
 {
     return (list->size == 0);
-}
-
-inline
-BOOLEAN
-RtLinkedListIsFull
-    (
-        IN RT_LINKED_LIST* list
-    )
-{
-    return (list->size == list->capacity);
 }
