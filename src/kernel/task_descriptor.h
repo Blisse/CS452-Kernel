@@ -1,7 +1,8 @@
 #pragma once
 
+#include <rt.h>
+#include <rtos.h>
 #include <rtosc/buffer.h>
-#include "rt.h"
 #include "stack.h"
 
 #define NUM_TASK_DESCRIPTORS 64
@@ -29,7 +30,7 @@ typedef struct _TASK_DESCRIPTOR {
     UINT* stackPointer;
     INT taskId;
     INT parentTaskId;
-    UINT priority;
+    TASK_PRIORITY priority;
     TASK_STATE state;
     RT_CIRCULAR_BUFFER mailbox;
     STACK* stack;    

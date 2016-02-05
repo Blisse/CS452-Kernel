@@ -3,7 +3,7 @@
 #include "rt.h"
 #include "rtos.h"
 
-#define NAME_SERVER_PRIORITY PRIORITY_28
+#define NAME_SERVER_PRIORITY Priority28
 
 VOID
 NameServerTask

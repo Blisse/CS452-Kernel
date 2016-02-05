@@ -18,7 +18,7 @@ inline
 RT_STATUS
 KernelCreateTask
     (
-        IN UINT priority,
+        IN TASK_PRIORITY priority,
         IN TASK_START_FUNC startFunc
     )
 {
@@ -45,7 +45,7 @@ KernelInit
     TaskInit();
     TrapInstallHandler();
 
-    VERIFY(RT_SUCCESS(KernelCreateTask(SYSTEM_PRIORITY, InitTask)),
+    VERIFY(RT_SUCCESS(KernelCreateTask(SystemPriority, InitTask)),
            "Failed to create the init task \r\n");
 }
 

@@ -26,7 +26,7 @@ ClockServerTask
     )
 {
     RegisterAs(CLOCK_SERVER_NAME);
-    Create(HIGHEST_PRIORITY, ClockNotifierTask);
+    Create(HighestPriority, ClockNotifierTask);
     Receive(NULL, NULL, 0);
 }
 

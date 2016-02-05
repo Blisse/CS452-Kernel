@@ -12,7 +12,7 @@ InitTask
     )
 {
     // The system idle task - nothing else can have this priority
-    Create(IDLE_PRIORITY, IdleTask);
+    Create(IdlePriority, IdleTask);
 
     // Name server MUST be created now, as its id is hard coded
     Create(NAME_SERVER_PRIORITY, NameServerTask);

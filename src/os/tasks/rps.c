@@ -319,7 +319,7 @@ RpsInit
         VOID
     )
 {
-    Create(PRIORITY_17, RpspServerTask);
-    Create(PRIORITY_16, RpspClientTask);
-    Create(PRIORITY_16, RpspClientTask);
+    Create(Priority17, RpspServerTask);
+    Create(Priority16, RpspClientTask);
+    Create(Priority16, RpspClientTask);
 }

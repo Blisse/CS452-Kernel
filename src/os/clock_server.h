@@ -3,7 +3,7 @@
 #include "rt.h"
 #include "rtos.h"
 
-#define CLOCK_SERVER_PRIORITY PRIORITY_29
+#define CLOCK_SERVER_PRIORITY Priority29
 
 VOID
 ClockServerTask

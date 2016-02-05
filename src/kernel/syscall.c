@@ -22,7 +22,7 @@ static
 INT
 SystemCreateTask
     (
-        IN UINT priority,
+        IN TASK_PRIORITY priority,
         IN TASK_START_FUNC startFunc
     )
 {

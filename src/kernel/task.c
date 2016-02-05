@@ -32,7 +32,7 @@ inline
 BOOLEAN
 TaskpIsPriorityValid
     (
-        IN UINT priority
+        IN TASK_PRIORITY priority
     )
 {
     // Check to see if priority is a power of 2
@@ -64,7 +64,7 @@ RT_STATUS
 TaskCreate
     (
         IN TASK_DESCRIPTOR* parent,
-        IN UINT priority,
+        IN TASK_PRIORITY priority,
         IN TASK_START_FUNC startFunc,
         OUT TASK_DESCRIPTOR** td
     )
