@@ -31,7 +31,7 @@ SystemCreateTask
                                   priority,
                                   startFunc,
                                   &td);
-    
+
     switch(status)
     {
         case STATUS_SUCCESS:

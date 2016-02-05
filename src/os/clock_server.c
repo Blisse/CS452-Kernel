@@ -7,7 +7,7 @@
 
 static
 VOID
-ClockNotifierTask
+ClockNotifierpTask
     (
         VOID
     )
@@ -19,15 +19,25 @@ ClockNotifierTask
     }
 }
 
+static
 VOID
-ClockServerTask
+ClockServerpTask
     (
         VOID
     )
 {
     RegisterAs(CLOCK_SERVER_NAME);
-    Create(HighestPriority, ClockNotifierTask);
+    Create(HighestPriority, ClockNotifierpTask);
     Receive(NULL, NULL, 0);
+}
+
+VOID
+ClockServerCreateTask
+    (
+        VOID
+    )
+{
+    Create(Priority29, ClockServerpTask);
 }
 
 INT

@@ -11,12 +11,9 @@ InitTask
         VOID
     )
 {
-    // The system idle task - nothing else can have this priority
-    Create(IdlePriority, IdleTask);
+    IdleCreateTask();
 
-    // Name server MUST be created now, as its id is hard coded
-    Create(NAME_SERVER_PRIORITY, NameServerTask);
+    NameServerCreateTask();
 
-    // Now the clock server
-    Create(CLOCK_SERVER_PRIORITY, ClockServerTask);
+    ClockServerCreateTask();
 }

@@ -1,16 +1,77 @@
 #include "idle.h"
 
 #include <bwio/bwio.h>
+#include <rtos.h>
+#include <rtosc/assert.h>
 
+static BOOLEAN g_running;
+
+inline
 VOID
-IdleTask
+IdleInit
     (
         VOID
     )
 {
-    // TODO - Measure system performance
-    while(1) 
+    g_running = FALSE;
+}
+
+inline
+VOID
+IdleExit
+    (
+        VOID
+    )
+{
+    g_running = FALSE;
+}
+
+static
+inline
+BOOLEAN
+IdlepIsRunning
+    (
+        VOID
+    )
+{
+    return g_running;
+}
+
+static
+VOID
+IdlepTask
+    (
+        VOID
+    )
+{
+    while(IdlepIsRunning())
     {
         bwprintf(BWCOM2, "IDLE\r\n");
     }
+}
+
+static
+inline
+VOID
+IdlepStart
+    (
+        VOID
+    )
+{
+    g_running = TRUE;
+}
+
+VOID
+IdleCreateTask
+    (
+        VOID
+    )
+{
+    VERIFY(!IdlepIsRunning(), "Only one idle task may exist at any time.");
+
+    IdlepStart();
+
+    INT taskId = Create(IdlePriority, IdlepTask);
+
+    VERIFY(taskId == 1, "Idle task must be first created task.");
 }

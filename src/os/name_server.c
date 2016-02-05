@@ -132,7 +132,7 @@ NameServerpFind
 }
 
 VOID
-NameServerTask
+NameServerpTask
     (
         VOID
     )
@@ -179,6 +179,17 @@ NameServerTask
 
         Reply(senderTaskId, &response, sizeof(response));
     }
+}
+
+VOID
+NameServerCreateTask
+    (
+        VOID
+    )
+{
+    INT taskId = Create(Priority29, NameServerpTask);
+
+    VERIFY(taskId == NAME_SERVER_TID, "Name server created with invalid task id.");
 }
 
 static

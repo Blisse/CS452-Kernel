@@ -15,7 +15,6 @@ main
     bwprintf(BWCOM2, "\r\n");
 
     // Run the kernel
-    KernelInit();
     KernelRun();
 
     return STATUS_SUCCESS;
