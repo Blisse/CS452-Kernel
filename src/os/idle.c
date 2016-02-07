@@ -46,7 +46,7 @@ IdlepTask
 {
     while(IdlepIsRunning())
     {
-        bwprintf(BWCOM2, ".");
+        Pass();
     }
 }
 
