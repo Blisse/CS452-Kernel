@@ -32,7 +32,7 @@ static
 VOID
 InterruptSignalEvent
     (
-        IN INTERRUPT_EVENT event, 
+        IN EVENT event,
         IN INT returnValue
     )
 {
@@ -51,7 +51,7 @@ inline
 BOOLEAN
 InterruptIsValidEvent
     (
-        IN INTERRUPT_EVENT event
+        IN EVENT event
     )
 {
     return ClockEvent <= event && event < NumEvent;
@@ -62,7 +62,7 @@ inline
 BOOLEAN
 InterruptIsEventAvailable
     (
-        IN INTERRUPT_EVENT event
+        IN EVENT event
     )
 {
     return g_eventHandlers[event] == NULL;
@@ -71,8 +71,8 @@ InterruptIsEventAvailable
 RT_STATUS
 InterruptAwaitEvent
     (
-        IN TASK_DESCRIPTOR* td, 
-        IN INTERRUPT_EVENT event
+        IN TASK_DESCRIPTOR* td,
+        IN EVENT event
     )
 {
     if(InterruptIsValidEvent(event))

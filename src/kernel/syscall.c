@@ -186,7 +186,7 @@ static
 INT
 SystemAwaitEvent
     (
-        IN INTERRUPT_EVENT event
+        IN EVENT event
     )
 {
     RT_STATUS status = InterruptAwaitEvent(SchedulerGetCurrentTask(), event);

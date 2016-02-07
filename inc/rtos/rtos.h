@@ -116,11 +116,15 @@ Reply
  *          EVENT API               *
  ************************************/
 
-#define EVENT_CLOCK 0
+typedef enum _EVENT
+{
+    ClockEvent = 0,
+    NumEvent
+} EVENT;
 
  extern
  INT
  AwaitEvent
     (
-        INT eventType
+        EVENT event
     );
