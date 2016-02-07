@@ -3,6 +3,7 @@
 #include <rt.h>
 #include <rtos.h>
 #include <rtosc/buffer.h>
+#include <rtosc/linked_list.h>
 #include "stack.h"
 
 #define NUM_TASK_DESCRIPTORS 64
@@ -33,7 +34,8 @@ typedef struct _TASK_DESCRIPTOR {
     TASK_PRIORITY priority;
     TASK_STATE state;
     RT_CIRCULAR_BUFFER mailbox;
-    STACK* stack;    
+    STACK* stack;
+    RT_LINKED_LIST_NODE delayRequestNode;
 } TASK_DESCRIPTOR;
 
 RT_STATUS

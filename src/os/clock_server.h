@@ -1,7 +1,7 @@
 #pragma once
 
-#include "rt.h"
-#include "rtos.h"
+#include <rt.h>
+#include <rtos.h>
 
 VOID
 ClockServerCreateTask
