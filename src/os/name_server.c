@@ -187,9 +187,9 @@ NameServerCreateTask
         VOID
     )
 {
-    INT taskId = Create(Priority29, NameServerpTask);
-
-    VERIFY(taskId == NAME_SERVER_TID, "Name server created with invalid task id.");
+    INT nameServerTaskId = Create(Priority29, NameServerpTask);
+    ASSERT(nameServerTaskId == NAME_SERVER_TID, "Name server created with invalid task id.");
+    UNREFERENCED_PARAMETER(nameServerTaskId);
 }
 
 static

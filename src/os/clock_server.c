@@ -214,7 +214,9 @@ ClockServerpTask
 
     RegisterAs(CLOCK_SERVER_NAME);
 
-    VERIFY(Create(HighestPriority, ClockNotifierpTask) > 0, "Could not create clock notifier task.");
+    INT clockNotifierTaskId = Create(HighestPriority, ClockNotifierpTask);
+    ASSERT(clockNotifierTaskId > 0, "Could not create clock notifier task.");
+    UNREFERENCED_PARAMETER(clockNotifierTaskId);
 
     while (1)
     {
@@ -250,7 +252,9 @@ ClockServerCreateTask
         VOID
     )
 {
-    VERIFY(Create(Priority29, ClockServerpTask) > 0, "Could not create clock server task.");
+    INT clockServerTaskId = Create(Priority29, ClockServerpTask);
+    ASSERT(clockServerTaskId > 0, "Could not create clock server task.");
+    UNREFERENCED_PARAMETER(clockServerTaskId);
 }
 
 static

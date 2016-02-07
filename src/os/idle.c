@@ -71,7 +71,7 @@ IdleCreateTask
 
     IdlepStart();
 
-    INT taskId = Create(IdlePriority, IdlepTask);
-
-    VERIFY(taskId == 1, "Idle task must be first created task.");
+    INT idleTaskId = Create(IdlePriority, IdlepTask);
+    ASSERT(idleTaskId == 1, "Idle task must be first created task.");
+    UNREFERENCED_PARAMETER(idleTaskId);
 }
