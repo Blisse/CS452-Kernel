@@ -3,6 +3,8 @@
 #include <rt.h>
 #include <rtos.h>
 
+#define CLOCK_SERVER_NAME "clk"
+
 VOID
 ClockServerCreateTask
     (

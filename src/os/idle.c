@@ -46,7 +46,7 @@ IdlepTask
 {
     while(IdlepIsRunning())
     {
-        bwprintf(BWCOM2, "IDLE\r\n");
+        bwprintf(BWCOM2, ".");
     }
 }
 

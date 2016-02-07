@@ -8,28 +8,25 @@
 #include "scheduler.h"
 #include "task_descriptor.h"
 
-#define CLOCK_SERVER_NAME "clk"
-
 static volatile UINT g_ticks;
 
 typedef enum _CLOCK_SERVER_REQUEST_TYPE
 {
-    NotifyTickRequest = 0,
+    TickRequest = 0,
     DelayRequest,
-    TickRequest,
+    TimeRequest,
     DelayUntilRequest,
 } CLOCK_SERVER_REQUEST_TYPE;
 
 typedef struct _CLOCK_SERVER_REQUEST
 {
     CLOCK_SERVER_REQUEST_TYPE type;
-    TASK_DESCRIPTOR* td;
     INT ticks;
 } CLOCK_SERVER_REQUEST;
 
 typedef struct _CLOCK_SERVER_DELAY_REQUEST
 {
-    TASK_DESCRIPTOR* td;
+    INT taskId;
     UINT delayUntilTick;
 } CLOCK_SERVER_DELAY_REQUEST;
 
@@ -44,7 +41,7 @@ ClockServerpResetDelayRequest
         CLOCK_SERVER_DELAY_REQUEST* delayRequest
     )
 {
-    delayRequest->td = NULL;
+    delayRequest->taskId = -1;
     delayRequest->delayUntilTick = 0;
 }
 
@@ -74,24 +71,48 @@ ClockNotifierpTask
     )
 {
     INT clockServerTaskId = WhoIs(CLOCK_SERVER_NAME);
+    CLOCK_SERVER_REQUEST notifyRequest = { TickRequest };
 
     while(1)
     {
         AwaitEvent(ClockEvent);
-
-        Send(clockServerTaskId, NULL, 0, NULL, 0);
+        Send(clockServerTaskId, &notifyRequest, sizeof(notifyRequest), NULL, 0);
     }
 }
 
 static
 inline
 CLOCK_SERVER_DELAY_REQUEST*
-ClockServerpGetDelayStatus
+ClockServerpGetDelayRequest
     (
         RT_LINKED_LIST_NODE* delayRequestNode
     )
 {
     return ((CLOCK_SERVER_DELAY_REQUEST*) delayRequestNode->data);
+}
+
+static
+BOOLEAN
+ClockServerpCanUnblockFrontDelayedTask
+    (
+        VOID
+    )
+{
+    RT_LINKED_LIST_NODE* head;
+
+    if (RT_SUCCESS(RtLinkedListPeekFront(&g_delayedTasks, &head)))
+    {
+        CLOCK_SERVER_DELAY_REQUEST* headDelayRequest = ClockServerpGetDelayRequest(head);
+
+        ASSERT(headDelayRequest != NULL, "Should not have null delay request.");
+
+        if (headDelayRequest->delayUntilTick <= g_ticks)
+        {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
 }
 
 static
@@ -101,18 +122,19 @@ ClockServerpUnblockAllDelayedTasks
         VOID
     )
 {
-    RT_LINKED_LIST_NODE* head;
-    while (RT_SUCCESS(RtLinkedListPeekFront(&g_delayedTasks, &head)
-        && ClockServerpGetDelayStatus(head)->delayUntilTick <= g_ticks))
+    while (ClockServerpCanUnblockFrontDelayedTask())
     {
-        Reply(ClockServerpGetDelayStatus(head)->td->taskId, NULL, 0);
-        RtLinkedListPopFront(&g_delayedTasks);
+        RT_LINKED_LIST_NODE* head;
+        VERIFY(RT_SUCCESS(RtLinkedListPeekAndPopFront(&g_delayedTasks, &head)), "Should be able to peek and pop front.");
+
+        CLOCK_SERVER_DELAY_REQUEST* delayRequest = ClockServerpGetDelayRequest(head);
+        Reply(delayRequest->taskId, NULL, 0);
     }
 }
 
 static
 VOID
-ClockServerpReplyNotifyTick
+ClockServerpUpdateTick
     (
         INT notifierTaskId
     )
@@ -133,8 +155,8 @@ ClockServerpIsDelayedLess
         RT_LINKED_LIST_NODE* b
     )
 {
-    return ClockServerpGetDelayStatus(a)->delayUntilTick
-        < ClockServerpGetDelayStatus(b)->delayUntilTick;
+    return ClockServerpGetDelayRequest(a)->delayUntilTick
+        < ClockServerpGetDelayRequest(b)->delayUntilTick;
 }
 
 static
@@ -176,14 +198,19 @@ static
 VOID
 ClockServerpDelayTask
     (
-        TASK_DESCRIPTOR* td,
+        INT taskId,
         UINT delayUntilTick
     )
 {
+    TASK_DESCRIPTOR* td;
+
+    VERIFY(RT_SUCCESS(TaskDescriptorGet(taskId, &td)), "Invalid task id.");
+
     ASSERT(td->state == ReplyBlockedState, "Task to delay must be reply-blocked.");
 
-    CLOCK_SERVER_DELAY_REQUEST* delayRequest = &g_delayRequests[td->taskId % NUM_TASK_DESCRIPTORS];
-    delayRequest->td = td;
+    CLOCK_SERVER_DELAY_REQUEST* delayRequest = &g_delayRequests[taskId % NUM_TASK_DESCRIPTORS];
+
+    delayRequest->taskId = taskId;
     delayRequest->delayUntilTick = delayUntilTick;
 
     td->delayRequestNode.data = delayRequest;
@@ -227,17 +254,17 @@ ClockServerpTask
 
         switch (request.type)
         {
-            case NotifyTickRequest:
-                ClockServerpReplyNotifyTick(request.td->taskId);
+            case TickRequest:
+                ClockServerpUpdateTick(taskId);
                 break;
             case DelayRequest:
-                ClockServerpDelayTask(request.td, g_ticks + request.ticks);
+                ClockServerpDelayTask(taskId, g_ticks + request.ticks);
                 break;
-            case TickRequest:
-                ClockServerpReplyTicks(request.td->taskId);
+            case TimeRequest:
+                ClockServerpReplyTicks(taskId);
                 break;
             case DelayUntilRequest:
-                ClockServerpDelayTask(request.td, request.ticks);
+                ClockServerpDelayTask(taskId, request.ticks);
                 break;
             default:
                 ASSERT(FALSE, "Received invalid clock server request type.");
@@ -282,7 +309,7 @@ Delay
         INT ticks
     )
 {
-    CLOCK_SERVER_REQUEST request = { DelayRequest, SchedulerGetCurrentTask(), ticks };
+    CLOCK_SERVER_REQUEST request = { DelayRequest, ticks };
     return ClockServerSendRequest(&request);
 }
 
@@ -292,7 +319,7 @@ Time
         VOID
     )
 {
-    CLOCK_SERVER_REQUEST request = { TickRequest, SchedulerGetCurrentTask() };
+    CLOCK_SERVER_REQUEST request = { TimeRequest };
     return ClockServerSendRequest(&request);
 }
 
@@ -302,6 +329,6 @@ DelayUntil
         INT ticks
     )
 {
-    CLOCK_SERVER_REQUEST request = { DelayUntilRequest, SchedulerGetCurrentTask(), ticks };
+    CLOCK_SERVER_REQUEST request = { DelayUntilRequest, ticks };
     return ClockServerSendRequest(&request);
 }

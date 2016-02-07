@@ -115,7 +115,6 @@ TaskDestroy
     )
 {
     td->state = ZombieState;
-    DelayUntil(0);
     IpcDrainMailbox(td);
     VERIFY(RT_SUCCESS(StackDeallocate(td->stack)), "Failed to destroy task's stack \r\n");
     VERIFY(RT_SUCCESS(TaskDescriptorDeallocate(td)), "Failed to destroy task descriptor \r\n");
