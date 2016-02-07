@@ -295,7 +295,7 @@ ClockServerSendRequest
 
     INT response = 0;
 
-    if (RT_SUCCESS(Send(clockServerTaskId, &request, sizeof(request), &response, sizeof(response))))
+    if (RT_SUCCESS(Send(clockServerTaskId, request, sizeof(*request), &response, sizeof(response))))
     {
         return response;
     }
