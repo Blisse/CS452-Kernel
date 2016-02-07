@@ -1,3 +1,5 @@
+set(EXE_RTOS "rtos.elf")
+
 set(SRC_KERNEL
     "arm.asm"
     "cache.asm"

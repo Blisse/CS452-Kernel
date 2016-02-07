@@ -1,3 +1,10 @@
+set(EXE_TEST_SCHEDULER "tscheduler")
+set(EXE_TEST_BUFFER "tbuffer")
+set(EXE_TEST_LINKED_LIST "tlinkedlist")
+set(EXE_TEST_STRING "tstring")
+set(EXE_TEST_TASK_DESCRIPTOR "ttaskdescriptor")
+set(EXE_TEST_PRIORITY_QUEUE "tpriorityqueue")
+
 function(add_c_test TEST_NAME TEST_MAIN TEST_DEPENDENCIES)
     add_c_executable(${TEST_NAME} "${TEST_MAIN}" "${TEST_DEPENDENCIES}")
     add_test(NAME ${TEST_NAME} COMMAND $<TARGET_FILE:${TEST_NAME}>)
