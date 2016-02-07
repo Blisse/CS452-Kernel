@@ -30,7 +30,7 @@ static TASK_DESCRIPTOR* g_eventHandlers[NumEvent];
 
 static
 VOID
-InterruptSignalEvent
+InterruptpSignalEvent
     (
         IN EVENT event,
         IN INT returnValue
@@ -49,7 +49,7 @@ InterruptSignalEvent
 static
 inline
 BOOLEAN
-InterruptIsValidEvent
+InterruptpIsValidEvent
     (
         IN EVENT event
     )
@@ -60,7 +60,7 @@ InterruptIsValidEvent
 static
 inline
 BOOLEAN
-InterruptIsEventAvailable
+InterruptpIsEventAvailable
     (
         IN EVENT event
     )
@@ -75,9 +75,9 @@ InterruptAwaitEvent
         IN EVENT event
     )
 {
-    if(InterruptIsValidEvent(event))
+    if(InterruptpIsValidEvent(event))
     {
-        if(InterruptIsEventAvailable(event))
+        if(InterruptpIsEventAvailable(event))
         {
             g_eventHandlers[event] = td;
             td->state = EventBlockedState;
@@ -99,7 +99,7 @@ InterruptAwaitEvent
 static
 inline
 VOID
-InterruptHandleClock
+InterruptpHandleClock
     (
         VOID
     )
@@ -108,7 +108,7 @@ InterruptHandleClock
     *TIMER_CLEAR(TIMER2_BASE) = TRUE;
 
     // Handle the interrupt
-    InterruptSignalEvent(ClockEvent, STATUS_SUCCESS);
+    InterruptpSignalEvent(ClockEvent, STATUS_SUCCESS);
 }
 
 VOID
@@ -121,7 +121,7 @@ InterruptHandler
 
     if(status & TC2IO_MASK)
     {
-        InterruptHandleClock();
+        InterruptpHandleClock();
     }
     else
     {
@@ -132,7 +132,7 @@ InterruptHandler
 static
 inline
 VOID
-InterruptSetupTimer
+InterruptpSetupTimer
     (
         VOID
     )
@@ -171,7 +171,7 @@ InterruptEnable
         VOID
     )
 {
-    InterruptSetupTimer();
+    InterruptpSetupTimer();
 }
 
 VOID
