@@ -166,29 +166,29 @@ ClockServerpDelayRequestNode
         RT_LINKED_LIST_NODE* delayRequestNode
     )
 {
-
     RT_LINKED_LIST_NODE* current;
 
-    RtLinkedListPeekFront(&g_delayedTasks, &current);
+    RT_STATUS status = RtLinkedListPeekFront(&g_delayedTasks, &current);
 
-    while (current != NULL && ClockServerpIsDelayedLess(delayRequestNode, current))
+    if (RT_SUCCESS(status))
     {
-        current = current->next;
+        while (current != NULL && ClockServerpIsDelayedLess(current, delayRequestNode))
+        {
+            current = current->next;
+        }
+
     }
 
-    RT_STATUS status = STATUS_FAILURE;
-
-    if (current == NULL)
+    if (current != NULL)
     {
-        // No other task is delayed less (or there are no tasks)
-        status = RtLinkedListPushBack(&g_delayedTasks, delayRequestNode);
+        status = RtLinkedListInsertBetween(&g_delayedTasks,
+                                   current->previous,
+                                   current,
+                                   delayRequestNode);
     }
     else
     {
-        status = RtLinkedListInsertBetween(&g_delayedTasks,
-                                           current->previous,
-                                           current,
-                                           delayRequestNode);
+        status = RtLinkedListPushBack(&g_delayedTasks, delayRequestNode);
     }
 
     ASSERT(RT_SUCCESS(status), "Could not delay request node.");
