@@ -38,6 +38,8 @@ InterruptpSignalEvent
 {
     TASK_DESCRIPTOR* handler = g_eventHandlers[event];
 
+    ASSERT(handler != NULL, "No tasks blocked waiting on this event.");
+
     // Unblock the handler
     handler->state = ReadyState;
     TaskSetReturnValue(handler, returnValue);
