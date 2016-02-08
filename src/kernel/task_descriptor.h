@@ -7,7 +7,6 @@
 #include "stack.h"
 
 #define NUM_TASK_DESCRIPTORS 64
-#define NUM_PRIORITY 32
 
 typedef
 VOID

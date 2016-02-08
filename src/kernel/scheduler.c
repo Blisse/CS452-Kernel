@@ -1,13 +1,14 @@
 #include "scheduler.h"
 
 #include <rtosc/priority_queue.h>
+#include <rtos.h>
 
 #include "task_descriptor.h"
 
 static TASK_DESCRIPTOR* g_currentTd;
 
-static TASK_DESCRIPTOR* g_taskDescriptorsPriorityQueueData[NUM_PRIORITY][NUM_TASK_DESCRIPTORS];
-static RT_CIRCULAR_BUFFER g_taskDescriptorPriorityQueueBuffer[NUM_PRIORITY];
+static TASK_DESCRIPTOR* g_taskDescriptorsPriorityQueueData[NumPriority][NUM_TASK_DESCRIPTORS];
+static RT_CIRCULAR_BUFFER g_taskDescriptorPriorityQueueBuffer[NumPriority];
 static RT_PRIORITY_QUEUE g_taskDescriptorPriorityQueue;
 
 VOID
@@ -22,7 +23,7 @@ SchedulerInit
                         g_taskDescriptorsPriorityQueueData,
                         g_taskDescriptorPriorityQueueBuffer,
                         sizeof(TASK_DESCRIPTOR*),
-                        NUM_PRIORITY,
+                        NumPriority,
                         NUM_TASK_DESCRIPTORS
                         );
 }
