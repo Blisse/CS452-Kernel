@@ -45,3 +45,8 @@ Reply:
 AwaitEvent:
     swi 8
     bx lr
+
+.globl QueryPerformance
+QueryPerformance:
+    swi 9
+    bx lr

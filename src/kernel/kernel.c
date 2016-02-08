@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "idle.h"
 #include "interrupt.h"
+#include "performance.h"
 #include "scheduler.h"
 #include "syscall.h"
 #include "trap.h"
@@ -41,6 +42,7 @@ KernelpInit
     CacheInit();
     IdleInit();
     InterruptInit();
+    PerformanceInit();
     SchedulerInit();
     SyscallInit();
     TaskInit();
@@ -94,8 +96,10 @@ KernelRun
 
             nextTd->state = RunningState;
 
+            PerformanceEnterTask();
             // Return to user mode
             KernelLeave(nextTd->stackPointer);
+            PerformanceExitTask(nextTd->taskId);
 
             // The task may have transitioned to a new state
             // due to interrupts, Exit(), etc.  Don't update

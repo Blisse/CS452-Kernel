@@ -8,6 +8,7 @@ set(SRC_KERNEL
     "ipc.c"
     "kernel.asm"
     "kernel.c"
+    "performance.c"
     "scheduler.c"
     "stack.c"
     "syscall.c"

@@ -123,9 +123,25 @@ typedef enum _EVENT
     NumEvent
 } EVENT;
 
- extern
- INT
- AwaitEvent
+extern
+INT
+AwaitEvent
     (
         EVENT event
+    );
+
+/************************************
+ *       PERFORMANCE API            *
+ ************************************/
+
+typedef struct _TASK_PERFORMANCE {
+    UINT activeTicks;
+} TASK_PERFORMANCE;
+
+extern
+INT
+QueryPerformance
+    (
+        IN INT taskId,
+        OUT TASK_PERFORMANCE* performance
     );

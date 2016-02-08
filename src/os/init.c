@@ -12,6 +12,41 @@ typedef struct _CLOCK_CLIENT_DELAY_REQUEST
     INT repeat;
 } CLOCK_CLIENT_DELAY_REQUEST;
 
+#define NUM_TASKS 10
+
+static
+VOID
+UserPerformanceTask
+    (
+        VOID
+    )
+{
+    DelayUntil(300);
+
+    bwprintf(BWCOM2, "\r\n");
+    bwprintf(BWCOM2, "--PERFORMANCE--\r\n");
+    bwprintf(BWCOM2, "TASK\t%%active\r\n");
+
+    TASK_PERFORMANCE performanceCounters[NUM_TASKS];
+    UINT i;
+    UINT totalTime = 0;
+    for (i = 0; i < NUM_TASKS; i++)
+    {
+        QueryPerformance(i, &performanceCounters[i]);
+        totalTime += performanceCounters[i].activeTicks;
+    }
+
+    for (i = 0; i < NUM_TASKS; i++)
+    {
+        UINT ticks = performanceCounters[i].activeTicks;
+        UINT percent = ticks * 10000 / totalTime;
+
+        bwprintf(BWCOM2, "%d\t%u.%u\r\n", i, percent / 100, percent % 100);
+    }
+
+    IdleExit();
+}
+
 static
 VOID
 UserClientTask
@@ -29,7 +64,7 @@ UserClientTask
     for (i = 0; i < request.repeat; i++)
     {
         Delay(request.delay);
-        bwprintf(BWCOM2, "%d %d %d/%d\r\n", taskId, request.delay, i+1, request.repeat);
+        bwprintf(BWCOM2, "%d\t%d\t%d/%d\r\n", taskId, request.delay, i+1, request.repeat);
     }
 }
 
@@ -63,6 +98,8 @@ UserTask
 
     CLOCK_CLIENT_DELAY_REQUEST priority6Request = { 71, 3 };
     Reply(priority6TaskId, &priority6Request, sizeof(priority6Request));
+
+    bwprintf(BWCOM2, "TASK\tDELAY\tITERATION\r\n");
 }
 
 VOID
@@ -78,4 +115,6 @@ InitTask
     ClockServerCreateTask();
 
     UserTask();
+
+    Create(Priority10, UserPerformanceTask);
 }
