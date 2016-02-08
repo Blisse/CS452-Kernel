@@ -38,14 +38,15 @@ InterruptpSignalEvent
 {
     TASK_DESCRIPTOR* handler = g_eventHandlers[event];
 
-    ASSERT(handler != NULL, "No tasks blocked waiting on this event.");
+    if (handler != NULL)
+    {
+        // Unblock the handler
+        handler->state = ReadyState;
+        TaskSetReturnValue(handler, returnValue);
+        SchedulerAddTask(handler);
 
-    // Unblock the handler
-    handler->state = ReadyState;
-    TaskSetReturnValue(handler, returnValue);
-    SchedulerAddTask(handler);
-
-    g_eventHandlers[event] = NULL;
+        g_eventHandlers[event] = NULL;
+    }
 }
 
 static
