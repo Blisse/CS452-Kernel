@@ -3,17 +3,7 @@
 #include <rt.h>
 #include <rtos.h>
 #include <rtosc/buffer.h>
-#include <rtosc/linked_list.h>
 #include "stack.h"
-
-#define NUM_TASK_DESCRIPTORS 64
-
-typedef
-VOID
-(*TASK_START_FUNC)
-    (
-        VOID
-    );
 
 typedef enum _TASK_STATE
 {
@@ -34,7 +24,6 @@ typedef struct _TASK_DESCRIPTOR {
     TASK_STATE state;
     RT_CIRCULAR_BUFFER mailbox;
     STACK* stack;
-    RT_LINKED_LIST_NODE delayRequestNode;
 } TASK_DESCRIPTOR;
 
 RT_STATUS

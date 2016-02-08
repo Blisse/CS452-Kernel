@@ -1,10 +1,9 @@
 #include "idle.h"
 
-#include <bwio/bwio.h>
 #include <rtos.h>
 #include <rtosc/assert.h>
 
-static BOOLEAN g_running;
+static volatile BOOLEAN g_running;
 
 inline
 VOID
@@ -44,10 +43,7 @@ IdlepTask
         VOID
     )
 {
-    while(IdlepIsRunning())
-    {
-        Pass();
-    }
+    while(IdlepIsRunning()) {  }
 }
 
 static

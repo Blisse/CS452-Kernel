@@ -5,7 +5,7 @@
 
 #define ERROR_TRANSACTION_NOT_FINISHED -3
 
-#define MAILBOX_SIZE NUM_TASK_DESCRIPTORS
+#define MAILBOX_SIZE NUM_TASKS
 
 typedef struct _PENDING_MESSAGE 
 {
@@ -21,7 +21,7 @@ typedef struct _PENDING_RECEIVE
     INT bufferLength;
 } PENDING_RECEIVE;
 
-static PENDING_MESSAGE g_mailboxes[NUM_TASK_DESCRIPTORS][MAILBOX_SIZE];
+static PENDING_MESSAGE g_mailboxes[NUM_TASKS][MAILBOX_SIZE];
 
 inline
 VOID
@@ -31,7 +31,7 @@ IpcInitializeMailbox
     )
 {
     RtCircularBufferInit(&td->mailbox,
-                         g_mailboxes[td->taskId % NUM_TASK_DESCRIPTORS], 
+                         g_mailboxes[td->taskId % NUM_TASKS], 
                          MAILBOX_SIZE);
 }
 

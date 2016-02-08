@@ -8,6 +8,8 @@
  *          TASK API                *
  ************************************/
 
+#define NUM_TASKS 64
+
 typedef enum _TASK_PRIORITY {
     IdlePriority = 0x1,
     LowestPriority = 0x2,
@@ -44,12 +46,19 @@ typedef enum _TASK_PRIORITY {
     NumPriority = 33
 } TASK_PRIORITY;
 
+typedef
+VOID
+(*TASK_START_FUNC)
+    (
+        VOID
+    );
+
 extern
 INT
 Create
     (
         IN TASK_PRIORITY priority,
-        IN VOID (*code)()
+        IN TASK_START_FUNC code
     );
 
 extern

@@ -1,14 +1,9 @@
 #include "clock_server.h"
 
-#include <bwio/bwio.h>
-#include <rtosc/linked_list.h>
 #include <rtosc/assert.h>
+#include <rtosc/linked_list.h>
 
 #include "name_server.h"
-#include "scheduler.h"
-#include "task_descriptor.h"
-
-static volatile UINT g_ticks;
 
 typedef enum _CLOCK_SERVER_REQUEST_TYPE
 {
@@ -26,42 +21,16 @@ typedef struct _CLOCK_SERVER_REQUEST
 
 typedef struct _CLOCK_SERVER_DELAY_REQUEST
 {
+    RT_LINKED_LIST_NODE node;
     INT taskId;
     UINT delayUntilTick;
 } CLOCK_SERVER_DELAY_REQUEST;
 
+#define NODE_TO_DELAY_REQUEST(node) (container_of(node, CLOCK_SERVER_DELAY_REQUEST, node))
+
+static UINT g_ticks;
 static RT_LINKED_LIST g_delayedTasks;
-static CLOCK_SERVER_DELAY_REQUEST g_delayRequests[NUM_TASK_DESCRIPTORS];
-
-static
-inline
-VOID
-ClockServerpResetDelayRequest
-    (
-        CLOCK_SERVER_DELAY_REQUEST* delayRequest
-    )
-{
-    delayRequest->taskId = -1;
-    delayRequest->delayUntilTick = 0;
-}
-
-static
-VOID
-ClockServerpInit
-    (
-        VOID
-    )
-{
-    g_ticks = 0;
-
-    RtLinkedListInit(&g_delayedTasks);
-
-    UINT i;
-    for (i = 0; i < NUM_TASK_DESCRIPTORS; i++)
-    {
-        ClockServerpResetDelayRequest(&g_delayRequests[i]);
-    }
-}
+static CLOCK_SERVER_DELAY_REQUEST g_delayRequests[NUM_TASKS];
 
 static
 VOID
@@ -81,55 +50,48 @@ ClockNotifierpTask
 }
 
 static
-inline
-CLOCK_SERVER_DELAY_REQUEST*
-ClockServerpGetDelayRequest
-    (
-        RT_LINKED_LIST_NODE* delayRequestNode
-    )
-{
-    return ((CLOCK_SERVER_DELAY_REQUEST*) delayRequestNode->data);
-}
-
-static
-BOOLEAN
-ClockServerpCanUnblockFrontDelayedTask
+VOID
+ClockServerpInit
     (
         VOID
     )
 {
-    RT_LINKED_LIST_NODE* head;
-
-    if (RT_SUCCESS(RtLinkedListPeekFront(&g_delayedTasks, &head)))
-    {
-        CLOCK_SERVER_DELAY_REQUEST* headDelayRequest = ClockServerpGetDelayRequest(head);
-
-        ASSERT(headDelayRequest != NULL, "Should not have null delay request.");
-
-        if (headDelayRequest->delayUntilTick <= g_ticks)
-        {
-            return TRUE;
-        }
-    }
-
-    return FALSE;
+    g_ticks = 0;
+    RtLinkedListInit(&g_delayedTasks);
 }
 
 static
-VOID
+RT_STATUS
 ClockServerpUnblockAllDelayedTasks
     (
         VOID
     )
 {
-    while (ClockServerpCanUnblockFrontDelayedTask())
-    {
-        RT_LINKED_LIST_NODE* head;
-        VERIFY(RT_SUCCESS(RtLinkedListPeekAndPopFront(&g_delayedTasks, &head)), "Should be able to peek and pop front.");
+    RT_STATUS status = STATUS_SUCCESS;
+    RT_LINKED_LIST_NODE* node;    
 
-        CLOCK_SERVER_DELAY_REQUEST* delayRequest = ClockServerpGetDelayRequest(head);
-        Reply(delayRequest->taskId, NULL, 0);
+    while(!RtLinkedListIsEmpty(&g_delayedTasks) && RT_SUCCESS(status))
+    {
+        status = RtLinkedListPeekFront(&g_delayedTasks, &node);
+
+        if(RT_SUCCESS(status))
+        {
+            CLOCK_SERVER_DELAY_REQUEST* delayRequest = NODE_TO_DELAY_REQUEST(node);
+
+            if(delayRequest->delayUntilTick <= g_ticks)
+            {
+                Reply(delayRequest->taskId, NULL, 0);
+
+                status = RtLinkedListPopFront(&g_delayedTasks);
+            }
+            else
+            {
+                break;
+            }
+        }
     }
+
+    return status;
 }
 
 static
@@ -143,55 +105,37 @@ ClockServerpUpdateTick
 
     Reply(notifierTaskId, NULL, 0);
 
-    ClockServerpUnblockAllDelayedTasks();
+    VERIFY(RT_SUCCESS(ClockServerpUnblockAllDelayedTasks()), "Failed to unblock delayed tasks");
 }
 
 static
-inline
-BOOLEAN
-ClockServerpIsDelayedLess
-    (
-        RT_LINKED_LIST_NODE* a,
-        RT_LINKED_LIST_NODE* b
-    )
-{
-    return ClockServerpGetDelayRequest(a)->delayUntilTick
-        < ClockServerpGetDelayRequest(b)->delayUntilTick;
-}
-
-static
-VOID
+RT_STATUS
 ClockServerpDelayRequestNode
     (
-        RT_LINKED_LIST_NODE* delayRequestNode
+        CLOCK_SERVER_DELAY_REQUEST* delayRequest
     )
 {
-    RT_LINKED_LIST_NODE* current;
+    RT_LINKED_LIST_NODE* node = NULL;
 
-    RT_STATUS status = RtLinkedListPeekFront(&g_delayedTasks, &current);
+    (VOID) RtLinkedListPeekFront(&g_delayedTasks, &node);
 
-    if (RT_SUCCESS(status))
+    while(NULL != node && 
+          NODE_TO_DELAY_REQUEST(node)->delayUntilTick < delayRequest->delayUntilTick)
     {
-        while (current != NULL && ClockServerpIsDelayedLess(current, delayRequestNode))
-        {
-            current = current->next;
-        }
-
+        node = node->next;
     }
 
-    if (current != NULL)
+    if(NULL != node)
     {
-        status = RtLinkedListInsertBetween(&g_delayedTasks,
-                                   current->previous,
-                                   current,
-                                   delayRequestNode);
+        return RtLinkedListInsertBetween(&g_delayedTasks,
+                                         node->previous,
+                                         node,
+                                         &delayRequest->node);
     }
     else
     {
-        status = RtLinkedListPushBack(&g_delayedTasks, delayRequestNode);
+        return RtLinkedListPushBack(&g_delayedTasks, &delayRequest->node);
     }
-
-    ASSERT(RT_SUCCESS(status), "Could not delay request node.");
 }
 
 static
@@ -202,20 +146,12 @@ ClockServerpDelayTask
         UINT delayUntilTick
     )
 {
-    TASK_DESCRIPTOR* td;
-
-    VERIFY(RT_SUCCESS(TaskDescriptorGet(taskId, &td)), "Invalid task id.");
-
-    ASSERT(td->state == ReplyBlockedState, "Task to delay must be reply-blocked.");
-
-    CLOCK_SERVER_DELAY_REQUEST* delayRequest = &g_delayRequests[taskId % NUM_TASK_DESCRIPTORS];
+    CLOCK_SERVER_DELAY_REQUEST* delayRequest = &g_delayRequests[taskId % NUM_TASKS];
 
     delayRequest->taskId = taskId;
     delayRequest->delayUntilTick = delayUntilTick;
 
-    td->delayRequestNode.data = delayRequest;
-
-    ClockServerpDelayRequestNode(&td->delayRequestNode);
+    VERIFY(RT_SUCCESS(ClockServerpDelayRequestNode(delayRequest)), "Failed to delay task");
 }
 
 static
@@ -225,9 +161,7 @@ ClockServerpReplyTicks
         INT taskId
     )
 {
-    INT ticks = g_ticks;
-
-    Reply(taskId, &ticks, sizeof(ticks));
+    Reply(taskId, &g_ticks, sizeof(g_ticks));
 }
 
 static
@@ -285,22 +219,21 @@ ClockServerCreateTask
 }
 
 static
-RT_STATUS
+INT
 ClockServerSendRequest
     (
         CLOCK_SERVER_REQUEST* request
     )
 {
     INT clockServerTaskId = WhoIs(CLOCK_SERVER_NAME);
+    INT response;
+    INT status = Send(clockServerTaskId, 
+                      request, 
+                      sizeof(*request), 
+                      &response, 
+                      sizeof(response));
 
-    INT response = 0;
-
-    if (RT_SUCCESS(Send(clockServerTaskId, request, sizeof(*request), &response, sizeof(response))))
-    {
-        return response;
-    }
-
-    return STATUS_FAILURE;
+    return SUCCESSFUL(status) ? response : status;
 }
 
 INT

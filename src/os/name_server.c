@@ -6,7 +6,7 @@
 #include <rtosc/string.h>
 
 #define NAME_SERVER_TID 2
-#define NAME_SERVER_HASH_TABLE_SIZE 100
+#define NAME_SERVER_HASH_TABLE_SIZE (NUM_TASKS * 2)
 
 #define ERROR_SUCCESS 0
 #define ERROR_NAME_SERVER_FULL -1

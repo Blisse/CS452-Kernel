@@ -17,12 +17,6 @@ typedef struct _RT_LINKED_LIST {
 } RT_LINKED_LIST;
 
 VOID
-RtLinkedListNodeInit
-    (
-        RT_LINKED_LIST_NODE* node
-    );
-
-VOID
 RtLinkedListInit
     (
         IN RT_LINKED_LIST* list
@@ -98,9 +92,13 @@ RtLinkedListRemove
         IN RT_LINKED_LIST_NODE* node
     );
 
+static
 inline
 BOOLEAN
 RtLinkedListIsEmpty
     (
         IN RT_LINKED_LIST* list
-    );
+    )
+{
+    return 0 == list->size;
+}

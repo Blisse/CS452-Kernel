@@ -7,8 +7,8 @@
 #define STACK_ADDRESS_START 0x00400000
 #define STACK_ADDRESS_END   0x01F00000
 
-static STACK g_stacks[NUM_TASK_DESCRIPTORS];
-static STACK* g_availableStacksBuffer[NUM_TASK_DESCRIPTORS];
+static STACK g_stacks[NUM_TASKS];
+static STACK* g_availableStacksBuffer[NUM_TASKS];
 static RT_CIRCULAR_BUFFER g_availableStacksQueue;
 
 static
@@ -34,7 +34,7 @@ StackInit
                          g_availableStacksBuffer,
                          sizeof(g_availableStacksBuffer));
     
-    for(i = 0; i < NUM_TASK_DESCRIPTORS && RT_SUCCESS(status); i++)
+    for(i = 0; i < NUM_TASKS && RT_SUCCESS(status); i++)
     {
         STACK* stack = &g_stacks[i];
         stack->top = StackpCalculateAddress(i);

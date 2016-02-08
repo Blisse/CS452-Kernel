@@ -7,7 +7,7 @@
 
 TASK_DESCRIPTOR* g_currentTd;
 
-static TASK_DESCRIPTOR* g_taskDescriptorsPriorityQueueData[NumPriority][NUM_TASK_DESCRIPTORS];
+static TASK_DESCRIPTOR* g_taskDescriptorsPriorityQueueData[NumPriority][NUM_TASKS];
 static RT_CIRCULAR_BUFFER g_taskDescriptorPriorityQueueBuffer[NumPriority];
 static RT_PRIORITY_QUEUE g_taskDescriptorPriorityQueue;
 
@@ -24,7 +24,7 @@ SchedulerInit
                         g_taskDescriptorPriorityQueueBuffer,
                         sizeof(TASK_DESCRIPTOR*),
                         NumPriority,
-                        NUM_TASK_DESCRIPTORS);
+                        NUM_TASKS);
 }
 
 inline

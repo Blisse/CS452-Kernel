@@ -12,7 +12,7 @@ typedef struct _CLOCK_CLIENT_DELAY_REQUEST
     INT repeat;
 } CLOCK_CLIENT_DELAY_REQUEST;
 
-#define NUM_TASKS 10
+#define K3_TASKS 10
 
 static
 VOID
@@ -27,21 +27,22 @@ UserPerformanceTask
     bwprintf(BWCOM2, "--PERFORMANCE--\r\n");
     bwprintf(BWCOM2, "TASK\t%%active\r\n");
 
-    TASK_PERFORMANCE performanceCounters[NUM_TASKS];
+    TASK_PERFORMANCE performanceCounters[K3_TASKS];
     UINT i;
     UINT totalTime = 0;
-    for (i = 0; i < NUM_TASKS; i++)
+    for (i = 0; i < K3_TASKS; i++)
     {
         QueryPerformance(i, &performanceCounters[i]);
         totalTime += performanceCounters[i].activeTicks;
     }
 
-    for (i = 0; i < NUM_TASKS; i++)
+    for (i = 0; i < K3_TASKS; i++)
     {
-        UINT ticks = performanceCounters[i].activeTicks;
-        UINT percent = ticks * 10000 / totalTime;
+        float fraction = (performanceCounters[i].activeTicks / ((float) totalTime)) * 100;
+        UINT integerPart = fraction;
+        UINT decimalPart = (fraction - integerPart) * 100;
 
-        bwprintf(BWCOM2, "%d\t%u.%u\r\n", i, percent / 100, percent % 100);
+        bwprintf(BWCOM2, "%d\t%u.%u%u\r\n", i, integerPart, decimalPart / 10, decimalPart % 10);
     }
 
     IdleExit();

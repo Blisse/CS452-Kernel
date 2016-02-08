@@ -4,7 +4,7 @@
 #include "clock_server.h"
 #include "task_descriptor.h"
 
-static TASK_PERFORMANCE g_taskPerformanceCounters[NUM_TASK_DESCRIPTORS];
+static TASK_PERFORMANCE g_taskPerformanceCounters[NUM_TASKS];
 static UINT g_lastTick;
 
 static
@@ -41,7 +41,7 @@ PerformanceInit
     PerformancepSetupTimer3();
 
     UINT i;
-    for (i = 0; i < NUM_TASK_DESCRIPTORS; i++)
+    for (i = 0; i < NUM_TASKS; i++)
     {
         g_taskPerformanceCounters[i].activeTicks = 0;
     }
@@ -57,7 +57,7 @@ PerformanceGet
         OUT TASK_PERFORMANCE* performance
     )
 {
-    if (0 <= taskId && taskId < NUM_TASK_DESCRIPTORS)
+    if (0 <= taskId && taskId < NUM_TASKS)
     {
         *performance = g_taskPerformanceCounters[taskId];
         return STATUS_SUCCESS;

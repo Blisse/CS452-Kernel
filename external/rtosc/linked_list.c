@@ -3,17 +3,6 @@
 #include <rtosc/assert.h>
 
 VOID
-RtLinkedListNodeInit
-    (
-        RT_LINKED_LIST_NODE* node
-    )
-{
-    node->next = NULL;
-    node->previous = NULL;
-    node->data = NULL;
-}
-
-VOID
 RtLinkedListInit
     (
         IN RT_LINKED_LIST* list
@@ -248,6 +237,7 @@ RtLinkedListPeekFront
     {
         status = STATUS_BUFFER_EMPTY;
     }
+    
     return status;
 }
 
@@ -268,6 +258,7 @@ RtLinkedListPeekBack
     {
         status = STATUS_BUFFER_EMPTY;
     }
+
     return status;
 }
 
@@ -379,15 +370,6 @@ RtLinkedListRemove
     {
         status = STATUS_NOT_FOUND;
     }
-    return status;
-}
 
-inline
-BOOLEAN
-RtLinkedListIsEmpty
-    (
-        IN RT_LINKED_LIST* list
-    )
-{
-    return (list->size == 0);
+    return status;
 }
