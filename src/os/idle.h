@@ -2,8 +2,22 @@
 
 #include "rt.h"
 
+inline
 VOID
-IdleTask
+IdleInit
+    (
+        VOID
+    );
+
+inline
+VOID
+IdleExit
+    (
+        VOID
+    );
+
+VOID
+IdleCreateTask
     (
         VOID
     );

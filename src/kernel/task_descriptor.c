@@ -21,6 +21,7 @@ TaskDescriptorInit
 
         // Initialize to -1 incase someone tries to send this task a message
         td->taskId = -1;
+        RtLinkedListNodeInit(&td->delayRequestNode);
 
         status = RtCircularBufferPush(&g_taskDescriptorIdQueue, &i, sizeof(i));
     }
@@ -102,4 +103,15 @@ TaskDescriptorGet
     {
         return STATUS_INVALID_PARAMETER;
     }
+}
+
+inline
+RT_STATUS
+TaskDescriptorPriorityIsHigherOrEqual
+    (
+        IN TASK_DESCRIPTOR* ta,
+        IN TASK_DESCRIPTOR* tb
+    )
+{
+    return (ta->priority >= tb->priority);
 }

@@ -30,28 +30,31 @@ static TASK_DESCRIPTOR* g_eventHandlers[NumEvent];
 
 static
 VOID
-InterruptSignalEvent
+InterruptpSignalEvent
     (
-        IN INTERRUPT_EVENT event, 
+        IN EVENT event,
         IN INT returnValue
     )
 {
     TASK_DESCRIPTOR* handler = g_eventHandlers[event];
 
-    // Unblock the handler
-    handler->state = ReadyState;
-    TaskSetReturnValue(handler, returnValue);
-    SchedulerAddTask(handler);
+    if (handler != NULL)
+    {
+        // Unblock the handler
+        handler->state = ReadyState;
+        TaskSetReturnValue(handler, returnValue);
+        SchedulerAddTask(handler);
 
-    g_eventHandlers[event] = NULL;
+        g_eventHandlers[event] = NULL;
+    }
 }
 
 static
 inline
 BOOLEAN
-InterruptIsValidEvent
+InterruptpIsValidEvent
     (
-        IN INTERRUPT_EVENT event
+        IN EVENT event
     )
 {
     return ClockEvent <= event && event < NumEvent;
@@ -60,9 +63,9 @@ InterruptIsValidEvent
 static
 inline
 BOOLEAN
-InterruptIsEventAvailable
+InterruptpIsEventAvailable
     (
-        IN INTERRUPT_EVENT event
+        IN EVENT event
     )
 {
     return g_eventHandlers[event] == NULL;
@@ -71,13 +74,13 @@ InterruptIsEventAvailable
 RT_STATUS
 InterruptAwaitEvent
     (
-        IN TASK_DESCRIPTOR* td, 
-        IN INTERRUPT_EVENT event
+        IN TASK_DESCRIPTOR* td,
+        IN EVENT event
     )
 {
-    if(InterruptIsValidEvent(event))
+    if(InterruptpIsValidEvent(event))
     {
-        if(InterruptIsEventAvailable(event))
+        if(InterruptpIsEventAvailable(event))
         {
             g_eventHandlers[event] = td;
             td->state = EventBlockedState;
@@ -99,7 +102,7 @@ InterruptAwaitEvent
 static
 inline
 VOID
-InterruptHandleClock
+InterruptpHandleClock
     (
         VOID
     )
@@ -108,7 +111,7 @@ InterruptHandleClock
     *TIMER_CLEAR(TIMER2_BASE) = TRUE;
 
     // Handle the interrupt
-    InterruptSignalEvent(ClockEvent, STATUS_SUCCESS);
+    InterruptpSignalEvent(ClockEvent, STATUS_SUCCESS);
 }
 
 VOID
@@ -121,7 +124,7 @@ InterruptHandler
 
     if(status & TC2IO_MASK)
     {
-        InterruptHandleClock();
+        InterruptpHandleClock();
     }
     else
     {
@@ -132,7 +135,7 @@ InterruptHandler
 static
 inline
 VOID
-InterruptSetupTimer
+InterruptpSetupTimer
     (
         VOID
     )
@@ -171,7 +174,7 @@ InterruptEnable
         VOID
     )
 {
-    InterruptSetupTimer();
+    InterruptpSetupTimer();
 }
 
 VOID

@@ -28,14 +28,6 @@ set(LIB_OS "os")
 set(LIB_KERNEL "kernel")
 set(ALL_LIBS "-l${LIB_KERNEL} -l${LIB_OS} -l${LIB_RTOSC} -l${LIB_BWIO}")
 
-# executables
-set(EXE_RTOS "rtos.elf")
-set(EXE_TEST_SCHEDULER "tscheduler.elf")
-set(EXE_TEST_BUFFER "tbuffer")
-set(EXE_TEST_LINKED_LIST "tlinkedlist")
-set(EXE_TEST_STRING "tstring")
-set(EXE_TEST_TASK_DESCRIPTOR "ttaskdescriptor")
-
 # includes
 include_directories(
     "external"

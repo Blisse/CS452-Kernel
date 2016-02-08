@@ -1,11 +1,12 @@
 #pragma once
 
+#include <rt.h>
+#include <rtos.h>
 #include <rtosc/buffer.h>
-#include "rt.h"
+#include <rtosc/linked_list.h>
 #include "stack.h"
 
 #define NUM_TASK_DESCRIPTORS 64
-#define NUM_PRIORITY 32
 
 typedef
 VOID
@@ -29,17 +30,12 @@ typedef struct _TASK_DESCRIPTOR {
     UINT* stackPointer;
     INT taskId;
     INT parentTaskId;
-    UINT priority;
+    TASK_PRIORITY priority;
     TASK_STATE state;
     RT_CIRCULAR_BUFFER mailbox;
-    STACK* stack;    
+    STACK* stack;
+    RT_LINKED_LIST_NODE delayRequestNode;
 } TASK_DESCRIPTOR;
-
-#define TaskDescriptorGetStackPointer(task) ((task)->stackPointer)
-#define TaskDescriptorGetPriority(task) ((task)->priority)
-#define TaskDescriptorGetState(task) ((task)->state)
-#define TaskDescriptorGetTaskId(task) ((task)->taskId)
-#define TaskDescriptorGetParentTaskId(task) ((task)->parentTaskId)
 
 RT_STATUS
 TaskDescriptorInit
@@ -67,4 +63,12 @@ TaskDescriptorGet
     (
         IN INT taskId,
         OUT TASK_DESCRIPTOR** td
+    );
+
+inline
+RT_STATUS
+TaskDescriptorPriorityIsHigherOrEqual
+    (
+        IN TASK_DESCRIPTOR* ta,
+        IN TASK_DESCRIPTOR* tb
     );

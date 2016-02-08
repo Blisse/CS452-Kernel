@@ -8,44 +8,47 @@
  *          TASK API                *
  ************************************/
 
-#define IDLE_PRIORITY 0x1 /* Reserved for idle task */
-#define LOWEST_PRIORITY 0x2
-#define PRIORITY_2 0x4
-#define PRIORITY_3 0x8
-#define PRIORITY_4 0x10
-#define PRIORITY_5 0x20
-#define PRIORITY_6 0x40
-#define PRIORITY_7 0x80
-#define PRIORITY_8 0x100
-#define PRIORITY_9 0x200
-#define PRIORITY_10 0x400
-#define PRIORITY_11 0x800
-#define PRIORITY_12 0x1000
-#define PRIORITY_13 0x2000
-#define PRIORITY_14 0x4000
-#define PRIORITY_15 0x8000
-#define PRIORITY_16 0x10000
-#define PRIORITY_17 0x20000
-#define PRIORITY_18 0x40000
-#define PRIORITY_19 0x80000
-#define PRIORITY_20 0x100000
-#define PRIORITY_21 0x200000
-#define PRIORITY_22 0x400000
-#define PRIORITY_23 0x800000
-#define PRIORITY_24 0x1000000
-#define PRIORITY_25 0x2000000
-#define PRIORITY_26 0x4000000
-#define PRIORITY_27 0x8000000
-#define PRIORITY_28 0x10000000
-#define PRIORITY_29 0x20000000
-#define HIGHEST_PRIORITY 0x40000000
-#define SYSTEM_PRIORITY 0x80000000 /* Reserved for system tasks */
+typedef enum _TASK_PRIORITY {
+    IdlePriority = 0x1,
+    LowestPriority = 0x2,
+    Priority2 = 0x4,
+    Priority3 = 0x8,
+    Priority4 = 0x10,
+    Priority5 = 0x20,
+    Priority6 = 0x40,
+    Priority7 = 0x80,
+    Priority8 = 0x100,
+    Priority9 = 0x200,
+    Priority10 = 0x400,
+    Priority11 = 0x800,
+    Priority12 = 0x1000,
+    Priority13 = 0x2000,
+    Priority14 = 0x4000,
+    Priority15 = 0x8000,
+    Priority16 = 0x10000,
+    Priority17 = 0x20000,
+    Priority18 = 0x40000,
+    Priority19 = 0x80000,
+    Priority20 = 0x100000,
+    Priority21 = 0x200000,
+    Priority22 = 0x400000,
+    Priority23 = 0x800000,
+    Priority24 = 0x1000000,
+    Priority25 = 0x2000000,
+    Priority26 = 0x4000000,
+    Priority27 = 0x8000000,
+    Priority28 = 0x10000000,
+    Priority29 = 0x20000000,
+    HighestPriority = 0x40000000,
+    SystemPriority = 0x80000000,
+    NumPriority = 33
+} TASK_PRIORITY;
 
 extern
 INT
 Create
     (
-        IN UINT priority, 
+        IN TASK_PRIORITY priority,
         IN VOID (*code)()
     );
 
@@ -114,11 +117,31 @@ Reply
  *          EVENT API               *
  ************************************/
 
-#define EVENT_CLOCK 0
+typedef enum _EVENT
+{
+    ClockEvent = 0,
+    NumEvent
+} EVENT;
 
- extern
- INT
- AwaitEvent
+extern
+INT
+AwaitEvent
     (
-        INT eventType
+        EVENT event
+    );
+
+/************************************
+ *       PERFORMANCE API            *
+ ************************************/
+
+typedef struct _TASK_PERFORMANCE {
+    UINT activeTicks;
+} TASK_PERFORMANCE;
+
+extern
+INT
+QueryPerformance
+    (
+        IN INT taskId,
+        OUT TASK_PERFORMANCE* performance
     );

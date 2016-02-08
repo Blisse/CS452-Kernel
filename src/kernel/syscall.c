@@ -1,8 +1,9 @@
 #include "syscall.h"
 
+#include <rtosc/assert.h>
 #include "interrupt.h"
 #include "ipc.h"
-#include <rtosc/assert.h>
+#include "performance.h"
 #include "scheduler.h"
 #include "task.h"
 
@@ -14,7 +15,7 @@
 #define ERROR_TASK_NOT_REPLY_BLOCKED -3
 #define ERROR_INVALID_EVENT -1
 
-#define NUM_SYSCALLS 9
+#define NUM_SYSCALLS 10
 
 UINT g_systemCallTable[NUM_SYSCALLS];
 
@@ -22,7 +23,7 @@ static
 INT
 SystemCreateTask
     (
-        IN UINT priority,
+        IN TASK_PRIORITY priority,
         IN TASK_START_FUNC startFunc
     )
 {
@@ -31,7 +32,7 @@ SystemCreateTask
                                   priority,
                                   startFunc,
                                   &td);
-    
+
     switch(status)
     {
         case STATUS_SUCCESS:
@@ -186,7 +187,7 @@ static
 INT
 SystemAwaitEvent
     (
-        IN INTERRUPT_EVENT event
+        IN EVENT event
     )
 {
     RT_STATUS status = InterruptAwaitEvent(SchedulerGetCurrentTask(), event);
@@ -201,6 +202,30 @@ SystemAwaitEvent
 
         default:
             ASSERT(FALSE, "Unknown await status");
+            return 0;
+    }
+}
+
+static
+INT
+SystemQueryPerformance
+    (
+        IN INT taskId,
+        OUT TASK_PERFORMANCE* performance
+    )
+{
+    RT_STATUS status = PerformanceGet(taskId, performance);
+
+    switch (status)
+    {
+        case STATUS_SUCCESS:
+            return ERROR_SUCCESS;
+
+        case STATUS_FAILURE:
+            return ERROR_INVALID_TASK;
+
+        default:
+            ASSERT(FALSE, "Unknown performance status");
             return 0;
     }
 }
@@ -220,4 +245,5 @@ SyscallInit
     g_systemCallTable[6] = (UINT) SystemReceiveMessage;
     g_systemCallTable[7] = (UINT) SystemReplyMessage;
     g_systemCallTable[8] = (UINT) SystemAwaitEvent;
+    g_systemCallTable[9] = (UINT) SystemQueryPerformance;
 }

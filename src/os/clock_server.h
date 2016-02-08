@@ -1,12 +1,12 @@
 #pragma once
 
-#include "rt.h"
-#include "rtos.h"
+#include <rt.h>
+#include <rtos.h>
 
-#define CLOCK_SERVER_PRIORITY PRIORITY_29
+#define CLOCK_SERVER_NAME "clk"
 
 VOID
-ClockServerTask
+ClockServerCreateTask
     (
         VOID
     );

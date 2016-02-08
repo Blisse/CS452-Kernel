@@ -1,9 +1,15 @@
 #include "scheduler.h"
 
-#include "priority_queue.h"
+#include <rtosc/priority_queue.h>
+#include <rtos.h>
+
+#include "task_descriptor.h"
 
 static TASK_DESCRIPTOR* g_currentTd;
-static RT_PRIORITY_QUEUE g_priorityQueue;
+
+static TASK_DESCRIPTOR* g_taskDescriptorsPriorityQueueData[NumPriority][NUM_TASK_DESCRIPTORS];
+static RT_CIRCULAR_BUFFER g_taskDescriptorPriorityQueueBuffer[NumPriority];
+static RT_PRIORITY_QUEUE g_taskDescriptorPriorityQueue;
 
 VOID
 SchedulerInit
@@ -13,7 +19,13 @@ SchedulerInit
 {
     g_currentTd = NULL;
 
-    RtPriorityQueueInit(&g_priorityQueue);
+    RtPriorityQueueInit(&g_taskDescriptorPriorityQueue,
+                        g_taskDescriptorsPriorityQueueData,
+                        g_taskDescriptorPriorityQueueBuffer,
+                        sizeof(TASK_DESCRIPTOR*),
+                        NumPriority,
+                        NUM_TASK_DESCRIPTORS
+                        );
 }
 
 inline
@@ -23,24 +35,24 @@ SchedulerAddTask
         IN TASK_DESCRIPTOR* td
     )
 {
-    return RtPriorityQueueAdd(&g_priorityQueue, td);
+    return RtPriorityQueuePush(&g_taskDescriptorPriorityQueue, td->priority, &td, sizeof(td));
 }
 
-RT_STATUS 
+RT_STATUS
 SchedulerGetNextTask
     (
         OUT TASK_DESCRIPTOR** td
     )
 {
     TASK_DESCRIPTOR* nextTd;
-    RT_STATUS status = RtPriorityQueueGet(&g_priorityQueue, &nextTd);
 
-    if(NULL != g_currentTd && ReadyState == TaskDescriptorGetState(g_currentTd))
+    RT_STATUS status = RtPriorityQueuePeek(&g_taskDescriptorPriorityQueue, &nextTd, sizeof(nextTd));
+
+    if(NULL != g_currentTd && ReadyState == g_currentTd->state)
     {
-        if(RT_SUCCESS(status) && 
-           TaskDescriptorGetPriority(nextTd) >= TaskDescriptorGetPriority(g_currentTd))
+        if(RT_SUCCESS(status) && TaskDescriptorPriorityIsHigherOrEqual(nextTd, g_currentTd))
         {
-            status = RtPriorityQueueRemove(&g_priorityQueue);
+            status = RtPriorityQueuePop(&g_taskDescriptorPriorityQueue, sizeof(nextTd));
 
             if(RT_SUCCESS(status))
             {
@@ -60,7 +72,7 @@ SchedulerGetNextTask
     }
     else if(RT_SUCCESS(status))
     {
-        status = RtPriorityQueueRemove(&g_priorityQueue);
+        status = RtPriorityQueuePop(&g_taskDescriptorPriorityQueue, sizeof(nextTd));
 
         if(RT_SUCCESS(status))
         {

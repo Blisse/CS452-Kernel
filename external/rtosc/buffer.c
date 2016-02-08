@@ -48,7 +48,7 @@ RtCircularBufferPush
         }
 
         buffer->back = newBack;
-        buffer->size += bytesToAdd;
+        buffer->size = buffer->size + bytesToAdd;
 
         status = STATUS_SUCCESS;
     }
@@ -112,7 +112,7 @@ RtCircularBufferPop
     if(bytesToRemove <= buffer->size)
     {
         buffer->front = (buffer->front + bytesToRemove) % buffer->capacity;
-        buffer->size -= bytesToRemove;
+        buffer->size = buffer->size - bytesToRemove;
 
         return STATUS_SUCCESS;
     }

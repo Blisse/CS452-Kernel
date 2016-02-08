@@ -4,12 +4,6 @@
 #include "task.h"
 
 VOID
-KernelInit
-    (
-        VOID
-    );
-
-VOID
 KernelRun
     (
         VOID

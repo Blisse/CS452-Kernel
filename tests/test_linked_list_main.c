@@ -9,9 +9,8 @@
 
 void test_linked_list_init() {
     RT_LINKED_LIST list;
-    RtLinkedListInit(&list, TEST_BUFFER_SIZE);
+    RtLinkedListInit(&list);
 
-    T_ASSERT(list.capacity == TEST_BUFFER_SIZE, "List capacity is incorrect");
     T_ASSERT(list.size == 0, "List size is incorrect");
     T_ASSERT(list.head == NULL, "List head is incorrect");
     T_ASSERT(list.tail == NULL, "List tail is incorrect");
@@ -19,7 +18,7 @@ void test_linked_list_init() {
 
 void test_linked_list_push_front() {
     RT_LINKED_LIST list;
-    RtLinkedListInit(&list, TEST_BUFFER_SIZE);
+    RtLinkedListInit(&list);
 
     INT i = 1;
     RT_LINKED_LIST_NODE na;
@@ -69,7 +68,7 @@ void test_linked_list_push_front() {
 
 void test_linked_list_push_back() {
     RT_LINKED_LIST list;
-    RtLinkedListInit(&list, TEST_BUFFER_SIZE);
+    RtLinkedListInit(&list);
 
     INT i = 1;
     RT_LINKED_LIST_NODE na;
@@ -119,10 +118,9 @@ void test_linked_list_push_back() {
 
 void test_linked_list_push_more() {
     RT_LINKED_LIST list;
-    RtLinkedListInit(&list, 4);
+    RtLinkedListInit(&list);
 
     T_ASSERT(RtLinkedListIsEmpty(&list), "List is not empty");
-    T_ASSERT(!RtLinkedListIsFull(&list), "List is full");
 
     RT_LINKED_LIST_NODE na;
     T_ASSERT(RT_SUCCESS(RtLinkedListPushBack(&list, &na)), "Failed to push to list back");
@@ -136,15 +134,14 @@ void test_linked_list_push_more() {
     T_ASSERT(list.size == 4, "List size is incorrect");
 
     T_ASSERT(!RtLinkedListIsEmpty(&list), "List is empty");
-    T_ASSERT(RtLinkedListIsFull(&list), "List is not full");
 
     RT_LINKED_LIST_NODE ne;
-    T_ASSERT(RT_FAILURE(RtLinkedListPushBack(&list, &ne)), "Shouldn't be able to push to list back");
+    T_ASSERT(RT_SUCCESS(RtLinkedListPushBack(&list, &ne)), "Shouldn't be able to push to list back");
 }
 
 void test_linked_list_pop() {
     RT_LINKED_LIST list;
-    RtLinkedListInit(&list, TEST_BUFFER_SIZE);
+    RtLinkedListInit(&list);
 
     RT_LINKED_LIST_NODE na;
     RT_LINKED_LIST_NODE nb;
@@ -206,7 +203,7 @@ void test_linked_list_pop() {
 
 void test_linked_list_insert_and_remove() {
     RT_LINKED_LIST list;
-    RtLinkedListInit(&list, TEST_BUFFER_SIZE);
+    RtLinkedListInit(&list);
 
     RT_LINKED_LIST_NODE na;
     RT_LINKED_LIST_NODE nb;

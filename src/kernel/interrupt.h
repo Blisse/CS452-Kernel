@@ -1,13 +1,8 @@
 #pragma once
 
-#include "rt.h"
+#include <rt.h>
+#include <rtos.h>
 #include "task_descriptor.h"
-
-typedef enum _INTERRUPT_EVENT
-{
-    ClockEvent = 0, 
-    NumEvent
-} INTERRUPT_EVENT;
 
 VOID
 InterruptInit
@@ -30,6 +25,6 @@ InterruptDisable
 RT_STATUS
 InterruptAwaitEvent
     (
-        IN TASK_DESCRIPTOR* td, 
-        IN INTERRUPT_EVENT event
+        IN TASK_DESCRIPTOR* td,
+        IN EVENT event
     );

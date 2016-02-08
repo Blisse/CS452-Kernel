@@ -1,3 +1,5 @@
+set(EXE_RTOS "rtos.elf")
+
 set(SRC_KERNEL
     "arm.asm"
     "cache.asm"
@@ -6,7 +8,7 @@ set(SRC_KERNEL
     "ipc.c"
     "kernel.asm"
     "kernel.c"
-    "priority_queue.c"
+    "performance.c"
     "scheduler.c"
     "stack.c"
     "syscall.c"

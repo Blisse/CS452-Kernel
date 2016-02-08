@@ -4,21 +4,21 @@
 #include <rtosc/assert.h>
 
 #include "cache.h"
+#include "idle.h"
 #include "interrupt.h"
-
-#include "cache.h"
+#include "performance.h"
 #include "scheduler.h"
 #include "syscall.h"
 #include "trap.h"
 
-static BOOLEAN g_exit;
+static BOOLEAN g_running;
 
 static
 inline
 RT_STATUS
 KernelCreateTask
     (
-        IN UINT priority,
+        IN TASK_PRIORITY priority,
         IN TASK_START_FUNC startFunc
     )
 {
@@ -30,22 +30,25 @@ KernelCreateTask
                       &unused);
 }
 
+static
 VOID
-KernelInit
+KernelpInit
     (
         VOID
     )
 {
-    g_exit = FALSE;
+    g_running = TRUE;
 
     CacheInit();
+    IdleInit();
     InterruptInit();
+    PerformanceInit();
     SchedulerInit();
     SyscallInit();
     TaskInit();
     TrapInstallHandler();
 
-    VERIFY(RT_SUCCESS(KernelCreateTask(SYSTEM_PRIORITY, InitTask)),
+    VERIFY(RT_SUCCESS(KernelCreateTask(SystemPriority, InitTask)),
            "Failed to create the init task \r\n");
 }
 
@@ -57,7 +60,18 @@ KernelpExit
         VOID
     )
 {
-    g_exit = TRUE;
+    g_running = FALSE;
+}
+
+static
+inline
+BOOLEAN
+KernelpIsRunning
+    (
+        VOID
+    )
+{
+    return g_running;
 }
 
 VOID
@@ -66,11 +80,14 @@ KernelRun
         VOID
     )
 {
+    KernelpInit();
+
     InterruptEnable();
 
-    while(!g_exit)
+    while(KernelpIsRunning())
     {
         TASK_DESCRIPTOR* nextTd;
+
         RT_STATUS status = SchedulerGetNextTask(&nextTd);
 
         if(RT_SUCCESS(status))
@@ -79,8 +96,10 @@ KernelRun
 
             nextTd->state = RunningState;
 
+            PerformanceEnterTask();
             // Return to user mode
             KernelLeave(nextTd->stackPointer);
+            PerformanceExitTask(nextTd->taskId);
 
             // The task may have transitioned to a new state
             // due to interrupts, Exit(), etc.  Don't update
