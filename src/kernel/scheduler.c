@@ -5,7 +5,7 @@
 
 #include "task_descriptor.h"
 
-static TASK_DESCRIPTOR* g_currentTd;
+TASK_DESCRIPTOR* g_currentTd;
 
 static TASK_DESCRIPTOR* g_taskDescriptorsPriorityQueueData[NumPriority][NUM_TASK_DESCRIPTORS];
 static RT_CIRCULAR_BUFFER g_taskDescriptorPriorityQueueBuffer[NumPriority];
@@ -24,8 +24,7 @@ SchedulerInit
                         g_taskDescriptorPriorityQueueBuffer,
                         sizeof(TASK_DESCRIPTOR*),
                         NumPriority,
-                        NUM_TASK_DESCRIPTORS
-                        );
+                        NUM_TASK_DESCRIPTORS);
 }
 
 inline
@@ -50,7 +49,7 @@ SchedulerGetNextTask
 
     if(NULL != g_currentTd && ReadyState == g_currentTd->state)
     {
-        if(RT_SUCCESS(status) && TaskDescriptorPriorityIsHigherOrEqual(nextTd, g_currentTd))
+        if(RT_SUCCESS(status) && nextTd->priority >= g_currentTd->priority)
         {
             status = RtPriorityQueuePop(&g_taskDescriptorPriorityQueue, sizeof(nextTd));
 
@@ -83,14 +82,4 @@ SchedulerGetNextTask
     *td = g_currentTd;
 
     return status;
-}
-
-inline
-TASK_DESCRIPTOR*
-SchedulerGetCurrentTask
-    (
-        VOID
-    )
-{
-    return g_currentTd;
 }

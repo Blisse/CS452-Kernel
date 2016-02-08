@@ -15,5 +15,8 @@ typedef INT RT_STATUS;
 #define STATUS_INVALID_STATE -8
 #define STATUS_BUFFER_EMPTY -9
 
-#define RT_SUCCESS(status) (STATUS_SUCCESS == (status))
-#define RT_FAILURE(status) (!RT_SUCCESS(status))
+#define likely(x) (__builtin_expect(x, 1))
+#define unlikely(x) (__builtin_expect(x, 0))
+
+#define RT_SUCCESS(status) (likely(STATUS_SUCCESS == (status)))
+#define RT_FAILURE(status) (STATUS_SUCCESS != (status))

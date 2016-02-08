@@ -84,11 +84,11 @@ TaskDescriptorGet
         OUT TASK_DESCRIPTOR** td
     )
 {
-    if(TaskDescriptorpIsValidId(taskId))
+    if(likely(TaskDescriptorpIsValidId(taskId)))
     {
         TASK_DESCRIPTOR* getTd = &g_taskDescriptors[taskId % NUM_TASK_DESCRIPTORS];
 
-        if (getTd->taskId == taskId)
+        if (likely(getTd->taskId == taskId))
         {
             *td = getTd;
 
@@ -103,15 +103,4 @@ TaskDescriptorGet
     {
         return STATUS_INVALID_PARAMETER;
     }
-}
-
-inline
-RT_STATUS
-TaskDescriptorPriorityIsHigherOrEqual
-    (
-        IN TASK_DESCRIPTOR* ta,
-        IN TASK_DESCRIPTOR* tb
-    )
-{
-    return (ta->priority >= tb->priority);
 }

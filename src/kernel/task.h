@@ -33,14 +33,6 @@ TaskValidate
 
 inline
 VOID
-TaskUpdateStackPointer
-    (
-        IN TASK_DESCRIPTOR* td, 
-        IN UINT* stackPointer
-    );
-
-inline
-VOID
 TaskSetReturnValue
     (
         IN TASK_DESCRIPTOR* td, 

@@ -80,7 +80,7 @@ IpcSend
         INT length;
 
         TaskRetrieveAsyncParameter(to, &pendingReceive, sizeof(pendingReceive));
-
+        
         // Figure out how many bytes we actually want to copy
         // TODO: We should probably do something if there are excess bytes
         length = min(messageLength, pendingReceive.bufferLength);
@@ -104,8 +104,8 @@ IpcSend
         // Store the message so it can be picked up later
         from->state = ReceiveBlockedState;
         status = RtCircularBufferPush(&to->mailbox,
-                                     &pendingMessage,
-                                     sizeof(pendingMessage));
+                                      &pendingMessage,
+                                      sizeof(pendingMessage));
     }
 
     if(RT_SUCCESS(status))
@@ -135,8 +135,8 @@ IpcReceive
         PENDING_MESSAGE pendingMessage;
 
         status = RtCircularBufferPeekAndPop(&td->mailbox,
-                                              &pendingMessage,
-                                              sizeof(pendingMessage));
+                                            &pendingMessage,
+                                            sizeof(pendingMessage));
 
         if(RT_SUCCESS(status))
         {

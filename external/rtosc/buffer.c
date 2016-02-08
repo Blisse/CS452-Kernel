@@ -24,13 +24,11 @@ RtCircularBufferPush
         IN UINT bytesToAdd
     )
 {
-    RT_STATUS status;
-
-    if((buffer->size + bytesToAdd) <= buffer->capacity)
+    if(likely((buffer->size + bytesToAdd) <= buffer->capacity))
     {
         UINT newBack = (buffer->back + bytesToAdd) % buffer->capacity;
 
-        if(newBack > buffer->back)
+        if(likely(newBack > buffer->back))
         {
             // Don't need to wrap around the buffer - perform a direct copy
             RtMemcpy(ptr_add(buffer->underlyingBuffer, buffer->back), sourceBuffer, bytesToAdd);
@@ -50,14 +48,12 @@ RtCircularBufferPush
         buffer->back = newBack;
         buffer->size = buffer->size + bytesToAdd;
 
-        status = STATUS_SUCCESS;
+        return STATUS_SUCCESS;
     }
     else
     {
-        status = STATUS_BUFFER_OVERFLOW;
+        return STATUS_BUFFER_OVERFLOW;
     }
-
-    return status;
 }
 
 RT_STATUS
@@ -68,13 +64,11 @@ RtCircularBufferPeek
         IN UINT bytesToRemove
     )
 {
-    RT_STATUS status;
-
-    if(bytesToRemove <= buffer->size)
+    if(likely(bytesToRemove <= buffer->size))
     {
         UINT newFront = (buffer->front + bytesToRemove) % buffer->capacity;
 
-        if(newFront > buffer->front)
+        if(likely(newFront > buffer->front))
         {
             // Don't need to wrap around the buffer - perform a direct copy
             RtMemcpy(targetBuffer, ptr_add(buffer->underlyingBuffer, buffer->front), bytesToRemove);
@@ -91,14 +85,12 @@ RtCircularBufferPeek
             RtMemcpy(ptr_add(targetBuffer, bytesTillEnd), buffer->underlyingBuffer, newFront);
         }
 
-        status = STATUS_SUCCESS;
+        return STATUS_SUCCESS;
     }
     else
     {
-        status = STATUS_BUFFER_TOO_SMALL;
+        return STATUS_BUFFER_TOO_SMALL;
     }
-
-    return status;
 }
 
 inline
@@ -109,7 +101,7 @@ RtCircularBufferPop
         IN UINT bytesToRemove
     )
 {
-    if(bytesToRemove <= buffer->size)
+    if(likely(bytesToRemove <= buffer->size))
     {
         buffer->front = (buffer->front + bytesToRemove) % buffer->capacity;
         buffer->size = buffer->size - bytesToRemove;
@@ -138,34 +130,4 @@ RtCircularBufferPeekAndPop
     }
 
     return status;
-}
-
-inline
-BOOLEAN
-RtCircularBufferIsEmpty
-    (
-        IN RT_CIRCULAR_BUFFER* buffer
-    )
-{
-    return (buffer->size == 0);
-}
-
-inline
-BOOLEAN
-RtCircularBufferIsFull
-    (
-        IN RT_CIRCULAR_BUFFER* buffer
-    )
-{
-    return (buffer->size == buffer->capacity);
-}
-
-inline
-UINT
-RtCircularBufferSize
-    (
-        IN RT_CIRCULAR_BUFFER* buffer
-    )
-{
-    return buffer->size;
 }

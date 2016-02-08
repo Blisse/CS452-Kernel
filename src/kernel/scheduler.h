@@ -22,9 +22,15 @@ SchedulerGetNextTask
         OUT TASK_DESCRIPTOR** td
     );
 
+extern TASK_DESCRIPTOR* g_currentTd;
+
+static
 inline
 TASK_DESCRIPTOR*
 SchedulerGetCurrentTask
     (
         VOID
-    );
+    )
+{
+    return g_currentTd;
+}

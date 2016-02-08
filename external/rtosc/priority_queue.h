@@ -22,13 +22,6 @@ RtPriorityQueueInit
     );
 
 inline
-BOOLEAN
-RtPriorityQueueIsValidPriority
-    (
-        IN UINT priority
-    );
-
-inline
 RT_STATUS
 RtPriorityQueuePush
     (

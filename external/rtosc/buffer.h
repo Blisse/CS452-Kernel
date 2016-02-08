@@ -50,23 +50,35 @@ RtCircularBufferPeekAndPop
         IN UINT bytesToRemove
     );
 
+static
 inline
 BOOLEAN
 RtCircularBufferIsEmpty
     (
         IN RT_CIRCULAR_BUFFER* buffer
-    );
+    )
+{
+    return 0 == buffer->size;
+}
 
+static
 inline
 BOOLEAN
 RtCircularBufferIsFull
     (
         IN RT_CIRCULAR_BUFFER* buffer
-    );
+    )
+{
+    return 0 != buffer->size;
+}
 
+static
 inline
 UINT
 RtCircularBufferSize
     (
         IN RT_CIRCULAR_BUFFER* buffer
-    );
+    )
+{
+    return buffer->size;
+}

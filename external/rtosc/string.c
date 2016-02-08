@@ -1,5 +1,7 @@
 #include "string.h"
 
+#include "assert.h"
+
 // TODO: Optimize all of these functions
 // NOTE: Much of this code is copied from code I wrote in SE350.
 //       I'm pretty sure that's OK since I'm copying code that
@@ -137,7 +139,6 @@ RtStrFind
     return pos;
 }
 
-// TODO: Optimize this with NEON or Load-Multiple
 static
 inline
 VOID
@@ -189,15 +190,9 @@ RtMemcpy
         UINT bytes
     )
 {
-    if(0 == ((UINT) dest) % sizeof(UINT) &&
-       0 == ((UINT) src) % sizeof(UINT))
-    {
-        memcpy_aligned(dest, src, bytes);
-    }
-    else
-    {
-        memcpy_unaligned(dest, src, bytes);
-    }
+    ASSERT(0 == ((UINT) dest) % sizeof(UINT), "Memcpy dest not aligned");
+    ASSERT(0 == ((UINT) src) % sizeof(UINT), "Memcpy src not aligned");
+    memcpy_aligned(dest, src, bytes);
 }
 
 // These functions were taken from bwio

@@ -64,11 +64,3 @@ TaskDescriptorGet
         IN INT taskId,
         OUT TASK_DESCRIPTOR** td
     );
-
-inline
-RT_STATUS
-TaskDescriptorPriorityIsHigherOrEqual
-    (
-        IN TASK_DESCRIPTOR* ta,
-        IN TASK_DESCRIPTOR* tb
-    );

@@ -83,16 +83,6 @@ Power2Log2
 }
 
 inline
-BOOLEAN
-RtPriorityQueueIsValidPriority
-    (
-        IN UINT priority
-    )
-{
-    return IsPower2(priority);
-}
-
-inline
 RT_STATUS
 RtPriorityQueuePush
     (
@@ -102,27 +92,23 @@ RtPriorityQueuePush
         IN UINT bytesToAdd
     )
 {
-    RT_STATUS status;
-
-    if (RtPriorityQueueIsValidPriority(priority))
+    if(likely(IsPower2(priority)))
     {
         UINT index = Power2Log2(priority);
-
         RT_CIRCULAR_BUFFER* queue = &priorityQueue->queues[index];
-
-        status = RtCircularBufferPush(queue, sourceBuffer, bytesToAdd);
-
+        RT_STATUS status = RtCircularBufferPush(queue, sourceBuffer, bytesToAdd);
+        
         if (RT_SUCCESS(status))
         {
             priorityQueue->bitmask |= priority;
         }
+
+        return status;
     }
     else
     {
-        status = STATUS_INVALID_PARAMETER;
+        return STATUS_INVALID_PARAMETER;
     }
-
-    return status;
 }
 
 RT_STATUS
@@ -133,22 +119,17 @@ RtPriorityQueuePeek
         IN UINT bytesToGet
     )
 {
-    RT_STATUS status;
-
-    if (priorityQueue->bitmask)
+    if(likely(priorityQueue->bitmask))
     {
         UINT index = Log2(priorityQueue->bitmask);
-
         RT_CIRCULAR_BUFFER* queue = &priorityQueue->queues[index];
 
-        status = RtCircularBufferPeek(queue, targetBuffer, bytesToGet);
+        return RtCircularBufferPeek(queue, targetBuffer, bytesToGet);
     }
     else
     {
-        status = STATUS_NOT_FOUND;
+        return STATUS_NOT_FOUND;
     }
-
-    return status;
 }
 
 inline
@@ -159,27 +140,23 @@ RtPriorityQueuePop
         IN UINT bytesToRemove
     )
 {
-    RT_STATUS status;
-
-    if (priorityQueue->bitmask)
+    if(likely(priorityQueue->bitmask))
     {
         UINT index = Log2(priorityQueue->bitmask);
-
         RT_CIRCULAR_BUFFER* queue = &priorityQueue->queues[index];
-
-        status = RtCircularBufferPop(queue, bytesToRemove);
+        RT_STATUS status = RtCircularBufferPop(queue, bytesToRemove);
 
         if(RT_SUCCESS(status) && RtCircularBufferIsEmpty(queue))
         {
             priorityQueue->bitmask &= ~(1 << index);
         }
+
+        return status;
     }
     else
     {
-        status = STATUS_BUFFER_TOO_SMALL;
+        return STATUS_BUFFER_TOO_SMALL;
     }
-
-    return status;
 }
 
 inline
@@ -193,7 +170,7 @@ RtPriorityQueuePeekAndPop
 {
     RT_STATUS status = RtPriorityQueuePeek(priorityQueue, targetBuffer, bytesToGet);
 
-    if (RT_SUCCESS(status))
+    if(RT_SUCCESS(status))
     {
         status = RtPriorityQueuePop(priorityQueue, bytesToGet);
     }

@@ -161,7 +161,7 @@ TaskStoreAsyncParameter
         IN UINT size
     )
 {
-    RtMemcpy(ptr_add(td->stackPointer, -1 * (size + 1)),
+    RtMemcpy(ptr_add(td->stackPointer, -1 * (size + sizeof(UINT))),
              parameter,
              size);
 }
@@ -176,6 +176,6 @@ TaskRetrieveAsyncParameter
     )
 {
     RtMemcpy(parameter,
-             ptr_add(td->stackPointer, -1 * (size + 1)),
+             ptr_add(td->stackPointer, -1 * (size + sizeof(UINT))),
              size);
 }

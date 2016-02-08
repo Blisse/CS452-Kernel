@@ -24,7 +24,7 @@ KernelCreateTask
 {
     TASK_DESCRIPTOR* unused;
 
-    return TaskCreate(SchedulerGetCurrentTask(),
+    return TaskCreate(NULL,
                       priority,
                       startFunc,
                       &unused);

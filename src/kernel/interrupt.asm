@@ -31,7 +31,7 @@ InterruptEnter:
 
     /* Store the user's sp as we will need to use it */
     /* This saves us from having to make another mode switch */
-    mov r4, sp
+    mov r10, sp
 
     /* Switch to irq mode */
     msr cpsr_c, #0xD2
@@ -42,21 +42,19 @@ InterruptEnter:
     mrs r1, spsr
 
     /* Store user cpsr and pc */
-    stmfd r4!, {r0-r1}
+    stmfd r10!, {r0-r1}
 
     /* Switch to supervisor mode to handle the interrupt */
     msr cpsr_c, #0xD3
 
     /* Get the current task */
-    bl SchedulerGetCurrentTask
-
-    /* Move stack pointer to the correct location */
-    mov r1, r4
+    ldr r5, =g_currentTd
+    ldr r5, [r5]
 
     /* Update the current task's stack pointer */
-    /* Current task is in r0 */
-    /* New stack pointer is in r1 */
-    bl TaskUpdateStackPointer
+    /* Current task is in r5 */
+    /* Task stack pointer is in r10 */
+    str r10, [r5]
 
     /* Call the interrupt handler */
     bl InterruptHandler
