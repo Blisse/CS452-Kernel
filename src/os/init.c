@@ -1,10 +1,12 @@
 #include "init.h"
 
-#include "idle.h"
-#include "clock_server.h"
-#include "name_server.h"
 #include <rtosc/assert.h>
 #include <bwio/bwio.h>
+
+#include "clock_server.h"
+#include "idle.h"
+#include "name_server.h"
+#include "uart_server.h"
 
 typedef struct _CLOCK_CLIENT_DELAY_REQUEST
 {
@@ -12,7 +14,7 @@ typedef struct _CLOCK_CLIENT_DELAY_REQUEST
     INT repeat;
 } CLOCK_CLIENT_DELAY_REQUEST;
 
-#define K3_TASKS 11
+#define K3_TASKS 15
 
 static
 VOID
@@ -114,6 +116,8 @@ InitTask
     NameServerCreateTask();
 
     ClockServerCreateTask();
+
+    UartServerCreateTask();
 
     UserTask();
 

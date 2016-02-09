@@ -8,6 +8,7 @@ set(SRC_OS
     ${CMAKE_CURRENT_SOURCE_DIR}/name_server.c
     ${CMAKE_CURRENT_SOURCE_DIR}/object.c
     ${CMAKE_CURRENT_SOURCE_DIR}/uart.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/uart_server.c
     )
 
 add_subdirectory("tasks")
