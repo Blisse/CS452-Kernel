@@ -10,8 +10,6 @@
 #include "syscall.h"
 #include "trap.h"
 
-static BOOLEAN g_running;
-
 static
 inline
 RT_STATUS
@@ -36,8 +34,6 @@ KernelpInit
         VOID
     )
 {
-    g_running = TRUE;
-
     CacheInit();
     InterruptInit();
     PerformanceInit();
@@ -49,28 +45,6 @@ KernelpInit
     VERIFY(RT_SUCCESS(KernelCreateTask(SystemPriority, InitTask)));
 }
 
-static
-inline
-VOID
-KernelpExit
-    (
-        VOID
-    )
-{
-    g_running = FALSE;
-}
-
-static
-inline
-BOOLEAN
-KernelpIsRunning
-    (
-        VOID
-    )
-{
-    return g_running;
-}
-
 VOID
 KernelRun
     (
@@ -78,10 +52,9 @@ KernelRun
     )
 {
     KernelpInit();
-
     InterruptEnable();
 
-    while(KernelpIsRunning())
+    while(1)
     {
         TASK_DESCRIPTOR* nextTd;
 
@@ -109,7 +82,7 @@ KernelRun
         else if(STATUS_NOT_FOUND == status)
         {
             // No more tasks to run, quit the system
-            KernelpExit();
+            break;
         }
         else
         {
