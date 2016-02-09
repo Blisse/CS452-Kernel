@@ -136,11 +136,9 @@ ClockServerpTask
     CLOCK_SERVER_DELAY_REQUEST delayRequests[NUM_TASKS];
 
     RtLinkedListInit(&delayedTasks);
-    RegisterAs(CLOCK_SERVER_NAME);
 
-    INT clockNotifierTaskId = Create(HighestPriority, ClockNotifierpTask);
-    ASSERT(SUCCESSFUL(clockNotifierTaskId));
-    UNREFERENCED_PARAMETER(clockNotifierTaskId);
+    VERIFY(SUCCESSFUL(RegisterAs(CLOCK_SERVER_NAME)));
+    VERIFY(SUCCESSFUL(Create(HighestPriority, ClockNotifierpTask)));
 
     while (1)
     {
@@ -195,9 +193,7 @@ ClockServerCreateTask
         VOID
     )
 {
-    INT clockServerTaskId = Create(Priority28, ClockServerpTask);
-    ASSERT(SUCCESSFUL(clockServerTaskId));
-    UNREFERENCED_PARAMETER(clockServerTaskId);
+    VERIFY(SUCCESSFUL(Create(Priority28, ClockServerpTask)));
 }
 
 static

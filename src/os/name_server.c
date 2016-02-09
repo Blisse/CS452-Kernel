@@ -50,15 +50,15 @@ NameServerpInitializeHashTable
 
 static
 inline
-INT
+UINT
 NameServerpHash
     (
         IN STRING name
     )
 {
     CHAR c;
-    INT i = 0;
-    INT hash = 0;
+    UINT i = 0;
+    UINT hash = 0;
 
     // Index dependant string hashing algorithm
     // Inspired by notes from CS240
@@ -81,12 +81,12 @@ NameServerpInsert
         IN INT value
     )
 {
-    INT hash = NameServerpHash(key);
-    INT i;
+    UINT hash = NameServerpHash(key);
+    UINT i;
 
     for(i = 0; i < NAME_SERVER_HASH_TABLE_SIZE; i++)
     {
-        INT index = (hash + i) % NAME_SERVER_HASH_TABLE_SIZE;
+        UINT index = (hash + i) % NAME_SERVER_HASH_TABLE_SIZE;
         NAME_SERVER_ENTRY* entry = &hashTable[index];
 
         if(entry->key == "" || RtStrEqual(key, entry->key))
@@ -111,12 +111,12 @@ NameServerpFind
         OUT INT* value
     )
 {
-    INT hash = NameServerpHash(key);
-    INT i;
+    UINT hash = NameServerpHash(key);
+    UINT i;
 
     for(i = 0; i < NAME_SERVER_HASH_TABLE_SIZE; i++)
     {
-        INT index = (hash + i) % NAME_SERVER_HASH_TABLE_SIZE;
+        UINT index = (hash + i) % NAME_SERVER_HASH_TABLE_SIZE;
         NAME_SERVER_ENTRY* entry = &hashTable[index];
 
         if(RtStrEqual(key, entry->key))
@@ -163,7 +163,7 @@ NameServerpTask
                 success = NameServerpFind(hashTable,
                                           request.name,
                                           &response);
-
+                
                 if(!success)
                 {
                     response = ERROR_NAME_SERVER_NOT_FOUND;
@@ -187,7 +187,7 @@ NameServerCreateTask
         VOID
     )
 {
-    INT nameServerTaskId = Create(Priority29, NameServerpTask);
+    INT nameServerTaskId = Create(Priority28, NameServerpTask);
     ASSERT(nameServerTaskId == NAME_SERVER_TID);
     UNREFERENCED_PARAMETER(nameServerTaskId);
 }
