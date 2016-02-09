@@ -82,7 +82,6 @@ Power2Log2
     return MultiplyDeBruijnBitPosition[(UINT)(v * 0x077CB531U) >> 27];
 }
 
-inline
 RT_STATUS
 RtPriorityQueuePush
     (
@@ -132,7 +131,6 @@ RtPriorityQueuePeek
     }
 }
 
-inline
 RT_STATUS
 RtPriorityQueuePop
     (
@@ -159,7 +157,6 @@ RtPriorityQueuePop
     }
 }
 
-inline
 RT_STATUS
 RtPriorityQueuePeekAndPop
     (

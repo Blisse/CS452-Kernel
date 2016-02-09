@@ -1,7 +1,7 @@
 #include "stack.h"
 
 #include <rtosc/buffer.h>
-#include "task.h"
+#include "rtos.h"
 
 #define STACK_SIZE  0x10000
 #define STACK_ADDRESS_START 0x00400000
@@ -51,7 +51,6 @@ StackInit
     return status;
 }
 
-inline
 RT_STATUS
 StackAllocate
     (
@@ -59,15 +58,14 @@ StackAllocate
     )
 {
     return RtCircularBufferPeekAndPop(&g_availableStacksQueue,
-                                        stack,
-                                        sizeof(*stack));
+                                      stack,
+                                      sizeof(*stack));
 }
 
-inline
 RT_STATUS
 StackDeallocate
     (
-        STACK* stack
+        IN STACK* stack
     )
 {
     return RtCircularBufferPush(&g_availableStacksQueue, &stack, sizeof(stack));

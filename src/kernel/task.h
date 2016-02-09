@@ -24,14 +24,12 @@ TaskDestroy
         IN TASK_DESCRIPTOR* td
     );
 
-inline
 BOOLEAN
 TaskValidate
     (
         IN TASK_DESCRIPTOR* td
     );
 
-inline
 VOID
 TaskSetReturnValue
     (
@@ -39,7 +37,6 @@ TaskSetReturnValue
         IN INT returnValue
     );
 
-inline
 VOID
 TaskStoreAsyncParameter
     (
@@ -48,7 +45,6 @@ TaskStoreAsyncParameter
         IN UINT size
     );
 
-inline
 VOID
 TaskRetrieveAsyncParameter
     (

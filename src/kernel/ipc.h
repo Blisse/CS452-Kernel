@@ -3,14 +3,12 @@
 #include "rt.h"
 #include "task.h"
 
-inline
 VOID
 IpcInitializeMailbox
     (
         IN TASK_DESCRIPTOR* td
     );
 
-inline
 VOID
 IpcDrainMailbox
     (

@@ -1,11 +1,10 @@
 #include "task.h"
 
-#include "ipc.h"
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
 #include <rtos.h>
 
-#include "clock_server.h"
+#include "ipc.h"
 #include "scheduler.h"
 #include "stack.h"
 
@@ -115,7 +114,6 @@ TaskDestroy
     VERIFY(RT_SUCCESS(TaskDescriptorDeallocate(td)));
 }
 
-inline
 BOOLEAN
 TaskValidate
     (
@@ -125,18 +123,6 @@ TaskValidate
     return CANARY == *(task->stack->top);
 }
 
-inline
-VOID
-TaskUpdateStackPointer
-    (
-        IN TASK_DESCRIPTOR* task,
-        IN UINT* stackPointer
-    )
-{
-    task->stackPointer = stackPointer;
-}
-
-inline
 VOID
 TaskSetReturnValue
     (
@@ -147,7 +133,6 @@ TaskSetReturnValue
     *(UINT*)(ptr_add(td->stackPointer, RETURN_VALUE_OFFSET)) = returnValue;
 }
 
-inline
 VOID
 TaskStoreAsyncParameter
     (
@@ -161,7 +146,6 @@ TaskStoreAsyncParameter
              size);
 }
 
-inline
 VOID
 TaskRetrieveAsyncParameter
     (

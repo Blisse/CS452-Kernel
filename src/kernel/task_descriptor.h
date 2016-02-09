@@ -32,21 +32,18 @@ TaskDescriptorInit
         VOID
     );
 
-inline
 RT_STATUS
 TaskDescriptorAllocate
     (
         OUT TASK_DESCRIPTOR** td
     );
 
-inline
 RT_STATUS
 TaskDescriptorDeallocate
     (
         IN TASK_DESCRIPTOR* td
     );
 
-inline
 RT_STATUS
 TaskDescriptorGet
     (

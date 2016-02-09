@@ -14,14 +14,12 @@ StackInit
         VOID
     );
 
-inline
 RT_STATUS
 StackAllocate
     (
         OUT STACK** stack
     );
 
-inline
 RT_STATUS
 StackDeallocate
     (

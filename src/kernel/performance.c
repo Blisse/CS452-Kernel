@@ -1,7 +1,6 @@
 #include "performance.h"
 
 #include <ts7200.h>
-#include "clock_server.h"
 #include "task_descriptor.h"
 
 static TASK_PERFORMANCE g_taskPerformanceCounters[NUM_TASKS];
@@ -65,7 +64,6 @@ PerformanceGet
     return STATUS_FAILURE;
 }
 
-inline
 VOID
 PerformanceEnterTask
     (
@@ -75,7 +73,6 @@ PerformanceEnterTask
     g_lastTick = PerformancepGetTimer3();
 }
 
-inline
 VOID
 PerformanceExitTask
     (

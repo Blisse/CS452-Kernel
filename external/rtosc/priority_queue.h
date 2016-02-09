@@ -21,7 +21,6 @@ RtPriorityQueueInit
         IN UINT capacity
     );
 
-inline
 RT_STATUS
 RtPriorityQueuePush
     (
@@ -39,7 +38,6 @@ RtPriorityQueuePeek
         IN UINT bytesToGet
     );
 
-inline
 RT_STATUS
 RtPriorityQueuePop
     (
@@ -47,7 +45,6 @@ RtPriorityQueuePop
         IN UINT bytesToRemove
     );
 
-inline
 RT_STATUS
 RtPriorityQueuePeekAndPop
     (

@@ -3,8 +3,6 @@
 #include <rtosc/priority_queue.h>
 #include <rtos.h>
 
-#include "task_descriptor.h"
-
 TASK_DESCRIPTOR* g_currentTd;
 
 static TASK_DESCRIPTOR* g_taskDescriptorsPriorityQueueData[NumPriority][NUM_TASKS];
@@ -27,7 +25,6 @@ SchedulerInit
                         NUM_TASKS);
 }
 
-inline
 RT_STATUS
 SchedulerAddTask
     (

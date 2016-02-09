@@ -93,7 +93,6 @@ RtCircularBufferPeek
     }
 }
 
-inline
 RT_STATUS
 RtCircularBufferPop
     (

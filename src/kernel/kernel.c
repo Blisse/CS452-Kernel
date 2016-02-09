@@ -8,7 +8,15 @@
 #include "performance.h"
 #include "scheduler.h"
 #include "syscall.h"
+#include "task.h"
 #include "trap.h"
+
+extern
+VOID
+KernelLeave
+    (
+        IN UINT* stack
+    );
 
 static
 inline
@@ -28,6 +36,7 @@ KernelCreateTask
 }
 
 static
+inline
 VOID
 KernelpInit
     (

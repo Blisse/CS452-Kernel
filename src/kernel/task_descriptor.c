@@ -28,7 +28,6 @@ TaskDescriptorInit
     return status;
 }
 
-inline
 RT_STATUS
 TaskDescriptorAllocate
     (
@@ -52,7 +51,6 @@ TaskDescriptorAllocate
     return status;
 }
 
-inline
 RT_STATUS
 TaskDescriptorDeallocate
     (
@@ -75,7 +73,6 @@ TaskDescriptorpIsValidId
     return taskId >= 0;
 }
 
-inline
 RT_STATUS
 TaskDescriptorGet
     (

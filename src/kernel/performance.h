@@ -16,14 +16,12 @@ PerformanceGet
         OUT TASK_PERFORMANCE* performance
     );
 
-inline
 VOID
 PerformanceEnterTask
     (
         VOID
     );
 
-inline
 VOID
 PerformanceExitTask
     (

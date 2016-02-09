@@ -2,6 +2,7 @@
 
 #include <rtosc/assert.h>
 #include <rtosc/linked_list.h>
+#include <rtos.h>
 
 #include "courier.h"
 #include "name_server.h"
@@ -50,6 +51,7 @@ ClockNotifierpTask
 }
 
 static
+inline
 RT_STATUS
 ClockServerpUnblockDelayedTasks
     (
@@ -85,6 +87,7 @@ ClockServerpUnblockDelayedTasks
 }
 
 static
+inline
 RT_STATUS
 ClockServerpDelayTask
     (
@@ -218,7 +221,7 @@ ClockServerSendRequest
 INT
 Delay
     (
-        INT ticks
+        IN INT ticks
     )
 {
     CLOCK_SERVER_REQUEST request = { DelayRequest, ticks };

@@ -23,7 +23,6 @@ typedef struct _PENDING_RECEIVE
 
 static PENDING_MESSAGE g_mailboxes[NUM_TASKS][MAILBOX_SIZE];
 
-inline
 VOID
 IpcInitializeMailbox
     (
@@ -35,7 +34,6 @@ IpcInitializeMailbox
                          MAILBOX_SIZE);
 }
 
-inline
 VOID
 IpcDrainMailbox
     (

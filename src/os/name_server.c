@@ -1,7 +1,6 @@
 #include "name_server.h"
 
 #include <rtos.h>
-
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
 
@@ -198,8 +197,8 @@ inline
 INT
 SendNameServerRequest
     (
-        NAME_SERVER_REQUEST_TYPE type,
-        STRING name
+        IN NAME_SERVER_REQUEST_TYPE type,
+        IN STRING name
     )
 {
     NAME_SERVER_REQUEST request = { type,  name };

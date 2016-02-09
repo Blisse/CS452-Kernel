@@ -1,7 +1,6 @@
 #pragma once
 
 #include <rt.h>
-#include <rtos.h>
 
 VOID
 ClockServerCreateTask
@@ -12,7 +11,7 @@ ClockServerCreateTask
 INT
 Delay
     (
-        INT ticks
+        IN INT ticks
     );
 
 INT
@@ -24,5 +23,5 @@ Time
 INT
 DelayUntil
     (
-        INT ticks
+        IN INT ticks
     );

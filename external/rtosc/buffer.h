@@ -34,7 +34,6 @@ RtCircularBufferPeek
         IN UINT bytesToGet
     );
 
-inline
 RT_STATUS
 RtCircularBufferPop
     (

@@ -9,7 +9,6 @@ SchedulerInit
         VOID
     );
 
-inline
 RT_STATUS
 SchedulerAddTask
     (
