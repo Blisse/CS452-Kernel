@@ -3,7 +3,7 @@
 #include "rt.h"
 
 VOID
-NameServerCreateTask
+K3_DelayTaskInit
     (
         VOID
     );

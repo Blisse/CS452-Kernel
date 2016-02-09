@@ -2,9 +2,7 @@
 
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
-
-#include "name_server.h"
-#include "rtos.h"
+#include <rtos.h>
 
 #define UART_COM1_INPUT_NAME "c1_in"
 #define UART_COM1_OUTPUT_NAME "c1_out"

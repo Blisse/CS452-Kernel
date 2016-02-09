@@ -4,8 +4,6 @@
 #include <rtosc/assert.h>
 #include <rtos.h>
 
-#include "name_server.h"
-
 #define RPS_SERVER_NAME "RpsServer"
 
 typedef enum _RPS_SERVER_REQUEST_TYPE
@@ -314,7 +312,7 @@ RpspServerTask
 }
 
 VOID
-RpsInit
+K2_RpsInit
     (
         VOID
     )

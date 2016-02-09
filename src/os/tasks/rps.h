@@ -3,7 +3,7 @@
 #include <rt.h>
 
 VOID
-RpsInit
+K2_RpsInit
     (
         VOID
     );

@@ -123,6 +123,22 @@ Reply
     );
 
 /************************************
+ *          NAME API                *
+ ************************************/
+
+INT
+RegisterAs
+    (
+        IN STRING name
+    );
+
+INT
+WhoIs
+    (
+        IN STRING name
+    );
+
+/************************************
  *          EVENT API               *
  ************************************/
 
@@ -140,6 +156,80 @@ AwaitEvent
     );
 
 /************************************
+ *          TIME API                *
+ ************************************/
+
+INT
+Delay
+    (
+        IN INT ticks
+    );
+
+INT
+Time
+    (
+        VOID
+    );
+
+INT
+DelayUntil
+    (
+        IN INT ticks
+    );
+
+/************************************
+ *          I/O API                 *
+ ************************************/
+
+#define COM1_CHANNEL 0
+#define COM2_CHANNEL 1
+
+INT
+GetString
+    (
+        IN INT channel, 
+        IN STRING buffer, 
+        IN UINT bufferLength
+    );
+
+INT
+PutString
+    (
+        IN INT channel, 
+        IN STRING str
+    );
+
+INT
+PutFormattedString
+    (
+        IN INT channel, 
+        IN STRING str
+    );
+
+CHAR
+Getc
+    (
+        IN INT channel
+    );
+
+INT
+Putc
+    (
+        IN INT channel, 
+        IN CHAR c
+    );
+
+/************************************
+ *       SHUTDOWN API               *
+ ************************************/
+
+VOID
+Shutdown
+    (
+        VOID
+    );
+
+/************************************
  *       PERFORMANCE API            *
  ************************************/
 
@@ -153,14 +243,4 @@ QueryPerformance
     (
         IN INT taskId,
         OUT TASK_PERFORMANCE* performance
-    );
-
-/************************************
- *       SHUTDOWN API               *
- ************************************/
-
-VOID
-Shutdown
-    (
-        VOID
     );

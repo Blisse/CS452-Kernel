@@ -5,7 +5,6 @@
 #include <rtos.h>
 
 #include "courier.h"
-#include "name_server.h"
 
 #define CLOCK_SERVER_NAME "clk"
 
