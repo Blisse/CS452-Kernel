@@ -5,11 +5,13 @@
 
 #include "name_server.h"
 
+#define CLOCK_SERVER_NAME "clk"
+
 typedef enum _CLOCK_SERVER_REQUEST_TYPE
 {
     TickRequest = 0,
+    TimeRequest, 
     DelayRequest,
-    TimeRequest,
     DelayUntilRequest,
 } CLOCK_SERVER_REQUEST_TYPE;
 
@@ -27,10 +29,6 @@ typedef struct _CLOCK_SERVER_DELAY_REQUEST
 } CLOCK_SERVER_DELAY_REQUEST;
 
 #define NODE_TO_DELAY_REQUEST(node) (container_of(node, CLOCK_SERVER_DELAY_REQUEST, node))
-
-static UINT g_ticks;
-static RT_LINKED_LIST g_delayedTasks;
-static CLOCK_SERVER_DELAY_REQUEST g_delayRequests[NUM_TASKS];
 
 static
 VOID
@@ -50,39 +48,29 @@ ClockNotifierpTask
 }
 
 static
-VOID
-ClockServerpInit
-    (
-        VOID
-    )
-{
-    g_ticks = 0;
-    RtLinkedListInit(&g_delayedTasks);
-}
-
-static
 RT_STATUS
-ClockServerpUnblockAllDelayedTasks
+ClockServerpUnblockDelayedTasks
     (
-        VOID
+        IN RT_LINKED_LIST* delayedTasks, 
+        IN UINT currentTick
     )
 {
     RT_STATUS status = STATUS_SUCCESS;
     RT_LINKED_LIST_NODE* node;    
 
-    while(!RtLinkedListIsEmpty(&g_delayedTasks) && RT_SUCCESS(status))
+    while(!RtLinkedListIsEmpty(delayedTasks) && RT_SUCCESS(status))
     {
-        status = RtLinkedListPeekFront(&g_delayedTasks, &node);
+        status = RtLinkedListPeekFront(delayedTasks, &node);
 
         if(RT_SUCCESS(status))
         {
             CLOCK_SERVER_DELAY_REQUEST* delayRequest = NODE_TO_DELAY_REQUEST(node);
 
-            if(delayRequest->delayUntilTick <= g_ticks)
+            if(delayRequest->delayUntilTick <= currentTick)
             {
                 Reply(delayRequest->taskId, NULL, 0);
 
-                status = RtLinkedListPopFront(&g_delayedTasks);
+                status = RtLinkedListPopFront(delayedTasks);
             }
             else
             {
@@ -95,29 +83,22 @@ ClockServerpUnblockAllDelayedTasks
 }
 
 static
-VOID
-ClockServerpUpdateTick
-    (
-        INT notifierTaskId
-    )
-{
-    g_ticks = g_ticks + 1;
-
-    Reply(notifierTaskId, NULL, 0);
-
-    VERIFY(RT_SUCCESS(ClockServerpUnblockAllDelayedTasks()), "Failed to unblock delayed tasks");
-}
-
-static
 RT_STATUS
-ClockServerpDelayRequestNode
+ClockServerpDelayTask
     (
-        CLOCK_SERVER_DELAY_REQUEST* delayRequest
+        IN RT_LINKED_LIST* delayedTasks, 
+        IN CLOCK_SERVER_DELAY_REQUEST* delayRequests, 
+        IN INT taskId,
+        IN UINT delayUntilTick
     )
 {
+    CLOCK_SERVER_DELAY_REQUEST* delayRequest = &delayRequests[taskId % NUM_TASKS];
     RT_LINKED_LIST_NODE* node = NULL;
 
-    (VOID) RtLinkedListPeekFront(&g_delayedTasks, &node);
+    delayRequest->taskId = taskId;
+    delayRequest->delayUntilTick = delayUntilTick;    
+
+    (VOID) RtLinkedListPeekFront(delayedTasks, &node);
 
     while(NULL != node && 
           NODE_TO_DELAY_REQUEST(node)->delayUntilTick < delayRequest->delayUntilTick)
@@ -127,41 +108,15 @@ ClockServerpDelayRequestNode
 
     if(NULL != node)
     {
-        return RtLinkedListInsertBetween(&g_delayedTasks,
+        return RtLinkedListInsertBetween(delayedTasks,
                                          node->previous,
                                          node,
                                          &delayRequest->node);
     }
     else
     {
-        return RtLinkedListPushBack(&g_delayedTasks, &delayRequest->node);
+        return RtLinkedListPushBack(delayedTasks, &delayRequest->node);
     }
-}
-
-static
-VOID
-ClockServerpDelayTask
-    (
-        INT taskId,
-        UINT delayUntilTick
-    )
-{
-    CLOCK_SERVER_DELAY_REQUEST* delayRequest = &g_delayRequests[taskId % NUM_TASKS];
-
-    delayRequest->taskId = taskId;
-    delayRequest->delayUntilTick = delayUntilTick;
-
-    VERIFY(RT_SUCCESS(ClockServerpDelayRequestNode(delayRequest)), "Failed to delay task");
-}
-
-static
-VOID
-ClockServerpReplyTicks
-    (
-        INT taskId
-    )
-{
-    Reply(taskId, &g_ticks, sizeof(g_ticks));
 }
 
 static
@@ -171,8 +126,11 @@ ClockServerpTask
         VOID
     )
 {
-    ClockServerpInit();
+    UINT currentTick = 0;
+    RT_LINKED_LIST delayedTasks;
+    CLOCK_SERVER_DELAY_REQUEST delayRequests[NUM_TASKS];
 
+    RtLinkedListInit(&delayedTasks);
     RegisterAs(CLOCK_SERVER_NAME);
 
     INT clockNotifierTaskId = Create(HighestPriority, ClockNotifierpTask);
@@ -189,17 +147,33 @@ ClockServerpTask
         switch (request.type)
         {
             case TickRequest:
-                ClockServerpUpdateTick(taskId);
+                Reply(taskId, NULL, 0);
+                currentTick++;
+                VERIFY(RT_SUCCESS(ClockServerpUnblockDelayedTasks(&delayedTasks, currentTick)), 
+                       "Failed to unblock delayed tasks");
                 break;
-            case DelayRequest:
-                ClockServerpDelayTask(taskId, g_ticks + request.ticks);
-                break;
+
             case TimeRequest:
-                ClockServerpReplyTicks(taskId);
+                Reply(taskId, &currentTick, sizeof(currentTick));
                 break;
+
+            case DelayRequest:
+                VERIFY(RT_SUCCESS(ClockServerpDelayTask(&delayedTasks, delayRequests, taskId, currentTick + request.ticks)),
+                       "Failed to delay task");
+                break;
+
             case DelayUntilRequest:
-                ClockServerpDelayTask(taskId, request.ticks);
+                if(request.ticks < currentTick)
+                {
+                    Reply(taskId, NULL, 0);
+                }
+                else
+                {
+                    VERIFY(RT_SUCCESS(ClockServerpDelayTask(&delayedTasks, delayRequests, taskId, request.ticks)), 
+                           "Failed to delay until");
+                }
                 break;
+
             default:
                 ASSERT(FALSE, "Received invalid clock server request type.");
                 break;
@@ -222,7 +196,7 @@ static
 INT
 ClockServerSendRequest
     (
-        CLOCK_SERVER_REQUEST* request
+        IN CLOCK_SERVER_REQUEST* request
     )
 {
     INT clockServerTaskId = WhoIs(CLOCK_SERVER_NAME);
@@ -259,7 +233,7 @@ Time
 INT
 DelayUntil
     (
-        INT ticks
+        IN INT ticks
     )
 {
     CLOCK_SERVER_REQUEST request = { DelayUntilRequest, ticks };
