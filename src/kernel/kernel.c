@@ -4,7 +4,6 @@
 #include <rtosc/assert.h>
 
 #include "cache.h"
-#include "idle.h"
 #include "interrupt.h"
 #include "performance.h"
 #include "scheduler.h"
@@ -40,7 +39,6 @@ KernelpInit
     g_running = TRUE;
 
     CacheInit();
-    IdleInit();
     InterruptInit();
     PerformanceInit();
     SchedulerInit();

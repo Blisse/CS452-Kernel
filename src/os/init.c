@@ -45,7 +45,7 @@ UserPerformanceTask
         bwprintf(BWCOM2, "%d\t%u.%u%u\r\n", i, integerPart, decimalPart / 10, decimalPart % 10);
     }
 
-    IdleExit();
+    Shutdown();
 }
 
 static

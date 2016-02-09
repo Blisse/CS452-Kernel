@@ -154,3 +154,13 @@ QueryPerformance
         IN INT taskId,
         OUT TASK_PERFORMANCE* performance
     );
+
+/************************************
+ *       SHUTDOWN API               *
+ ************************************/
+
+VOID
+Shutdown
+    (
+        VOID
+    );
