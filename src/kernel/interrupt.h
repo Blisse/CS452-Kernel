@@ -11,13 +11,7 @@ InterruptInit
     );
 
 VOID
-InterruptEnable
-    (
-        VOID
-    );
-
-VOID
-InterruptDisable
+InterruptDisableAll
     (
         VOID
     );

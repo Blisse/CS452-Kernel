@@ -61,7 +61,6 @@ KernelRun
     )
 {
     KernelpInit();
-    InterruptEnable();
 
     while(1)
     {
@@ -99,5 +98,9 @@ KernelRun
         }
     }
 
-    InterruptDisable();
+    // Interrupts must be turned off, or the next time the
+    // kernel runs, the interrupt handler will already be
+    // installed and interrupts will still be running.
+    // This puts the kernel in an undefined state.
+    InterruptDisableAll();
 }

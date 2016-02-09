@@ -30,73 +30,60 @@ static TASK_DESCRIPTOR* g_eventHandlers[NumEvent];
 
 static
 VOID
+InterruptpDisable
+    (
+        IN EVENT event
+    )
+{
+    volatile UINT* vicDisable = VIC_INTERRUPT_DISABLE(VIC1_BASE);
+
+    switch(event)
+    {
+        case ClockEvent:
+            *vicDisable = *vicDisable | TC2IO_MASK;
+            break;
+
+        default:
+            ASSERT(FALSE);
+    }
+} 
+
+static
+VOID
+InterruptpEnable
+    (
+        IN EVENT event
+    )
+{
+    volatile UINT* vicEnable = VIC_INTERRUPT_ENABLE(VIC1_BASE);
+    
+    switch(event)
+    {
+        case ClockEvent:
+            *vicEnable = *vicEnable | TC2IO_MASK;
+            break;
+
+        default:
+            ASSERT(FALSE);
+    }
+}
+
+static
+VOID
 InterruptpSignalEvent
     (
-        IN EVENT event,
-        IN INT returnValue
+        IN EVENT event
     )
 {
     TASK_DESCRIPTOR* handler = g_eventHandlers[event];
 
-    if (handler != NULL)
-    {
-        // Unblock the handler
-        handler->state = ReadyState;
-        TaskSetReturnValue(handler, returnValue);
-        SchedulerAddTask(handler);
+    // Unblock the handler
+    handler->state = ReadyState;
+    TaskSetReturnValue(handler, STATUS_SUCCESS);
+    SchedulerAddTask(handler);
 
-        g_eventHandlers[event] = NULL;
-    }
-}
-
-static
-inline
-BOOLEAN
-InterruptpIsValidEvent
-    (
-        IN EVENT event
-    )
-{
-    return ClockEvent <= event && event < NumEvent;
-}
-
-static
-inline
-BOOLEAN
-InterruptpIsEventAvailable
-    (
-        IN EVENT event
-    )
-{
-    return g_eventHandlers[event] == NULL;
-}
-
-RT_STATUS
-InterruptAwaitEvent
-    (
-        IN TASK_DESCRIPTOR* td,
-        IN EVENT event
-    )
-{
-    if(InterruptpIsValidEvent(event))
-    {
-        if(InterruptpIsEventAvailable(event))
-        {
-            g_eventHandlers[event] = td;
-            td->state = EventBlockedState;
-
-            return STATUS_SUCCESS;
-        }
-        else
-        {
-            ASSERT(FALSE);
-            return STATUS_INVALID_PARAMETER;
-        }
-    }
-    else
-    {
-        return STATUS_INVALID_PARAMETER;
-    }
+    // Clear the handler
+    g_eventHandlers[event] = NULL;
 }
 
 static
@@ -111,7 +98,10 @@ InterruptpHandleClock
     *TIMER_CLEAR(TIMER2_BASE) = TRUE;
 
     // Handle the interrupt
-    InterruptpSignalEvent(ClockEvent, STATUS_SUCCESS);
+    InterruptpSignalEvent(ClockEvent);
+
+    // Disable the interrupt
+    InterruptpDisable(ClockEvent);
 }
 
 VOID
@@ -146,10 +136,6 @@ InterruptpSetupTimer
 
     // Enable the timer
     *TIMER_CONTROL(TIMER2_BASE) = CLKSEL_MASK | MODE_MASK | ENABLE_MASK;
-
-    // Enable the timer interrupt
-    volatile UINT* vicEnable = VIC_INTERRUPT_ENABLE(VIC1_BASE);
-    *vicEnable = *vicEnable | TC2IO_MASK;
 }
 
 VOID
@@ -166,22 +152,59 @@ InterruptInit
     }
 
     InterruptInstallHandler();
-}
-
-VOID
-InterruptEnable
-    (
-        VOID
-    )
-{
     InterruptpSetupTimer();
 }
 
 VOID
-InterruptDisable
+InterruptDisableAll
     (
         VOID
     )
 {
     *VIC_INTERRUPT_DISABLE(VIC1_BASE) = 0xFFFFFFFF;
+}
+
+static
+inline
+BOOLEAN
+InterruptpIsValidEvent
+    (
+        IN EVENT event
+    )
+{
+    return ClockEvent <= event && event < NumEvent;
+}
+
+static
+inline
+BOOLEAN
+InterruptpIsEventAvailable
+    (
+        IN EVENT event
+    )
+{
+    return g_eventHandlers[event] == NULL;
+}
+
+RT_STATUS
+InterruptAwaitEvent
+    (
+        IN TASK_DESCRIPTOR* td,
+        IN EVENT event
+    )
+{
+    if(InterruptpIsValidEvent(event) &&
+       InterruptpIsEventAvailable(event))
+    {
+        g_eventHandlers[event] = td;
+        td->state = EventBlockedState;
+        InterruptpEnable(event);
+
+        return STATUS_SUCCESS;
+    }
+    else
+    {
+        ASSERT(FALSE);
+        return STATUS_INVALID_PARAMETER;
+    }
 }
