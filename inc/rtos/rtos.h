@@ -43,7 +43,7 @@ typedef enum _TASK_PRIORITY {
     Priority29 = 0x20000000,
     HighestPriority = 0x40000000,
     SystemPriority = 0x80000000,
-    NumPriority = 33
+    NumPriority = 32
 } TASK_PRIORITY;
 
 typedef
