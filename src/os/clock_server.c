@@ -3,6 +3,7 @@
 #include <rtosc/assert.h>
 #include <rtosc/linked_list.h>
 
+#include "courier.h"
 #include "name_server.h"
 
 #define CLOCK_SERVER_NAME "clk"
@@ -37,13 +38,14 @@ ClockNotifierpTask
         VOID
     )
 {
-    INT clockServerTaskId = WhoIs(CLOCK_SERVER_NAME);
     CLOCK_SERVER_REQUEST notifyRequest = { TickRequest };
+
+    CourierCreateTask(Priority29, MyTid(), MyParentTid());
 
     while(1)
     {
         AwaitEvent(ClockEvent);
-        Send(clockServerTaskId, &notifyRequest, sizeof(notifyRequest), NULL, 0);
+        CourierPickup(&notifyRequest, sizeof(notifyRequest));
     }
 }
 
@@ -190,7 +192,7 @@ ClockServerCreateTask
         VOID
     )
 {
-    INT clockServerTaskId = Create(Priority29, ClockServerpTask);
+    INT clockServerTaskId = Create(Priority28, ClockServerpTask);
     ASSERT(SUCCESSFUL(clockServerTaskId));
     UNREFERENCED_PARAMETER(clockServerTaskId);
 }

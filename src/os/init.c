@@ -12,7 +12,7 @@ typedef struct _CLOCK_CLIENT_DELAY_REQUEST
     INT repeat;
 } CLOCK_CLIENT_DELAY_REQUEST;
 
-#define K3_TASKS 10
+#define K3_TASKS 11
 
 static
 VOID
