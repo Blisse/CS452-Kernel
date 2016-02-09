@@ -22,7 +22,7 @@ RtLinkedListpPushEmpty
         IN RT_LINKED_LIST_NODE* node
     )
 {
-    ASSERT(RtLinkedListIsEmpty(list), "Linked list is not empty");
+    ASSERT(RtLinkedListIsEmpty(list));
 
     node->next = NULL;
     node->previous = NULL;
@@ -111,7 +111,7 @@ RtLinkedListpPopEmpty
         IN RT_LINKED_LIST* list
     )
 {
-    ASSERT(list->size == 1, "Linked list is not going to be empty");
+    ASSERT(list->size == 1);
 
     list->head->previous = NULL;
     list->head->next = NULL;
@@ -287,7 +287,7 @@ RtLinkedListInsertBetween
     }
     else if (before != NULL && after != NULL)
     {
-        ASSERT(before->next == after && after->previous == before, "Must insert between two valid nodes");
+        ASSERT(before->next == after && after->previous == before);
 
         before->next = node;
         node->next = after;

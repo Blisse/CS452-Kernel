@@ -10,7 +10,6 @@ VOID
 assert
     (
         BOOLEAN expr,
-        STRING msg,
         INT line,
         STRING file
     )
@@ -21,11 +20,9 @@ assert
     }
 
 #if NLOCAL
-    bwprintf(BWCOM2, "Assert triggered on line %d of file %s \r\n", line, file);
-    bwputstr(BWCOM2, msg);
-    bwputstr(BWCOM2, "\r\n");
+    bwprintf(BWCOM2, "Assert triggered on line %d of file %s\r\n", line, file);
 #else
-    printf("Assert triggered on line %d of file %s \r\n %s \r\n", line, file, msg);
+    printf("Assert triggered on line %d of file %s\r\n", line, file);
 #endif
 
     while(1) { }

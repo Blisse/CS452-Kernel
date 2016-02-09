@@ -190,8 +190,8 @@ RtMemcpy
         UINT bytes
     )
 {
-    ASSERT(0 == ((UINT) dest) % sizeof(UINT), "Memcpy dest not aligned");
-    ASSERT(0 == ((UINT) src) % sizeof(UINT), "Memcpy src not aligned");
+    ASSERT(0 == ((UINT) dest) % sizeof(UINT));
+    ASSERT(0 == ((UINT) src) % sizeof(UINT));
     memcpy_aligned(dest, src, bytes);
 }
 

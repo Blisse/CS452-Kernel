@@ -19,13 +19,8 @@ TaskInit
         VOID
     )
 {
-    RT_STATUS status = StackInit();
-
-    ASSERT(RT_SUCCESS(status), "Failed to initialize stack manager. \r\n");
-
-    status = TaskDescriptorInit();
-
-    ASSERT(RT_SUCCESS(status), "Failed to initialize task descriptors. \r\n");
+    VERIFY(RT_SUCCESS(StackInit()));
+    VERIFY(RT_SUCCESS(TaskDescriptorInit()));
 }
 
 static
@@ -116,8 +111,8 @@ TaskDestroy
 {
     td->state = ZombieState;
     IpcDrainMailbox(td);
-    VERIFY(RT_SUCCESS(StackDeallocate(td->stack)), "Failed to destroy task's stack \r\n");
-    VERIFY(RT_SUCCESS(TaskDescriptorDeallocate(td)), "Failed to destroy task descriptor \r\n");
+    VERIFY(RT_SUCCESS(StackDeallocate(td->stack)));
+    VERIFY(RT_SUCCESS(TaskDescriptorDeallocate(td)));
 }
 
 inline

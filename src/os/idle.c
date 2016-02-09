@@ -63,11 +63,11 @@ IdleCreateTask
         VOID
     )
 {
-    VERIFY(!IdlepIsRunning(), "Only one idle task may exist at any time.");
+    VERIFY(!IdlepIsRunning());
 
     IdlepStart();
 
     INT idleTaskId = Create(IdlePriority, IdlepTask);
-    ASSERT(idleTaskId == 1, "Idle task must be first created task.");
+    ASSERT(idleTaskId == 1);
     UNREFERENCED_PARAMETER(idleTaskId);
 }

@@ -24,7 +24,7 @@ ObjectRegisterHandle
         IN PVOID object
     )
 {
-    ASSERT(ObjectpCheckHandle(handle), "Invalid handle passed to ObjectRegisterHandle\n");
+    ASSERT(ObjectpCheckHandle(handle));
 
     handleTable[handle] = object;
 }
@@ -35,7 +35,7 @@ ObjectGetFromHandle
         IN HANDLE handle
     )
 {
-    ASSERT(ObjectpCheckHandle(handle), "Invalid handle passed to ObjectGetFromHandle\n");
+    ASSERT(ObjectpCheckHandle(handle));
 
     return handleTable[handle];
 }

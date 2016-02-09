@@ -168,13 +168,14 @@ NameServerpTask
                 if(!success)
                 {
                     response = ERROR_NAME_SERVER_NOT_FOUND;
-                    ASSERT(FALSE, "Received WhoIs request for unknown name \r\n");
+                    ASSERT(FALSE);
                 }
 
                 break;
 
             default:
-                ASSERT(FALSE, "Name server received unknown request \r\n");
+                ASSERT(FALSE);
+                break;
         }
 
         Reply(senderTaskId, &response, sizeof(response));
@@ -188,7 +189,7 @@ NameServerCreateTask
     )
 {
     INT nameServerTaskId = Create(Priority29, NameServerpTask);
-    ASSERT(nameServerTaskId == NAME_SERVER_TID, "Name server created with invalid task id.");
+    ASSERT(nameServerTaskId == NAME_SERVER_TID);
     UNREFERENCED_PARAMETER(nameServerTaskId);
 }
 

@@ -6,21 +6,20 @@ VOID
 assert
     (
         BOOLEAN expr,
-        STRING msg,
         INT line,
         STRING file
     );
 
-#define T_ASSERT(expr, msg) assert(expr, msg, __LINE__, __FILE__)
+#define T_ASSERT(expr) assert(expr, __LINE__, __FILE__)
 
 #ifdef NDEBUG
 
-#define ASSERT(expr, msg)
-#define VERIFY(expr, msg) (expr)
+#define ASSERT(expr)
+#define VERIFY(expr) (expr)
 
 #else
 
-#define ASSERT(expr, msg) assert(expr, msg, __LINE__, __FILE__)
-#define VERIFY(expr, msg) ASSERT(expr, msg)
+#define ASSERT(expr) assert(expr, __LINE__, __FILE__)
+#define VERIFY(expr) ASSERT(expr)
 
 #endif

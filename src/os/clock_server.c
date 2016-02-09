@@ -134,7 +134,7 @@ ClockServerpTask
     RegisterAs(CLOCK_SERVER_NAME);
 
     INT clockNotifierTaskId = Create(HighestPriority, ClockNotifierpTask);
-    ASSERT(clockNotifierTaskId > 0, "Could not create clock notifier task.");
+    ASSERT(SUCCESSFUL(clockNotifierTaskId));
     UNREFERENCED_PARAMETER(clockNotifierTaskId);
 
     while (1)
@@ -149,8 +149,7 @@ ClockServerpTask
             case TickRequest:
                 Reply(taskId, NULL, 0);
                 currentTick++;
-                VERIFY(RT_SUCCESS(ClockServerpUnblockDelayedTasks(&delayedTasks, currentTick)), 
-                       "Failed to unblock delayed tasks");
+                VERIFY(RT_SUCCESS(ClockServerpUnblockDelayedTasks(&delayedTasks, currentTick)));
                 break;
 
             case TimeRequest:
@@ -158,8 +157,10 @@ ClockServerpTask
                 break;
 
             case DelayRequest:
-                VERIFY(RT_SUCCESS(ClockServerpDelayTask(&delayedTasks, delayRequests, taskId, currentTick + request.ticks)),
-                       "Failed to delay task");
+                VERIFY(RT_SUCCESS(ClockServerpDelayTask(&delayedTasks, 
+                                                        delayRequests, 
+                                                        taskId, 
+                                                        currentTick + request.ticks)));
                 break;
 
             case DelayUntilRequest:
@@ -169,13 +170,15 @@ ClockServerpTask
                 }
                 else
                 {
-                    VERIFY(RT_SUCCESS(ClockServerpDelayTask(&delayedTasks, delayRequests, taskId, request.ticks)), 
-                           "Failed to delay until");
+                    VERIFY(RT_SUCCESS(ClockServerpDelayTask(&delayedTasks, 
+                                                            delayRequests, 
+                                                            taskId, 
+                                                            request.ticks)));
                 }
                 break;
 
             default:
-                ASSERT(FALSE, "Received invalid clock server request type.");
+                ASSERT(FALSE);
                 break;
         }
     }
@@ -188,7 +191,7 @@ ClockServerCreateTask
     )
 {
     INT clockServerTaskId = Create(Priority29, ClockServerpTask);
-    ASSERT(clockServerTaskId > 0, "Could not create clock server task.");
+    ASSERT(SUCCESSFUL(clockServerTaskId));
     UNREFERENCED_PARAMETER(clockServerTaskId);
 }
 

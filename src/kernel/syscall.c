@@ -45,7 +45,7 @@ SystemCreateTask
             return ERROR_OUT_OF_SPACE;
 
         default:
-            ASSERT(FALSE, "Unknown task creation status \r\n");
+            ASSERT(FALSE);
             return 0;
     }
 }
@@ -122,7 +122,7 @@ SystemSendMessage
             return ERROR_DEAD_TASK;
 
         default:
-            ASSERT(FALSE, "Unknown message send status");
+            ASSERT(FALSE);
             return 0;
     }
 }
@@ -139,8 +139,11 @@ SystemReceiveMessage
     TASK_DESCRIPTOR* currentTask = SchedulerGetCurrentTask();
     INT bytesReceived;
 
-    VERIFY(RT_SUCCESS(IpcReceive(currentTask, senderId, buffer, bufferLength, &bytesReceived)),
-           "Failed to initiate ipc receive call \r\n");
+    VERIFY(RT_SUCCESS(IpcReceive(currentTask, 
+                                 senderId, 
+                                 buffer, 
+                                 bufferLength, 
+                                 &bytesReceived)));
 
     return bytesReceived;
 }
@@ -178,7 +181,7 @@ SystemReplyMessage
             return ERROR_TASK_NOT_REPLY_BLOCKED;
 
         default:
-            ASSERT(FALSE, "Unknown message reply status");
+            ASSERT(FALSE);
             return 0;
     }
 }
@@ -201,7 +204,7 @@ SystemAwaitEvent
             return ERROR_INVALID_EVENT;
 
         default:
-            ASSERT(FALSE, "Unknown await status");
+            ASSERT(FALSE);
             return 0;
     }
 }
@@ -225,7 +228,7 @@ SystemQueryPerformance
             return ERROR_INVALID_TASK;
 
         default:
-            ASSERT(FALSE, "Unknown performance status");
+            ASSERT(FALSE);
             return 0;
     }
 }

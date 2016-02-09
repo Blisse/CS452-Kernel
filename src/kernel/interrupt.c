@@ -89,7 +89,7 @@ InterruptAwaitEvent
         }
         else
         {
-            ASSERT(FALSE, "Multiple clients waiting on event");
+            ASSERT(FALSE);
             return STATUS_INVALID_PARAMETER;
         }
     }
@@ -128,7 +128,7 @@ InterruptHandler
     }
     else
     {
-        ASSERT(FALSE, "Unknown interrupt");
+        ASSERT(FALSE);
     }
 }
 

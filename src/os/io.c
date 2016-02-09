@@ -29,7 +29,7 @@ IopDeviceWrite
         }
         else
         {
-            ASSERT(FALSE, "Write failed");
+            ASSERT(FALSE);
         }
     }
 
@@ -81,14 +81,14 @@ IoWriteFinished
         IN IO_DEVICE* device
     )
 {
-    ASSERT(IoDeviceIsWriting(device), "Write finished for device that is not writing\n");
+    ASSERT(IoDeviceIsWriting(device));
 
     device->status = IoReady;
 
     if(!RtCircularBufferIsEmpty(&device->writeBuffer))
     {
         RT_STATUS status = IopDeviceWrite(device);
-        ASSERT(RT_SUCCESS(status), "Buffered write to io device failed\n");
+        ASSERT(RT_SUCCESS(status));
         UNREFERENCED_PARAMETER(status);
     }
 }
@@ -104,7 +104,7 @@ IoFlush
        !RtCircularBufferIsEmpty(&device->writeBuffer))
     {
         RT_STATUS status = IopDeviceWrite(device);
-        ASSERT(RT_SUCCESS(status), "IoFlush failed\n");
+        ASSERT(RT_SUCCESS(status));
         UNREFERENCED_PARAMETER(status);
     }
 }
@@ -149,6 +149,6 @@ IoReceiveData
     )
 {
     RT_STATUS status = RtCircularBufferPush(&device->readBuffer, buffer, length);
-    ASSERT(RT_SUCCESS(status), "Buffering data received from io device failed\n");
+    ASSERT(RT_SUCCESS(status));
     UNREFERENCED_PARAMETER(status);
 }

@@ -48,8 +48,7 @@ KernelpInit
     TaskInit();
     TrapInstallHandler();
 
-    VERIFY(RT_SUCCESS(KernelCreateTask(SystemPriority, InitTask)),
-           "Failed to create the init task \r\n");
+    VERIFY(RT_SUCCESS(KernelCreateTask(SystemPriority, InitTask)));
 }
 
 static
@@ -92,12 +91,12 @@ KernelRun
 
         if(RT_SUCCESS(status))
         {
-            ASSERT(TaskValidate(nextTd), "Invalid task!  This likely indicates a stack overflow \r\n");
+            ASSERT(TaskValidate(nextTd));
 
             nextTd->state = RunningState;
 
-            PerformanceEnterTask();
             // Return to user mode
+            PerformanceEnterTask();
             KernelLeave(nextTd->stackPointer);
             PerformanceExitTask(nextTd->taskId);
 
@@ -116,7 +115,7 @@ KernelRun
         }
         else
         {
-            ASSERT(FALSE, "Scheduling failed \r\n");
+            ASSERT(FALSE);
         }
     }
 

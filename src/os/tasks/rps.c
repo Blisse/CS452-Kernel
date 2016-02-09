@@ -80,7 +80,7 @@ RpspClientPrintMove
             break;
 
         default:
-            ASSERT(FALSE, "Client chose a bad move \r\n");
+            ASSERT(FALSE);
             break;
     }
 }
@@ -212,7 +212,7 @@ RpspServerHandleOnePlayerQuitting
 
     // Wait for other player to quit
     Receive(&otherPlayer, &otherPlayerRequest, sizeof(otherPlayerRequest));
-    ASSERT(QuitRequest == otherPlayerRequest.type, "Other player is supposed to quit \r\n");
+    ASSERT(QuitRequest == otherPlayerRequest.type);
 
     bwprintf(BWCOM2, "Server: Client %d is quitting \r\n", otherPlayer);
 
@@ -248,10 +248,10 @@ RpspServerTask
 
     // Wait for players
     Receive(&player1, &player1Request, sizeof(player1Request));
-    ASSERT(SignupRequest == player1Request.type, "Bad player1 signup request \r\n");
+    ASSERT(SignupRequest == player1Request.type);
 
     Receive(&player2, &player2Request, sizeof(player2Request));
-    ASSERT(SignupRequest == player2Request.type, "Bad player2 signup request \r\n");
+    ASSERT(SignupRequest == player2Request.type);
 
     // Let the players know the game is about to start
     Reply(player1, NULL, 0);
@@ -309,7 +309,7 @@ RpspServerTask
     }
     else
     {
-        ASSERT(FALSE, "How did we get here? \r\n");
+        ASSERT(FALSE);
     }
 }
 

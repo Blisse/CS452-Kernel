@@ -9,10 +9,10 @@ void test_buffer_init() {
     RT_CIRCULAR_BUFFER queue;
     RtCircularBufferInit(&queue, buffer, sizeof(buffer));
 
-    T_ASSERT(queue.underlyingBuffer == buffer, "Wrong buffer assigned.");
-    T_ASSERT(queue.capacity == TEST_BUFFER_SIZE, "Wrong buffer size.");
-    T_ASSERT(queue.front == 0, "Wrong buffer front.");
-    T_ASSERT(queue.back == 0, "Wrong buffer back.");
+    T_ASSERT(queue.underlyingBuffer == buffer);
+    T_ASSERT(queue.capacity == TEST_BUFFER_SIZE);
+    T_ASSERT(queue.front == 0);
+    T_ASSERT(queue.back == 0);
 }
 
 void test_buffer_add() {
@@ -21,16 +21,16 @@ void test_buffer_add() {
     RtCircularBufferInit(&queue, buffer, sizeof(buffer));
 
     CHAR c = 'C';
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &c, sizeof(c))), "Couldn't add to buffer");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &c, sizeof(c))));
 
-    T_ASSERT(queue.front == 0, "Wrong buffer front.");
-    T_ASSERT(queue.back == sizeof(c), "Wrong buffer back.");
+    T_ASSERT(queue.front == 0);
+    T_ASSERT(queue.back == sizeof(c));
 
     INT i = 1;
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))), "Couldn't add to buffer");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))));
 
-    T_ASSERT(queue.front == 0, "Wrong buffer front.");
-    T_ASSERT(queue.back == sizeof(c) + sizeof(i), "Wrong buffer back.");
+    T_ASSERT(queue.front == 0);
+    T_ASSERT(queue.back == sizeof(c) + sizeof(i));
 }
 
 void test_buffer_add_full() {
@@ -39,13 +39,13 @@ void test_buffer_add_full() {
     RtCircularBufferInit(&queue, buffer, sizeof(buffer));
 
     INT i = 0;
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))), "Couldn't add to buffer");
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))), "Couldn't add to buffer");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))));
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))));
 
-    T_ASSERT(RT_FAILURE(RtCircularBufferPush(&queue, &i, sizeof(i))), "Shouldn't be able to add to buffer");
+    T_ASSERT(RT_FAILURE(RtCircularBufferPush(&queue, &i, sizeof(i))));
 
     CHAR c = 'c';
-    T_ASSERT(RT_FAILURE(RtCircularBufferPush(&queue, &c, sizeof(c))), "Shouldn't be able to add to buffer");
+    T_ASSERT(RT_FAILURE(RtCircularBufferPush(&queue, &c, sizeof(c))));
 }
 
 void test_buffer_add_get_remove() {
@@ -54,18 +54,18 @@ void test_buffer_add_get_remove() {
     RtCircularBufferInit(&queue, buffer, sizeof(buffer));
 
     INT i = 1;
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))), "Couldn't add to buffer");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))));
 
     INT j;
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPeek(&queue, &j, sizeof(j))), "Couldn't get from buffer");
-    T_ASSERT(queue.back == sizeof(i), "Get should not modify buffer");
-    T_ASSERT(i == j, "Got wrong value from buffer");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPeek(&queue, &j, sizeof(j))));
+    T_ASSERT(queue.back == sizeof(i));
+    T_ASSERT(i == j);
 
     INT k;
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPeekAndPop(&queue, &k, sizeof(k))), "Couldn't remove from buffer");
-    T_ASSERT(queue.front == queue.back, "Buffer should be empty");
-    T_ASSERT(i == k, "Got wrong value from buffer");
-    T_ASSERT(j == k, "Got wrong value from buffer");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPeekAndPop(&queue, &k, sizeof(k))));
+    T_ASSERT(queue.front == queue.back);
+    T_ASSERT(i == k);
+    T_ASSERT(j == k);
 }
 
 void test_buffer_add_overflow() {
@@ -74,22 +74,22 @@ void test_buffer_add_overflow() {
     RtCircularBufferInit(&queue, buffer, sizeof(buffer));
 
     INT i = 1;
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))), "Couldn't add to buffer");
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&queue, sizeof(i))), "Couldn't remove from buffer");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))));
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&queue, sizeof(i))));
 
     CHAR c = 'C';
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &c, sizeof(c))), "Couldn't add to buffer");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &c, sizeof(c))));
 
     INT j = 2;
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &j, sizeof(j))), "Couldn't add to buffer");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &j, sizeof(j))));
 
     CHAR d;
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPeekAndPop(&queue, &d, sizeof(d))), "Couldn't remove from buffer");
-    T_ASSERT(d == c, "Got wrong value from buffer");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPeekAndPop(&queue, &d, sizeof(d))));
+    T_ASSERT(d == c);
 
     INT k;
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPeekAndPop(&queue, &k, sizeof(k))), "Couldn't remove from buffer");
-    T_ASSERT(j == k, "Got wrong value from buffer");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPeekAndPop(&queue, &k, sizeof(k))));
+    T_ASSERT(j == k);
 }
 
 void test_buffer_is_empty_conditions() {
@@ -98,27 +98,27 @@ void test_buffer_is_empty_conditions() {
     RtCircularBufferInit(&queue, buffer, sizeof(buffer));
 
     INT i = 1;
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))), "Couldn't add to buffer");
-    T_ASSERT(RtCircularBufferIsEmpty(&queue) == FALSE, "Circular buffer is empty");
-    T_ASSERT(RtCircularBufferIsFull(&queue) == FALSE, "Circular buffer is full");
-    T_ASSERT(RtCircularBufferSize(&queue) == sizeof(i), "Circular buffer wrong size");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))));
+    T_ASSERT(RtCircularBufferIsEmpty(&queue) == FALSE);
+    T_ASSERT(RtCircularBufferIsFull(&queue) == FALSE);
+    T_ASSERT(RtCircularBufferSize(&queue) == sizeof(i));
 
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&queue, sizeof(i))), "Couldn't remove from buffer");
-    T_ASSERT(RtCircularBufferIsEmpty(&queue) == TRUE, "Circular buffer is not empty");
-    T_ASSERT(RtCircularBufferIsFull(&queue) == FALSE, "Circular buffer is full");
-    T_ASSERT(RtCircularBufferSize(&queue) == 0, "Circular buffer wrong size");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&queue, sizeof(i))));
+    T_ASSERT(RtCircularBufferIsEmpty(&queue) == TRUE);
+    T_ASSERT(RtCircularBufferIsFull(&queue) == FALSE);
+    T_ASSERT(RtCircularBufferSize(&queue) == 0);
 
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))), "Couldn't add to buffer");
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))), "Couldn't add to buffer");
-    T_ASSERT(RtCircularBufferIsEmpty(&queue) == FALSE, "Circular buffer is empty");
-    T_ASSERT(RtCircularBufferIsFull(&queue) == TRUE, "Circular buffer is not full");
-    T_ASSERT(RtCircularBufferSize(&queue) == TEST_BUFFER_SIZE, "Circular buffer wrong size");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))));
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))));
+    T_ASSERT(RtCircularBufferIsEmpty(&queue) == FALSE);
+    T_ASSERT(RtCircularBufferIsFull(&queue) == TRUE);
+    T_ASSERT(RtCircularBufferSize(&queue) == TEST_BUFFER_SIZE);
 
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&queue, sizeof(i))), "Couldn't remove from buffer");
-    T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&queue, sizeof(i))), "Couldn't remove from buffer");
-    T_ASSERT(RtCircularBufferIsEmpty(&queue) == TRUE, "Circular buffer is not empty");
-    T_ASSERT(RtCircularBufferIsFull(&queue) == FALSE, "Circular buffer is full");
-    T_ASSERT(RtCircularBufferSize(&queue) == 0, "Circular buffer wrong size");
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&queue, sizeof(i))));
+    T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&queue, sizeof(i))));
+    T_ASSERT(RtCircularBufferIsEmpty(&queue) == TRUE);
+    T_ASSERT(RtCircularBufferIsFull(&queue) == FALSE);
+    T_ASSERT(RtCircularBufferSize(&queue) == 0);
 }
 
 int main(int argc, char* argv[]) {
