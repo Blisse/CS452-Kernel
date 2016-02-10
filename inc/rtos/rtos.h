@@ -10,6 +10,8 @@
 
 #define NUM_TASKS 64
 
+// All priorities are a power of 2 so that
+// the scheduler can operate in O(1)
 typedef enum _TASK_PRIORITY {
     IdlePriority = 0x1,
     LowestUserPriority = 0x2,
@@ -145,6 +147,10 @@ WhoIs
 typedef enum _EVENT
 {
     ClockEvent = 0,
+    Com1ReceiveEvent,
+    Com1TransmitEvent,
+    Com2ReceiveEvent,
+    Com2TransmitEvent, 
     NumEvent
 } EVENT;
 

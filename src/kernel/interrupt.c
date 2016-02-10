@@ -8,6 +8,11 @@
 #define TIMER_LOAD(timerBase) ((volatile UINT*)((timerBase) + LDR_OFFSET))
 #define TIMER_CLEAR(timerBase) ((volatile UINT*)((timerBase) + CLR_OFFSET))
 
+#define UART_DATA(uartBase) ((volatile UINT*) ((uartBase) + UART_DATA_OFFSET))
+#define UART_LCRH(uartBase) ((volatile UINT*) ((uartBase) + UART_LCRH_OFFSET))
+#define UART_LCRM(uartBase) ((volatile UINT*) ((uartBase) + UART_LCRM_OFFSET))
+#define UART_LCRL(uartBase) ((volatile UINT*) ((uartBase) + UART_LCRL_OFFSET))
+
 #define VIC1_BASE 0x800B0000
 #define STATUS_OFFSET 0
 #define ENABLE_OFFSET 0x10
@@ -127,15 +132,51 @@ inline
 VOID
 InterruptpSetupTimer
     (
-        VOID
+        IN UINT* timerBase
     )
 {
     // Set the timer load value
     // 5080 will set a 508 khz timer to fire every 10 ms
-    *TIMER_LOAD(TIMER2_BASE) = 5080;
+    *TIMER_LOAD(timerBase) = 5080;
 
     // Enable the timer
-    *TIMER_CONTROL(TIMER2_BASE) = CLKSEL_MASK | MODE_MASK | ENABLE_MASK;
+    *TIMER_CONTROL(timerBase) = CLKSEL_MASK | MODE_MASK | ENABLE_MASK;
+}
+
+static
+inline
+VOID
+InterruptpSetupUart
+    (
+        IN UINT* uartBase, 
+        IN UINT baudRate, 
+        IN BOOLEAN needsTwoStopBits
+    )
+{
+    volatile UINT* lcrh = UART_LCRH(uartBase);
+    volatile UINT* lcrm = UART_LCRM(uartBase);
+    volatile UINT* lcrl = UART_LCRL(uartBase);
+    USHORT baudRateDivisor = (7372800 / (16 * baudRate)) - 1;
+
+    // Disable FIFO
+    *lcrh = *lcrh & ~FEN_MASK;
+
+    // Disable parity bits
+    *lcrh = *lcrh & ~PEN_MASK;
+
+    // Setup stop bits
+    if(needsTwoStopBits)
+    {
+        *lcrh = *lcrh | STP2_MASK;
+    }
+    else
+    {
+        *lcrh = *lcrh & ~STP2_MASK;
+    }
+
+    // Setup the baud rate
+    *lcrm = baudRateDivisor >> 8;
+    *lcrl = baudRateDivisor & 0xFF;
 }
 
 VOID
@@ -152,7 +193,9 @@ InterruptInit
     }
 
     InterruptInstallHandler();
-    InterruptpSetupTimer();
+    InterruptpSetupTimer((UINT*) TIMER2_BASE);
+    InterruptpSetupUart((UINT*) UART1_BASE, 2400, TRUE);
+    InterruptpSetupUart((UINT*) UART2_BASE, 115200, FALSE);
 }
 
 VOID
