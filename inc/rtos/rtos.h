@@ -203,7 +203,8 @@ INT
 PutFormattedString
     (
         IN INT channel, 
-        IN STRING str
+        IN STRING str, 
+        ...
     );
 
 CHAR

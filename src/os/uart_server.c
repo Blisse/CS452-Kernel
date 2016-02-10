@@ -173,7 +173,8 @@ INT
 PutFormattedString
     (
         IN INT channel, 
-        IN STRING str
+        IN STRING str, 
+        ...
     )
 {
     // TODO
