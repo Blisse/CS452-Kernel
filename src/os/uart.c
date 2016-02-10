@@ -77,7 +77,7 @@ UartpCom2Read
 {
     return *UART_DATA(UART2_BASE);
 }
-#if 0
+
 static
 VOID
 UartpCom2Write
@@ -85,9 +85,9 @@ UartpCom2Write
         CHAR c
     )
 {
-    ASSERT(FALSE);
+    *UART_DATA(UART2_BASE) = c;
 }
-#endif
+
 VOID
 UartCreateTasks
     (
@@ -112,10 +112,8 @@ UartCreateTasks
                                        UartCom2ReceiveEvent, 
                                        UartpCom2Read, 
                                        UART_COM2_READ_NAME)));
-    #if 0
     VERIFY(SUCCESSFUL(IoCreateWriteTask(Priority29, 
                                         UartCom2TransmitEvent, 
                                         UartpCom2Write, 
                                         UART_COM2_WRITE_NAME)));
-    #endif
 }

@@ -23,6 +23,7 @@
 
 #define TC2IO_MASK 0x20
 #define UART2RX_MASK 0x2000000
+#define UART2TX_MASK 0x4000000
 
 extern
 VOID
@@ -62,7 +63,7 @@ InterruptpDisable
             break;
 
         case UartCom2TransmitEvent:
-            ASSERT(FALSE);
+            *vicDisable = *vicDisable | UART2TX_MASK;
             break;
 
         default:
@@ -100,7 +101,7 @@ InterruptpEnable
             break;
 
         case UartCom2TransmitEvent:
-            ASSERT(FALSE);
+            *vicEnable = *vicEnable | UART2TX_MASK;
             break;
 
         default:
@@ -129,6 +130,7 @@ InterruptpSignalEvent
 }
 
 static
+inline
 VOID
 InterruptpHandleEvent
     (
@@ -153,6 +155,10 @@ InterruptHandler
     if(status & TC2IO_MASK)
     {
         InterruptpHandleEvent(ClockEvent);
+    }
+    else if(status & UART2TX_MASK)
+    {
+        InterruptpHandleEvent(UartCom2TransmitEvent);
     }
     else if(status & UART2RX_MASK)
     {
