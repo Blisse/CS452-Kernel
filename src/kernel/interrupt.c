@@ -6,7 +6,6 @@
 
 #define TIMER_CONTROL(timerBase) ((volatile UINT*)(ptr_add(timerBase, CRTL_OFFSET)))
 #define TIMER_LOAD(timerBase) ((volatile UINT*)(ptr_add(timerBase, LDR_OFFSET)))
-#define TIMER_CLEAR(timerBase) ((volatile UINT*)(ptr_add(timerBase, CLR_OFFSET)))
 
 #define UART_LCRH(uartBase) ((volatile UINT*) (ptr_add(uartBase, UART_LCRH_OFFSET)))
 #define UART_LCRM(uartBase) ((volatile UINT*) (ptr_add(uartBase, UART_LCRM_OFFSET)))
@@ -153,8 +152,6 @@ InterruptHandler
 
     if(status & TC2IO_MASK)
     {
-        // TODO - Move this out of the kernel
-        *TIMER_CLEAR(TIMER2_BASE) = TRUE;
         InterruptpHandleEvent(ClockEvent);
     }
     else if(status & UART2RX_MASK)

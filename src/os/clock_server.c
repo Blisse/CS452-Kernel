@@ -3,10 +3,13 @@
 #include <rtosc/assert.h>
 #include <rtosc/linked_list.h>
 #include <rtos.h>
+#include <ts7200.h>
 
 #include "courier.h"
 
 #define CLOCK_SERVER_NAME "clk"
+
+#define TIMER_CLEAR(timerBase) ((volatile UINT*)((timerBase) + CLR_OFFSET))
 
 typedef enum _CLOCK_SERVER_REQUEST_TYPE
 {
@@ -44,7 +47,13 @@ ClockNotifierpTask
 
     while(1)
     {
+        // Wait for the event
         AwaitEvent(ClockEvent);
+
+        // Acknowledge the interrupt
+        *TIMER_CLEAR(TIMER2_BASE) = TRUE;
+
+        // Send the event to the clock server
         CourierPickup(&notifyRequest, sizeof(notifyRequest));
     }
 }
