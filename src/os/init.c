@@ -3,10 +3,11 @@
 #include <bwio/bwio.h>
 #include "clock_server.h"
 #include "idle.h"
+#include "io.h"
 #include "name_server.h"
-#include "uart_server.h"
+#include "uart.h"
 
-#define K3_TASKS 11
+#define K3_TASKS 12
 
 static
 VOID
@@ -49,12 +50,9 @@ InitTask
     )
 {
     IdleCreateTask();
-
     NameServerCreateTask();
-
     ClockServerCreateTask();
-
-    UartServerCreateTask();
-
-    Create(Priority10, UserPerformanceTask);
+    IoCreateTask();
+    UartCreateTasks();
+    Create(LowestUserPriority, UserPerformanceTask);
 }

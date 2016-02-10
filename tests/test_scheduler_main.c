@@ -20,19 +20,19 @@ main
 
     lowPriorityTask1.taskId = 1;
     lowPriorityTask1.state = ReadyState;
-    lowPriorityTask1.priority = LowestPriority;
+    lowPriorityTask1.priority = LowestUserPriority;
 
     lowPriorityTask2.taskId = 2;
     lowPriorityTask2.state = ReadyState;
-    lowPriorityTask2.priority = LowestPriority;
+    lowPriorityTask2.priority = LowestUserPriority;
 
     highPriorityTask1.taskId = 3;
     highPriorityTask1.state = ReadyState;
-    highPriorityTask1.priority = HighestPriority;
+    highPriorityTask1.priority = HighestUserPriority;
 
     highPriorityTask2.taskId = 4;
     highPriorityTask2.state = ReadyState;
-    highPriorityTask2.priority = HighestPriority;
+    highPriorityTask2.priority = HighestUserPriority;
 
     bwsetfifo(BWCOM2, OFF);
     bwsetspeed(BWCOM2, 115200);

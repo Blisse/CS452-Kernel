@@ -40,7 +40,7 @@ ClockNotifierpTask
 {
     CLOCK_SERVER_REQUEST notifyRequest = { TickRequest };
 
-    CourierCreateTask(Priority29, MyTid(), MyParentTid());
+    CourierCreateTask(Priority30, MyTid(), MyParentTid());
 
     while(1)
     {
@@ -137,7 +137,7 @@ ClockServerpTask
     RtLinkedListInit(&delayedTasks);
 
     VERIFY(SUCCESSFUL(RegisterAs(CLOCK_SERVER_NAME)));
-    VERIFY(SUCCESSFUL(Create(HighestPriority, ClockNotifierpTask)));
+    VERIFY(SUCCESSFUL(Create(HighestSystemPriority, ClockNotifierpTask)));
 
     while (1)
     {
@@ -192,7 +192,7 @@ ClockServerCreateTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority28, ClockServerpTask)));
+    VERIFY(SUCCESSFUL(Create(Priority29, ClockServerpTask)));
 }
 
 static

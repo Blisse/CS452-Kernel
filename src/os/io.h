@@ -1,83 +1,57 @@
 #pragma once
 
-#include <rtosc/buffer.h>
-#include "object.h"
-#include "rt.h"
-
-typedef enum _IO_DEVICE_STATUS
-{
-    IoReady = 0,
-    IoWritePending
-} IO_DEVICE_STATUS;
-
-struct _IO_DEVICE;
-typedef struct _IO_DEVICE IO_DEVICE;
+#include <rt.h>
+#include <rtos.h>
 
 typedef
-RT_STATUS
-(*IO_DEVICE_WRITE_FUNC)
+INT
+(*IO_OPEN_FUNC)
     (
-        IN IO_DEVICE* device,
-        IN CHAR byte
+        IN IO_CHANNEL channel, 
+        OUT IO_DEVICE* device
     );
 
-struct _IO_DEVICE
-{
-    IO_DEVICE_STATUS status;
-    IO_DEVICE_WRITE_FUNC write;
-    RT_CIRCULAR_BUFFER readBuffer;
-    RT_CIRCULAR_BUFFER writeBuffer;
-};
+typedef
+CHAR
+(*IO_READ_FUNC)
+    (
+        VOID
+    );
 
+typedef
 VOID
-IoDeviceInit
+(*IO_WRITE_FUNC)
     (
-        IN IO_DEVICE* device,
-        IN HANDLE handle,
-        IN IO_DEVICE_WRITE_FUNC writeFunc,
-        IN PVOID readBuffer,
-        IN UINT readBufferSize,
-        IN PVOID writeBuffer,
-        IN UINT writeBufferSize
-    );
-
-#define IoDeviceIsReady(device) (IoReady == (device)->status)
-#define IoDeviceIsWriting(device) (IoWritePending == (device)->status)
-
-RT_STATUS
-IoWrite
-    (
-        IN IO_DEVICE* device,
-        IN PVOID buffer,
-        IN UINT length
+        CHAR c
     );
 
 VOID
-IoWriteFinished
+IoCreateTask
     (
-        IN IO_DEVICE* device
+        VOID
     );
 
-// Temporary for A0
-VOID
-IoFlush
+INT
+IoRegisterDriver
     (
-        IN IO_DEVICE* device
+        IN IO_DEVICE_TYPE type, 
+        IN IO_OPEN_FUNC openFunc
     );
 
-RT_STATUS
-IoRead
+INT
+IoCreateReadTask
     (
-        IN IO_DEVICE* device,
-        IN PVOID buffer,
-        IN UINT requestedBytes,
-        OUT UINT* actualBytes
+        IN TASK_PRIORITY priority, 
+        IN EVENT event, 
+        IN IO_READ_FUNC readFunc, 
+        IN STRING name
     );
 
-VOID
-IoReceiveData
+INT
+IoCreateWriteTask
     (
-        IN IO_DEVICE* device,
-        IN PVOID buffer,
-        IN UINT length
+        IN TASK_PRIORITY priority, 
+        IN EVENT event, 
+        IN IO_WRITE_FUNC writeFunc, 
+        IN STRING name
     );

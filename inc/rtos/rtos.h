@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rt.h"
+#include <rt.h>
 
 #define SUCCESSFUL(x) ((x) >= 0)
 
@@ -12,7 +12,7 @@
 
 typedef enum _TASK_PRIORITY {
     IdlePriority = 0x1,
-    LowestPriority = 0x2,
+    LowestUserPriority = 0x2,
     Priority2 = 0x4,
     Priority3 = 0x8,
     Priority4 = 0x10,
@@ -37,12 +37,12 @@ typedef enum _TASK_PRIORITY {
     Priority23 = 0x800000,
     Priority24 = 0x1000000,
     Priority25 = 0x2000000,
-    Priority26 = 0x4000000,
-    Priority27 = 0x8000000,
+    HighestUserPriority = 0x4000000,
+    LowestSystemPriority = 0x8000000,
     Priority28 = 0x10000000,
     Priority29 = 0x20000000,
-    HighestPriority = 0x40000000,
-    SystemPriority = 0x80000000,
+    Priority30 = 0x40000000,
+    HighestSystemPriority = 0x80000000,
     NumPriority = 32
 } TASK_PRIORITY;
 
@@ -178,46 +178,90 @@ DelayUntil
     );
 
 /************************************
- *          I/O API                 *
+ *       I/O SERVER API             *
  ************************************/
 
-#define COM1_CHANNEL 0
-#define COM2_CHANNEL 1
+typedef enum _IO_DEVICE_TYPE
+{
+    UartDevice = 0,
+    NumDeviceType
+} IO_DEVICE_TYPE;
+
+typedef enum _IO_CHANNEL
+{
+    ChannelCom1 = 0, 
+    ChannelCom2, 
+    NumChannel
+} IO_CHANNEL;
+
+typedef struct _IO_DEVICE
+{
+    INT readTaskID;
+    INT writeTaskID;
+} IO_DEVICE;
 
 INT
-GetString
+Open
     (
-        IN INT channel, 
+        IN IO_DEVICE_TYPE type, 
+        IN IO_CHANNEL channel, 
+        OUT IO_DEVICE* device
+    );
+
+INT
+Read
+    (
+        IN IO_DEVICE* device, 
+        IN PVOID buffer, 
+        IN UINT bufferLength
+    );
+
+INT
+Write
+    (
+        IN IO_DEVICE* device, 
+        IN PVOID buffer,
+        IN UINT bufferLength
+    );
+
+/************************************
+ *         I/O LIBRARY API          *
+ ************************************/
+
+CHAR
+ReadChar
+    (
+        IN IO_DEVICE* device
+    );
+
+INT
+WriteChar
+    (
+        IN IO_DEVICE* device, 
+        IN CHAR c
+    );
+
+INT
+ReadString
+    (
+        IN IO_DEVICE* device, 
         IN STRING buffer, 
         IN UINT bufferLength
     );
 
 INT
-PutString
+WriteString
     (
-        IN INT channel, 
+        IN IO_DEVICE* device, 
         IN STRING str
     );
 
 INT
-PutFormattedString
+WriteFormattedString
     (
-        IN INT channel, 
+        IN IO_DEVICE* device, 
         IN STRING str, 
         ...
-    );
-
-CHAR
-Getc
-    (
-        IN INT channel
-    );
-
-INT
-Putc
-    (
-        IN INT channel, 
-        IN CHAR c
     );
 
 /************************************
