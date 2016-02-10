@@ -2,12 +2,15 @@
 
 #include <rtosc/assert.h>
 #include <rtos.h>
+#include <ts7200.h>
 #include "io.h"
 
 #define UART_COM1_READ_NAME "com1_r"
 #define UART_COM1_WRITE_NAME "com1_w"
 #define UART_COM2_READ_NAME "com2_r"
 #define UART_COM2_WRITE_NAME "com2_w"
+
+#define UART_DATA(uartBase) ((volatile UINT*) (uartBase + UART_DATA_OFFSET))
 
 static
 INT
@@ -64,7 +67,7 @@ UartpCom1Write
 {
     ASSERT(FALSE);
 }
-
+#endif
 static
 CHAR
 UartpCom2Read
@@ -72,10 +75,9 @@ UartpCom2Read
         VOID
     )
 {
-    ASSERT(FALSE);
-    return 0;
+    return *UART_DATA(UART2_BASE);
 }
-
+#if 0
 static
 VOID
 UartpCom2Write
@@ -98,19 +100,21 @@ UartCreateTasks
     // Create the uart I/O servers
     #if 0
     VERIFY(SUCCESSFUL(IoCreateReadTask(Priority29, 
-                                       Com1ReceiveEvent, 
+                                       UartCom1ReceiveEvent, 
                                        UartpCom1Read, 
                                        UART_COM1_READ_NAME)));
     VERIFY(SUCCESSFUL(IoCreateWriteTask(Priority29, 
-                                        Com1TransmitEvent, 
+                                        UartCom1TransmitEvent, 
                                         UartpCom1Write, 
                                         UART_COM1_WRITE_NAME)));
+    #endif
     VERIFY(SUCCESSFUL(IoCreateReadTask(Priority29, 
-                                       Com2ReceiveEvent, 
+                                       UartCom2ReceiveEvent, 
                                        UartpCom2Read, 
                                        UART_COM2_READ_NAME)));
+    #if 0
     VERIFY(SUCCESSFUL(IoCreateWriteTask(Priority29, 
-                                        Com2TransmitEvent, 
+                                        UartCom2TransmitEvent, 
                                         UartpCom2Write, 
                                         UART_COM2_WRITE_NAME)));
     #endif

@@ -147,10 +147,10 @@ WhoIs
 typedef enum _EVENT
 {
     ClockEvent = 0,
-    Com1ReceiveEvent,
-    Com1TransmitEvent,
-    Com2ReceiveEvent,
-    Com2TransmitEvent, 
+    UartCom1ReceiveEvent,
+    UartCom1TransmitEvent,
+    UartCom2ReceiveEvent,
+    UartCom2TransmitEvent, 
     NumEvent
 } EVENT;
 

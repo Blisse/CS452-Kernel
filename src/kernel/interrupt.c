@@ -4,25 +4,26 @@
 #include "scheduler.h"
 #include <ts7200.h>
 
-#define TIMER_CONTROL(timerBase) ((volatile UINT*)((timerBase) + CRTL_OFFSET))
-#define TIMER_LOAD(timerBase) ((volatile UINT*)((timerBase) + LDR_OFFSET))
-#define TIMER_CLEAR(timerBase) ((volatile UINT*)((timerBase) + CLR_OFFSET))
+#define TIMER_CONTROL(timerBase) ((volatile UINT*)(ptr_add(timerBase, CRTL_OFFSET)))
+#define TIMER_LOAD(timerBase) ((volatile UINT*)(ptr_add(timerBase, LDR_OFFSET)))
+#define TIMER_CLEAR(timerBase) ((volatile UINT*)(ptr_add(timerBase, CLR_OFFSET)))
 
-#define UART_DATA(uartBase) ((volatile UINT*) ((uartBase) + UART_DATA_OFFSET))
-#define UART_LCRH(uartBase) ((volatile UINT*) ((uartBase) + UART_LCRH_OFFSET))
-#define UART_LCRM(uartBase) ((volatile UINT*) ((uartBase) + UART_LCRM_OFFSET))
-#define UART_LCRL(uartBase) ((volatile UINT*) ((uartBase) + UART_LCRL_OFFSET))
+#define UART_LCRH(uartBase) ((volatile UINT*) (ptr_add(uartBase, UART_LCRH_OFFSET)))
+#define UART_LCRM(uartBase) ((volatile UINT*) (ptr_add(uartBase, UART_LCRM_OFFSET)))
+#define UART_LCRL(uartBase) ((volatile UINT*) (ptr_add(uartBase, UART_LCRL_OFFSET)))
+#define UART_CTRL(uartBase) ((volatile UINT*) (ptr_add(uartBase, UART_CTLR_OFFSET)))
 
 #define VIC1_BASE 0x800B0000
 #define STATUS_OFFSET 0
 #define ENABLE_OFFSET 0x10
 #define DISABLE_OFFSET 0x14
 
-#define TC2IO_MASK 0x20
-
 #define VIC_STATUS(vicBase) ((volatile UINT*)((vicBase) + STATUS_OFFSET))
 #define VIC_INTERRUPT_ENABLE(vicBase) ((volatile UINT*)((vicBase) + ENABLE_OFFSET))
 #define VIC_INTERRUPT_DISABLE(vicBase) ((volatile UINT*)((vicBase) + DISABLE_OFFSET))
+
+#define TC2IO_MASK 0x20
+#define UART2RX_MASK 0x2000000
 
 extern
 VOID
@@ -34,6 +35,7 @@ InterruptInstallHandler
 static TASK_DESCRIPTOR* g_eventHandlers[NumEvent];
 
 static
+inline
 VOID
 InterruptpDisable
     (
@@ -48,12 +50,30 @@ InterruptpDisable
             *vicDisable = *vicDisable | TC2IO_MASK;
             break;
 
+        case UartCom1ReceiveEvent:
+            ASSERT(FALSE);
+            break;
+
+        case UartCom1TransmitEvent:
+            ASSERT(FALSE);
+            break;
+
+        case UartCom2ReceiveEvent:
+            *vicDisable = *vicDisable | UART2RX_MASK;
+            break;
+
+        case UartCom2TransmitEvent:
+            ASSERT(FALSE);
+            break;
+
         default:
             ASSERT(FALSE);
+            break;
     }
 } 
 
 static
+inline
 VOID
 InterruptpEnable
     (
@@ -68,12 +88,30 @@ InterruptpEnable
             *vicEnable = *vicEnable | TC2IO_MASK;
             break;
 
+        case UartCom1ReceiveEvent:
+            ASSERT(FALSE);
+            break;
+
+        case UartCom1TransmitEvent:
+            ASSERT(FALSE);
+            break;
+
+        case UartCom2ReceiveEvent:
+            *vicEnable = *vicEnable | UART2RX_MASK;
+            break;
+
+        case UartCom2TransmitEvent:
+            ASSERT(FALSE);
+            break;
+
         default:
             ASSERT(FALSE);
+            break;
     }
 }
 
 static
+inline
 VOID
 InterruptpSignalEvent
     (
@@ -92,21 +130,17 @@ InterruptpSignalEvent
 }
 
 static
-inline
 VOID
-InterruptpHandleClock
+InterruptpHandleEvent
     (
-        VOID
+        IN EVENT event
     )
 {
-    // Acknowledge the interrupt
-    *TIMER_CLEAR(TIMER2_BASE) = TRUE;
-
     // Handle the interrupt
-    InterruptpSignalEvent(ClockEvent);
+    InterruptpSignalEvent(event);
 
     // Disable the interrupt
-    InterruptpDisable(ClockEvent);
+    InterruptpDisable(event);
 }
 
 VOID
@@ -119,7 +153,13 @@ InterruptHandler
 
     if(status & TC2IO_MASK)
     {
-        InterruptpHandleClock();
+        // TODO - Move this out of the kernel
+        *TIMER_CLEAR(TIMER2_BASE) = TRUE;
+        InterruptpHandleEvent(ClockEvent);
+    }
+    else if(status & UART2RX_MASK)
+    {
+        InterruptpHandleEvent(UartCom2ReceiveEvent);
     }
     else
     {
@@ -156,6 +196,7 @@ InterruptpSetupUart
     volatile UINT* lcrh = UART_LCRH(uartBase);
     volatile UINT* lcrm = UART_LCRM(uartBase);
     volatile UINT* lcrl = UART_LCRL(uartBase);
+    volatile UINT* ctrl = UART_CTRL(uartBase);
     USHORT baudRateDivisor = (7372800 / (16 * baudRate)) - 1;
 
     // Disable FIFO
@@ -177,6 +218,9 @@ InterruptpSetupUart
     // Setup the baud rate
     *lcrm = baudRateDivisor >> 8;
     *lcrl = baudRateDivisor & 0xFF;
+
+    // Enable the uart
+    *ctrl = *ctrl | UARTEN_MASK | MSIEN_MASK | RIEN_MASK | TIEN_MASK;
 }
 
 VOID

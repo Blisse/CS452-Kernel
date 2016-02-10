@@ -56,7 +56,7 @@ IopReadNotifierTask
 
         // Read the new character
         c = params.read();
-
+        
         // Send it off to the read server
         request.buffer = &c;
         request.bufferLength = sizeof(c);
