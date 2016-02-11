@@ -1,7 +1,7 @@
 #include <bwio/bwio.h>
 #include <rtosc/assert.h>
-#include "rt.h"
-#include "rtos.h"
+#include <rt.h>
+#include <rtos.h>
 #include "scheduler.h"
 #include "task.h"
 

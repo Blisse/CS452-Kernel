@@ -13,6 +13,10 @@ set(SRC_OS
     ${CMAKE_CURRENT_SOURCE_DIR}/uart.c
     )
 
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
 add_subdirectory("tasks")
 
 add_c_library(

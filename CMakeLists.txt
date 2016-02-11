@@ -32,12 +32,8 @@ set(ALL_LIBS "-l${LIB_KERNEL} -l${LIB_OS} -l${LIB_RTOSC} -l${LIB_BWIO}")
 include_directories(
     "external"
     "inc"
-    "inc/common"
     "inc/rt"
     "inc/rtos"
-    "src/kernel"
-    "src/os"
-    "src/os/tasks"
     )
 
 # compile options

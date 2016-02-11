@@ -1,7 +1,7 @@
 #pragma once
 
 #include "buffer.h"
-#include "rt.h"
+#include <rt.h>
 
 typedef struct _RT_PRIORITY_QUEUE
 {
