@@ -30,7 +30,7 @@ set(ALL_LIBS "-l${LIB_KERNEL} -l${LIB_OS} -l${LIB_RTOSC} -l${LIB_BWIO}")
 
 # includes
 include_directories(
-    "external"
+    "ext"
     "inc"
     "inc/rt"
     "inc/rtos"
@@ -111,6 +111,6 @@ function(add_c_executable EXEC_NAME EXEC_SOURCES EXEC_DEPENDENCIES)
 endfunction()
 
 # build directories
-add_subdirectory("external")
+add_subdirectory("ext")
 add_subdirectory("src")
 add_subdirectory("tests")
