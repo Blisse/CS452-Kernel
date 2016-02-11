@@ -22,6 +22,8 @@
 #define VIC_INTERRUPT_DISABLE(vicBase) ((volatile UINT*)((vicBase) + DISABLE_OFFSET))
 
 #define TC2IO_MASK 0x20
+#define UART1RX_MASK 0x800000
+#define UART1TX_MASK 0x1000000
 #define UART2RX_MASK 0x2000000
 #define UART2TX_MASK 0x4000000
 
@@ -51,7 +53,7 @@ InterruptpDisable
             break;
 
         case UartCom1ReceiveEvent:
-            ASSERT(FALSE);
+            *vicDisable = *vicDisable | UART1RX_MASK;
             break;
 
         case UartCom1TransmitEvent:
@@ -89,7 +91,7 @@ InterruptpEnable
             break;
 
         case UartCom1ReceiveEvent:
-            ASSERT(FALSE);
+            *vicEnable = *vicEnable | UART1RX_MASK;
             break;
 
         case UartCom1TransmitEvent:
@@ -163,6 +165,10 @@ InterruptHandler
     else if(status & UART2RX_MASK)
     {
         InterruptpHandleEvent(UartCom2ReceiveEvent);
+    }
+    else if(status & UART1RX_MASK)
+    {
+        InterruptpHandleEvent(UartCom1ReceiveEvent);
     }
     else
     {

@@ -46,7 +46,7 @@ UartpOpen
         return -1;
     }
 }
-#if 0
+
 static
 CHAR
 UartpCom1Read
@@ -54,10 +54,9 @@ UartpCom1Read
         VOID
     )
 {
-    ASSERT(FALSE);
-    return 0;
+    return *UART_DATA(UART1_BASE);
 }
-
+#if 0
 static
 VOID
 UartpCom1Write
@@ -98,11 +97,11 @@ UartCreateTasks
     VERIFY(SUCCESSFUL(IoRegisterDriver(UartDevice, UartpOpen)));
 
     // Create the uart I/O servers
-    #if 0
     VERIFY(SUCCESSFUL(IoCreateReadTask(Priority29, 
                                        UartCom1ReceiveEvent, 
                                        UartpCom1Read, 
                                        UART_COM1_READ_NAME)));
+    #if 0
     VERIFY(SUCCESSFUL(IoCreateWriteTask(Priority29, 
                                         UartCom1TransmitEvent, 
                                         UartpCom1Write, 
