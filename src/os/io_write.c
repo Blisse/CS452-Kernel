@@ -1,7 +1,10 @@
 #include "io.h"
 
 #include <rtosc/assert.h>
+#include <rtosc/buffer.h>
 #include "courier.h"
+
+#define DEFAULT_BUFFER_SIZE 1024
 
 typedef struct _IO_WRITE_TASK_NOTIFIER_PARAMS
 {
@@ -58,12 +61,37 @@ IopWriteNotifierTask
 }
 
 static
+inline
+VOID
+IopPerformWrite
+    (
+        IN INT notifierTaskId, 
+        IN IO_WRITE_FUNC write, 
+        IN RT_CIRCULAR_BUFFER* buffer
+    )
+{
+    CHAR c;
+
+    // Grab the next character to be written
+    VERIFY(RT_SUCCESS(RtCircularBufferPeekAndPop(buffer, &c, sizeof(c))));
+
+    // Write the character
+    write(c);
+
+    // Unblock the notifier
+    VERIFY(SUCCESSFUL(Reply(notifierTaskId, NULL, 0)));
+}
+
+static
 VOID
 IopWriteTask
     (
         VOID
     )
 {
+    CHAR underlyingBuffer[DEFAULT_BUFFER_SIZE];
+    RT_CIRCULAR_BUFFER buffer;
+    BOOLEAN canWrite;
     IO_WRITE_TASK_PARAMS params;
     INT sender;
     INT notifierTaskId;
@@ -86,6 +114,10 @@ IopWriteTask
                            NULL, 
                            0)));
 
+    // Initialize task variables
+    RtCircularBufferInit(&buffer, underlyingBuffer, sizeof(underlyingBuffer));
+    canWrite = FALSE;
+
     // Run the server
     while(1)
     {
@@ -96,11 +128,28 @@ IopWriteTask
         switch(request.type)
         {
             case NotifierRequest:
-                ASSERT(FALSE);
+                if(RtCircularBufferIsEmpty(&buffer))
+                {
+                    canWrite = TRUE;
+                }
+                else
+                {
+                    IopPerformWrite(notifierTaskId, params.write, &buffer);
+                }
+                
                 break;
 
             case WriteRequest:
-                ASSERT(FALSE);
+                VERIFY(RT_SUCCESS(RtCircularBufferPush(&buffer, 
+                                                       request.buffer, 
+                                                       request.bufferLength)));
+
+                if(canWrite)
+                {
+                    IopPerformWrite(notifierTaskId, params.write, &buffer);
+                    canWrite = FALSE;
+                }
+
                 break;
 
             default:
