@@ -1,13 +1,14 @@
 #include "init.h"
 
 #include <bwio/bwio.h>
+#include <rtosc/assert.h>
 #include "clock_server.h"
 #include "idle.h"
 #include "io.h"
 #include "name_server.h"
 #include "uart.h"
 
-#define K3_TASKS 12
+#define K3_TASKS 14
 
 static
 VOID
@@ -43,6 +44,29 @@ UserPerformanceTask
     Shutdown();
 }
 
+static
+VOID
+TestEchoTask
+    (
+        VOID
+    )
+{
+    IO_DEVICE device;
+
+    VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom2, &device)));
+
+    while(1)
+    {
+        // This is just a demonstration of how the i/o server tries to be efficient
+        // You can wait for a whole bunch of characters to be ready
+        // This should echo in batches of 2, instead of every character
+        CHAR buffer[2];
+
+        VERIFY(SUCCESSFUL(Read(&device, buffer, sizeof(buffer))));
+        VERIFY(SUCCESSFUL(Write(&device, buffer, sizeof(buffer))));
+    }
+}
+
 VOID
 InitTask
     (
@@ -55,4 +79,5 @@ InitTask
     IoCreateTask();
     UartCreateTasks();
     Create(LowestUserPriority, UserPerformanceTask);
+    Create(HighestUserPriority, TestEchoTask);
 }
