@@ -89,36 +89,24 @@ function(add_c_executable EXEC_NAME EXEC_SOURCES EXEC_DEPENDENCIES)
     set_target_properties("${EXEC_NAME}" PROPERTIES LINKER_LANGUAGE C)
     if (NOT LOCAL)
         if (${CMAKE_RUNTIME_OUTPUT_DIRECTORY} MATCHES "/tstark/")
-            add_custom_command(
-                TARGET "${EXEC_NAME}"
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME}"
-                    "/u/cs452/tftp/ARM/tstark/${EXEC_NAME}"
-                COMMENT "Copying ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME} to /u/cs452/tftp/ARM/tstark/${EXEC_NAME}"
-                )
-            add_custom_command(
-                TARGET "${EXEC_NAME}"
-                POST_BUILD
-                COMMAND chmod 777 "/u/cs452/tftp/ARM/tstark/${EXEC_NAME}"
-                COMMENT "chmod 777 /u/cs452/tftp/ARM/tstark/${EXEC_NAME}"
-                )
+            set(TFTP_EXEC_PATH "/u/cs452/tftp/ARM/tstark/${EXEC_NAME}")
         else()
-            add_custom_command(
-                TARGET "${EXEC_NAME}"
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME}"
-                    "/u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}"
-                COMMENT "Copying ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME} to /u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}"
-                )
-            add_custom_command(
-                TARGET "${EXEC_NAME}"
-                POST_BUILD
-                COMMAND chmod 777 "/u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}"
-                COMMENT "chmod 777 /u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}"
-                )
+            set(TFTP_EXEC_PATH "/u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}")
         endif()
+        add_custom_command(
+            TARGET "${EXEC_NAME}"
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME}"
+                "${TFTP_EXEC_PATH}"
+            COMMENT "Copying ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EXEC_NAME} to ${TFTP_EXEC_PATH}"
+            )
+        add_custom_command(
+            TARGET "${EXEC_NAME}"
+            POST_BUILD
+            COMMAND chmod 777 ${TFTP_EXEC_PATH}
+            COMMENT "chmod 777 ${TFTP_EXEC_PATH}"
+            )
     endif()
 endfunction()
 
