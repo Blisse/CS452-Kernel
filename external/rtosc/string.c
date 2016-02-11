@@ -190,9 +190,15 @@ RtMemcpy
         UINT bytes
     )
 {
-    ASSERT(0 == ((UINT) dest) % sizeof(UINT));
-    ASSERT(0 == ((UINT) src) % sizeof(UINT));
-    memcpy_aligned(dest, src, bytes);
+    if(0 == ((UINT) dest) % sizeof(UINT) &&
+       0 == ((UINT) src) % sizeof(UINT))
+    {
+        memcpy_aligned(dest, src, bytes);
+    }
+    else
+    {
+        memcpy_unaligned(dest, src, bytes);
+    }    
 }
 
 // These functions were taken from bwio
