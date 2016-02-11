@@ -65,7 +65,7 @@ inline
 VOID
 IopPerformWrite
     (
-        IN INT notifierTaskId, 
+        IN INT blockedTaskId, 
         IN IO_WRITE_FUNC write, 
         IN RT_CIRCULAR_BUFFER* buffer
     )
@@ -79,7 +79,7 @@ IopPerformWrite
     write(c);
 
     // Unblock the notifier
-    VERIFY(SUCCESSFUL(Reply(notifierTaskId, NULL, 0)));
+    VERIFY(SUCCESSFUL(Reply(blockedTaskId, NULL, 0)));
 }
 
 static
@@ -92,6 +92,7 @@ IopWriteTask
     CHAR underlyingTransmitBuffer[DEFAULT_BUFFER_SIZE];
     RT_CIRCULAR_BUFFER transmitBuffer;
     BOOLEAN canWrite;
+    INT blockedTaskId;
     IO_WRITE_TASK_PARAMS params;
     INT sender;
     INT notifierTaskId;
@@ -116,6 +117,7 @@ IopWriteTask
 
     // Initialize task variables
     canWrite = FALSE;
+    blockedTaskId = -1;
     RtCircularBufferInit(&transmitBuffer, 
                          underlyingTransmitBuffer, 
                          sizeof(underlyingTransmitBuffer));
@@ -133,10 +135,11 @@ IopWriteTask
                 if(RtCircularBufferIsEmpty(&transmitBuffer))
                 {
                     canWrite = TRUE;
+                    blockedTaskId = sender;
                 }
                 else
                 {
-                    IopPerformWrite(notifierTaskId, params.write, &transmitBuffer);
+                    IopPerformWrite(sender, params.write, &transmitBuffer);
                 }
                 
                 break;
@@ -148,7 +151,7 @@ IopWriteTask
 
                 if(canWrite)
                 {
-                    IopPerformWrite(notifierTaskId, params.write, &transmitBuffer);
+                    IopPerformWrite(blockedTaskId, params.write, &transmitBuffer);
                     canWrite = FALSE;
                 }
 
