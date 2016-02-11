@@ -11,8 +11,11 @@
 #define UART_LCRM(uartBase) ((volatile UINT*) (ptr_add(uartBase, UART_LCRM_OFFSET)))
 #define UART_LCRL(uartBase) ((volatile UINT*) (ptr_add(uartBase, UART_LCRL_OFFSET)))
 #define UART_CTRL(uartBase) ((volatile UINT*) (ptr_add(uartBase, UART_CTLR_OFFSET)))
+#define UART_FLAG(uartBase) ((volatile UINT*) (ptr_add(uartBase, UART_FLAG_OFFSET)))
+#define UART_INTR(uartBase) ((volatile UINT*) (ptr_add(uartBase, UART_INTR_OFFSET)))
 
 #define VIC1_BASE 0x800B0000
+#define VIC2_BASE 0x800C0000
 #define STATUS_OFFSET 0
 #define ENABLE_OFFSET 0x10
 #define DISABLE_OFFSET 0x14
@@ -22,10 +25,8 @@
 #define VIC_INTERRUPT_DISABLE(vicBase) ((volatile UINT*)((vicBase) + DISABLE_OFFSET))
 
 #define TC2IO_MASK 0x20
-#define UART1RX_MASK 0x800000
-#define UART1TX_MASK 0x1000000
-#define UART2RX_MASK 0x2000000
-#define UART2TX_MASK 0x4000000
+#define UART1_MASK 0x100000
+#define UART2_MASK 0x400000
 
 extern
 VOID
@@ -44,28 +45,30 @@ InterruptpDisable
         IN EVENT event
     )
 {
-    volatile UINT* vicDisable = VIC_INTERRUPT_DISABLE(VIC1_BASE);
+    volatile UINT* vic1Disable = VIC_INTERRUPT_DISABLE(VIC1_BASE);
+    volatile UINT* uart1Ctrl = UART_CTRL((UINT*) UART1_BASE);
+    volatile UINT* uart2Ctrl = UART_CTRL((UINT*) UART2_BASE);
 
     switch(event)
     {
         case ClockEvent:
-            *vicDisable = *vicDisable | TC2IO_MASK;
+            *vic1Disable = *vic1Disable | TC2IO_MASK;
             break;
 
         case UartCom1ReceiveEvent:
-            *vicDisable = *vicDisable | UART1RX_MASK;
+            *uart1Ctrl = *uart1Ctrl & ~RIEN_MASK;
             break;
 
         case UartCom1TransmitEvent:
-            ASSERT(FALSE);
+            *uart1Ctrl = *uart1Ctrl & ~TIEN_MASK;
             break;
 
         case UartCom2ReceiveEvent:
-            *vicDisable = *vicDisable | UART2RX_MASK;
+            *uart2Ctrl = *uart2Ctrl & ~RIEN_MASK;
             break;
 
         case UartCom2TransmitEvent:
-            *vicDisable = *vicDisable | UART2TX_MASK;
+            *uart2Ctrl = *uart2Ctrl & ~TIEN_MASK;
             break;
 
         default:
@@ -82,28 +85,30 @@ InterruptpEnable
         IN EVENT event
     )
 {
-    volatile UINT* vicEnable = VIC_INTERRUPT_ENABLE(VIC1_BASE);
-    
+    volatile UINT* vic1Enable = VIC_INTERRUPT_ENABLE(VIC1_BASE);
+    volatile UINT* uart1Ctrl = UART_CTRL((UINT*) UART1_BASE);
+    volatile UINT* uart2Ctrl = UART_CTRL((UINT*) UART2_BASE);
+
     switch(event)
     {
         case ClockEvent:
-            *vicEnable = *vicEnable | TC2IO_MASK;
+            *vic1Enable = *vic1Enable | TC2IO_MASK;
             break;
 
         case UartCom1ReceiveEvent:
-            *vicEnable = *vicEnable | UART1RX_MASK;
+            *uart1Ctrl = *uart1Ctrl | RIEN_MASK;
             break;
 
         case UartCom1TransmitEvent:
-            ASSERT(FALSE);
+            *uart1Ctrl = *uart1Ctrl | TIEN_MASK;
             break;
 
         case UartCom2ReceiveEvent:
-            *vicEnable = *vicEnable | UART2RX_MASK;
+            *uart2Ctrl = *uart2Ctrl | RIEN_MASK;
             break;
 
         case UartCom2TransmitEvent:
-            *vicEnable = *vicEnable | UART2TX_MASK;
+            *uart2Ctrl = *uart2Ctrl | TIEN_MASK;
             break;
 
         default:
@@ -152,23 +157,55 @@ InterruptHandler
         VOID
     )
 {
-    UINT status = *VIC_STATUS(VIC1_BASE);
+    UINT vic1Status = *VIC_STATUS(VIC1_BASE);
+    UINT vic2Status = *VIC_STATUS(VIC2_BASE);
 
-    if(status & TC2IO_MASK)
+    if(vic1Status & TC2IO_MASK)
     {
         InterruptpHandleEvent(ClockEvent);
     }
-    else if(status & UART2TX_MASK)
+    else if(vic2Status & UART2_MASK)
     {
-        InterruptpHandleEvent(UartCom2TransmitEvent);
+        UINT uart2Status = *UART_INTR((UINT*) UART2_BASE);
+
+        if(uart2Status & TIS_MASK)
+        {
+            InterruptpHandleEvent(UartCom2TransmitEvent);
+        }
+        else if(uart2Status & RIS_MASK)
+        {
+            InterruptpHandleEvent(UartCom2ReceiveEvent);
+        }
+        else
+        {
+            ASSERT(FALSE);
+        }
     }
-    else if(status & UART2RX_MASK)
+    else if(vic2Status & UART1_MASK)
     {
-        InterruptpHandleEvent(UartCom2ReceiveEvent);
-    }
-    else if(status & UART1RX_MASK)
-    {
-        InterruptpHandleEvent(UartCom1ReceiveEvent);
+        static BOOLEAN cts = TRUE;
+        UINT uart1Status = *UART_INTR((UINT*) UART1_BASE);
+
+        if(uart1Status & TIS_MASK && cts)
+        {
+            InterruptpHandleEvent(UartCom1TransmitEvent);
+        }
+        else if(uart1Status & MIS_MASK)
+        {
+            // Acknowledge the interrupt
+            *UART_INTR((UINT*) UART1_BASE) = TRUE;
+
+            // Get the data from the interrupt
+            cts = *UART_FLAG((UINT*) UART1_BASE) & CTS_MASK;
+        }
+        else if(uart1Status & RIS_MASK)
+        {
+            InterruptpHandleEvent(UartCom1ReceiveEvent);
+        }
+        else
+        {
+            ASSERT(FALSE);
+        }
     }
     else
     {
@@ -198,6 +235,7 @@ VOID
 InterruptpSetupUart
     (
         IN UINT* uartBase, 
+        IN UINT vicMask,
         IN UINT baudRate, 
         IN BOOLEAN needsTwoStopBits
     )
@@ -206,6 +244,7 @@ InterruptpSetupUart
     volatile UINT* lcrm = UART_LCRM(uartBase);
     volatile UINT* lcrl = UART_LCRL(uartBase);
     volatile UINT* ctrl = UART_CTRL(uartBase);
+    volatile UINT* vic2Enable = VIC_INTERRUPT_ENABLE(VIC2_BASE);
     USHORT baudRateDivisor = (7372800 / (16 * baudRate)) - 1;
 
     // Disable FIFO
@@ -229,7 +268,8 @@ InterruptpSetupUart
     *lcrl = baudRateDivisor & 0xFF;
 
     // Enable the uart
-    *ctrl = *ctrl | UARTEN_MASK | MSIEN_MASK | RIEN_MASK | TIEN_MASK;
+    *ctrl = *ctrl | UARTEN_MASK | MSIEN_MASK;
+    *vic2Enable = *vic2Enable | vicMask;
 }
 
 VOID
@@ -247,8 +287,8 @@ InterruptInit
 
     InterruptInstallHandler();
     InterruptpSetupTimer((UINT*) TIMER2_BASE);
-    InterruptpSetupUart((UINT*) UART1_BASE, 2400, TRUE);
-    InterruptpSetupUart((UINT*) UART2_BASE, 115200, FALSE);
+    InterruptpSetupUart((UINT*) UART1_BASE, UART1_MASK, 2400, TRUE);
+    InterruptpSetupUart((UINT*) UART2_BASE, UART2_MASK, 115200, FALSE);
 }
 
 VOID
@@ -258,6 +298,7 @@ InterruptDisableAll
     )
 {
     *VIC_INTERRUPT_DISABLE(VIC1_BASE) = 0xFFFFFFFF;
+    *VIC_INTERRUPT_DISABLE(VIC2_BASE) = 0xFFFFFFFF;
 }
 
 static
