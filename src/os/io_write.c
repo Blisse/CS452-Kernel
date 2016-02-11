@@ -89,8 +89,8 @@ IopWriteTask
         VOID
     )
 {
-    CHAR underlyingBuffer[DEFAULT_BUFFER_SIZE];
-    RT_CIRCULAR_BUFFER buffer;
+    CHAR underlyingTransmitBuffer[DEFAULT_BUFFER_SIZE];
+    RT_CIRCULAR_BUFFER transmitBuffer;
     BOOLEAN canWrite;
     IO_WRITE_TASK_PARAMS params;
     INT sender;
@@ -115,8 +115,10 @@ IopWriteTask
                            0)));
 
     // Initialize task variables
-    RtCircularBufferInit(&buffer, underlyingBuffer, sizeof(underlyingBuffer));
     canWrite = FALSE;
+    RtCircularBufferInit(&transmitBuffer, 
+                         underlyingTransmitBuffer, 
+                         sizeof(underlyingTransmitBuffer));
 
     // Run the server
     while(1)
@@ -128,28 +130,29 @@ IopWriteTask
         switch(request.type)
         {
             case NotifierRequest:
-                if(RtCircularBufferIsEmpty(&buffer))
+                if(RtCircularBufferIsEmpty(&transmitBuffer))
                 {
                     canWrite = TRUE;
                 }
                 else
                 {
-                    IopPerformWrite(notifierTaskId, params.write, &buffer);
+                    IopPerformWrite(notifierTaskId, params.write, &transmitBuffer);
                 }
                 
                 break;
 
             case WriteRequest:
-                VERIFY(RT_SUCCESS(RtCircularBufferPush(&buffer, 
+                VERIFY(RT_SUCCESS(RtCircularBufferPush(&transmitBuffer, 
                                                        request.buffer, 
                                                        request.bufferLength)));
 
                 if(canWrite)
                 {
-                    IopPerformWrite(notifierTaskId, params.write, &buffer);
+                    IopPerformWrite(notifierTaskId, params.write, &transmitBuffer);
                     canWrite = FALSE;
                 }
 
+                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 break;
 
             default:

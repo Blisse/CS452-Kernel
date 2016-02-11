@@ -1,7 +1,10 @@
 #include "io.h"
 
 #include <rtosc/assert.h>
+#include <rtosc/buffer.h>
 #include "courier.h"
+
+#define DEFAULT_BUFFER_SIZE 512
 
 typedef struct _IO_READ_TASK_NOTIFIER_PARAMS
 {
@@ -24,9 +27,24 @@ typedef enum _IO_READ_REQUEST_TYPE
 typedef struct _IO_READ_REQUEST
 {
     IO_READ_REQUEST_TYPE type;
+
+    union 
+    {
+        CHAR c;
+        struct
+        {
+            PVOID buffer;
+            UINT bufferLength;
+        };
+    };    
+} IO_READ_REQUEST;
+
+typedef struct _IO_PENDING_READ
+{
+    UINT taskId;
     PVOID buffer;
     UINT bufferLength;
-} IO_READ_REQUEST;
+} IO_PENDING_READ;
 
 static
 VOID
@@ -58,8 +76,7 @@ IopReadNotifierTask
         c = params.read();
         
         // Send it off to the read server
-        request.buffer = &c;
-        request.bufferLength = sizeof(c);
+        request.c = c;
         CourierPickup(&request, sizeof(request));
     }
 }
@@ -71,6 +88,10 @@ IopReadTask
         VOID
     )
 {
+    CHAR underlyingReceiveBuffer[DEFAULT_BUFFER_SIZE];
+    RT_CIRCULAR_BUFFER receiveBuffer;
+    IO_PENDING_READ underlyingPendingReadBuffer[NUM_TASKS];
+    RT_CIRCULAR_BUFFER pendingReadQueue;
     IO_READ_TASK_PARAMS params;
     INT sender;
     INT notifierTaskId;
@@ -93,6 +114,14 @@ IopReadTask
                            NULL, 
                            0)));
 
+    // Initialize task parameters
+    RtCircularBufferInit(&receiveBuffer, 
+                         underlyingReceiveBuffer, 
+                         sizeof(underlyingReceiveBuffer));
+    RtCircularBufferInit(&pendingReadQueue, 
+                         underlyingPendingReadBuffer, 
+                         sizeof(underlyingPendingReadBuffer));
+
     // Run the server
     while(1)
     {
@@ -103,11 +132,66 @@ IopReadTask
         switch(request.type)
         {
             case NotifierRequest:
-                ASSERT(FALSE);
+                // Reply to the notifier
+                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
+                
+                // Add the received character to the buffer
+                VERIFY(RT_SUCCESS(RtCircularBufferPush(&receiveBuffer, 
+                                                       &request.c, 
+                                                       sizeof(request.c))));
+
+                // Check to see if anyone is waiting on data
+                if(!RtCircularBufferIsEmpty(&pendingReadQueue))
+                {
+                    IO_PENDING_READ pendingRead;
+
+                    // Grab the task that is waiting on data
+                    VERIFY(RT_SUCCESS(RtCircularBufferPeek(&pendingReadQueue, 
+                                                           &pendingRead, 
+                                                           sizeof(pendingRead))));
+
+                    // Check to see if there is enough data to satisfy the task
+                    if(RtCircularBufferSize(&receiveBuffer) >= pendingRead.bufferLength)
+                    {
+                        // Move data from the receive buffer to the task's buffer
+                        VERIFY(RT_SUCCESS(RtCircularBufferPeekAndPop(&receiveBuffer, 
+                                                                     pendingRead.buffer, 
+                                                                     pendingRead.bufferLength)));
+
+                        // Remove the task from the queue
+                        VERIFY(RT_SUCCESS(RtCircularBufferPop(&pendingReadQueue, 
+                                                              sizeof(pendingRead))));
+
+                        // Unblock the task
+                        VERIFY(SUCCESSFUL(Reply(pendingRead.taskId, NULL, 0)));
+                    }
+                }
+
                 break;
 
             case ReadRequest:
-                ASSERT(FALSE);
+                // Check to see if there is enough data to satisfy the task
+                if(RtCircularBufferSize(&receiveBuffer) >= request.bufferLength)
+                {
+                    // Move data from the receive buffer to the task's buffer
+                    VERIFY(RT_SUCCESS(RtCircularBufferPeekAndPop(&receiveBuffer, 
+                                                                 request.buffer, 
+                                                                 request.bufferLength)));
+
+                    // Unblock the task
+                    VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
+                    
+                }
+                else
+                {
+                    IO_PENDING_READ pendingRead = { sender, request.buffer, request.bufferLength };
+
+                    // Add the task to a queue
+                    VERIFY(RT_SUCCESS(RtCircularBufferPush(&pendingReadQueue, 
+                                                           &pendingRead, 
+                                                           sizeof(pendingRead))));
+                }
+
                 break;
 
             default:
@@ -155,7 +239,11 @@ Read
         IN UINT bufferLength
     )
 {
-    IO_READ_REQUEST request = { ReadRequest, buffer, bufferLength };
+    IO_READ_REQUEST request;
+
+    request.type = ReadRequest;
+    request.buffer = buffer;
+    request.bufferLength = bufferLength;
 
     return Send(device->readTaskID, 
                 &request, 
