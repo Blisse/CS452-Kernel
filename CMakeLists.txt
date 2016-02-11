@@ -31,7 +31,6 @@ set(ALL_LIBS "-l${LIB_KERNEL} -l${LIB_OS} -l${LIB_RTOSC} -l${LIB_BWIO}")
 # includes
 include_directories(
     "ext"
-    "inc"
     "inc/rt"
     "inc/rtos"
     )
