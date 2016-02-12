@@ -67,6 +67,39 @@ TestEchoTask
     }
 }
 
+static
+VOID
+TestTrainTask
+    (
+        VOID
+    )
+{
+    IO_DEVICE com1;
+    IO_DEVICE com2;
+
+    // Open handles to com1 and com2
+    VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1)));
+    VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom2, &com2)));
+
+    // Turn on the train
+    VERIFY(SUCCESSFUL(WriteChar(&com1, 0x60)));
+
+    while(1)
+    {
+        CHAR sensorData[10];
+
+        // Grab sensor data
+        VERIFY(SUCCESSFUL(WriteChar(&com1, 0x85)));
+        VERIFY(SUCCESSFUL(Read(&com1, sensorData, sizeof(sensorData))));
+
+        // Display the sensor data
+        VERIFY(SUCCESSFUL(WriteString(&com2, "Sensor: \r\n")));
+
+        // Sensors can only change every so often
+        VERIFY(SUCCESSFUL(Delay(5)));
+    }
+}
+
 VOID
 InitTask
     (
@@ -80,4 +113,5 @@ InitTask
     UartCreateTasks();
     Create(LowestUserPriority, UserPerformanceTask);
     Create(HighestUserPriority, TestEchoTask);
+    Create(HighestUserPriority, TestTrainTask);
 }
