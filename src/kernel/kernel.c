@@ -60,8 +60,14 @@ KernelRun
         VOID
     )
 {
+    // Other group's kernel may have forgotten to disable an interrupt.
+    // Disable all interrupts to handle this.
+    InterruptDisableAll();
+
+    // Bootstrap the kernel
     KernelpInit();
 
+    // Run the kernel
     while(1)
     {
         TASK_DESCRIPTOR* nextTd;
@@ -98,9 +104,7 @@ KernelRun
         }
     }
 
-    // Interrupts must be turned off, or the next time the
-    // kernel runs, the interrupt handler will already be
-    // installed and interrupts will still be running.
-    // This puts the kernel in an undefined state.
+    // Be a good citizen and disable all interrupts so that we don't
+    // mess with any other group's kernel
     InterruptDisableAll();
 }

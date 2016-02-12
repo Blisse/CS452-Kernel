@@ -2,7 +2,6 @@
 
 #include <rtosc/assert.h>
 #include <rtosc/buffer.h>
-#include "courier.h"
 
 #define DEFAULT_BUFFER_SIZE 1024
 
@@ -46,9 +45,6 @@ IopWriteNotifierTask
     VERIFY(SUCCESSFUL(Receive(&parentId, &params, sizeof(params))));
     VERIFY(SUCCESSFUL(Reply(parentId, NULL, 0)));
 
-    // Setup a courier
-    CourierCreateTask(Priority30, MyTid(), parentId);
-
     // Run the notifier
     while(1)
     {
@@ -56,7 +52,7 @@ IopWriteNotifierTask
         VERIFY(SUCCESSFUL(AwaitEvent(params.event)));
 
         // Send it off to the write server
-        CourierPickup(&request, sizeof(request));
+        VERIFY(SUCCESSFUL(Send(parentId, &request, sizeof(request), NULL, 0)));
     }
 }
 
@@ -65,7 +61,7 @@ inline
 VOID
 IopPerformWrite
     (
-        IN INT blockedTaskId, 
+        IN INT notifierTaskId,
         IN IO_WRITE_FUNC write, 
         IN RT_CIRCULAR_BUFFER* buffer
     )
@@ -79,7 +75,7 @@ IopPerformWrite
     write(c);
 
     // Unblock the notifier
-    VERIFY(SUCCESSFUL(Reply(blockedTaskId, NULL, 0)));
+    VERIFY(SUCCESSFUL(Reply(notifierTaskId, NULL, 0)));
 }
 
 static
@@ -92,7 +88,6 @@ IopWriteTask
     CHAR underlyingTransmitBuffer[DEFAULT_BUFFER_SIZE];
     RT_CIRCULAR_BUFFER transmitBuffer;
     BOOLEAN canWrite;
-    INT blockedTaskId;
     IO_WRITE_TASK_PARAMS params;
     INT sender;
     INT notifierTaskId;
@@ -117,7 +112,6 @@ IopWriteTask
 
     // Initialize task variables
     canWrite = FALSE;
-    blockedTaskId = -1;
     RtCircularBufferInit(&transmitBuffer, 
                          underlyingTransmitBuffer, 
                          sizeof(underlyingTransmitBuffer));
@@ -135,11 +129,10 @@ IopWriteTask
                 if(RtCircularBufferIsEmpty(&transmitBuffer))
                 {
                     canWrite = TRUE;
-                    blockedTaskId = sender;
                 }
                 else
                 {
-                    IopPerformWrite(sender, params.write, &transmitBuffer);
+                    IopPerformWrite(notifierTaskId, params.write, &transmitBuffer);
                 }
                 
                 break;
@@ -151,8 +144,8 @@ IopWriteTask
 
                 if(canWrite)
                 {
-                    IopPerformWrite(blockedTaskId, params.write, &transmitBuffer);
                     canWrite = FALSE;
+                    IopPerformWrite(notifierTaskId, params.write, &transmitBuffer);
                 }
 
                 VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
