@@ -4,7 +4,6 @@
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
 
-#define NAME_SERVER_TID 2
 #define NAME_SERVER_HASH_TABLE_SIZE (NUM_TASKS * 2)
 
 #define ERROR_SUCCESS 0
@@ -28,6 +27,8 @@ typedef struct _NAME_SERVER_ENTRY
     STRING key;
     INT value;
 } NAME_SERVER_ENTRY;
+
+static INT g_nameServerId;
 
 static
 inline
@@ -187,9 +188,8 @@ NameServerCreateTask
         VOID
     )
 {
-    INT nameServerTaskId = Create(Priority28, NameServerpTask);
-    ASSERT(nameServerTaskId == NAME_SERVER_TID);
-    UNREFERENCED_PARAMETER(nameServerTaskId);
+    g_nameServerId = Create(Priority28, NameServerpTask);
+    ASSERT(SUCCESSFUL(g_nameServerId));
 }
 
 static
@@ -204,7 +204,7 @@ SendNameServerRequest
     NAME_SERVER_REQUEST request = { type,  name };
     INT response;
 
-    Send(NAME_SERVER_TID,
+    Send(g_nameServerId,
          &request,
          sizeof(request),
          &response,
