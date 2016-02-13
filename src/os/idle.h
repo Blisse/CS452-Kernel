@@ -7,3 +7,9 @@ IdleCreateTask
     (
         VOID
     );
+
+VOID
+IdleQuit
+    (
+        VOID
+    );

@@ -5,15 +5,6 @@
 
 static volatile BOOLEAN g_running;
 
-VOID
-Shutdown
-    (
-        VOID
-    )
-{
-    g_running = FALSE;
-}
-
 static
 VOID
 IdlepTask
@@ -21,8 +12,6 @@ IdlepTask
         VOID
     )
 {
-    g_running = TRUE;
-
     while(g_running) {  }
 }
 
@@ -32,7 +21,16 @@ IdleCreateTask
         VOID
     )
 {
-    INT idleTaskId = Create(IdlePriority, IdlepTask);
-    ASSERT(idleTaskId == 1);
-    UNREFERENCED_PARAMETER(idleTaskId);
+    g_running = TRUE;
+
+    VERIFY(SUCCESSFUL(Create(IdlePriority, IdlepTask)));
+}
+
+VOID
+IdleQuit
+    (
+        VOID
+    )
+{
+    g_running = FALSE;
 }

@@ -148,7 +148,7 @@ NameServerpTask
         INT senderTaskId;
         BOOLEAN success;
 
-        Receive(&senderTaskId, &request, sizeof(request));
+        VERIFY(SUCCESSFUL(Receive(&senderTaskId, &request, sizeof(request))));
 
         switch(request.type)
         {
@@ -178,7 +178,7 @@ NameServerpTask
                 break;
         }
 
-        Reply(senderTaskId, &response, sizeof(response));
+        VERIFY(SUCCESSFUL(Reply(senderTaskId, &response, sizeof(response))));
     }
 }
 
@@ -204,11 +204,11 @@ SendNameServerRequest
     NAME_SERVER_REQUEST request = { type,  name };
     INT response;
 
-    Send(g_nameServerId,
-         &request,
-         sizeof(request),
-         &response,
-         sizeof(response));
+    VERIFY(SUCCESSFUL(Send(g_nameServerId,
+                           &request,
+                           sizeof(request),
+                           &response,
+                           sizeof(response))));
 
     return response;
 }

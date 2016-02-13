@@ -274,6 +274,19 @@ WriteFormattedString
  *       SHUTDOWN API               *
  ************************************/
 
+typedef
+VOID
+(*SHUTDOWN_HOOK_FUNC)
+    (
+        VOID
+    );
+
+INT
+ShutdownRegisterHook
+    (
+        IN SHUTDOWN_HOOK_FUNC shutdownFunc
+    );
+
 VOID
 Shutdown
     (

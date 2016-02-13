@@ -6,6 +6,7 @@
 #include "idle.h"
 #include "io.h"
 #include "name_server.h"
+#include "shutdown.h"
 #include "uart.h"
 
 #define K3_TASKS 14
@@ -69,6 +70,22 @@ TestEchoTask
 
 static
 VOID
+TestTrainTaskShutdown
+    (
+        VOID
+    )
+{
+    IO_DEVICE com1;
+    bwprintf(BWCOM2, "S!\r\n");
+    // Open handles to com1
+    VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1)));
+
+    // Turn off the train
+    VERIFY(SUCCESSFUL(WriteChar(&com1, 0x61)));
+}
+
+static
+VOID
 TestTrainTask
     (
         VOID
@@ -83,6 +100,9 @@ TestTrainTask
 
     // Turn on the train
     VERIFY(SUCCESSFUL(WriteChar(&com1, 0x60)));
+
+    // Register a shutdown hook
+    VERIFY(SUCCESSFUL(ShutdownRegisterHook(TestTrainTaskShutdown)));
 
     while(1)
     {
@@ -108,6 +128,7 @@ InitTask
 {
     IdleCreateTask();
     NameServerCreateTask();
+    ShutdownCreateTask();
     ClockServerCreateTask();
     IoCreateTask();
     UartCreateTasks();
