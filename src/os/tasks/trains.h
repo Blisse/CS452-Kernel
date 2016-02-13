@@ -18,3 +18,20 @@ TrainReverse
     (
         IN UCHAR train
     );
+
+/************************************
+ *          SWITCH API              *
+ ************************************/
+
+typedef enum _SWITCH_DIRECTION
+{
+    SwitchCurved = 0, 
+    SwitchStraight
+} SWITCH_DIRECTION;
+
+INT
+SwitchSetDirection
+    (
+        IN UCHAR sw, 
+        IN SWITCH_DIRECTION direction
+    );

@@ -9,10 +9,11 @@
 #include "shutdown.h"
 #include "uart.h"
 
+#include "switch_server.h"
 #include "train_server.h"
 #include "trains.h"
 
-#define K3_TASKS 14
+#define K3_TASKS 21
 
 static
 VOID
@@ -21,7 +22,7 @@ UserPerformanceTask
         VOID
     )
 {
-    DelayUntil(1000);
+    DelayUntil(1500);
 
     bwprintf(BWCOM2, "\r\n");
     bwprintf(BWCOM2, "--PERFORMANCE--\r\n");
@@ -78,9 +79,18 @@ TestTrainTask
         VOID
     )
 {
+    // Wait for the switch server to configure the track
+    VERIFY(SUCCESSFUL(Delay(500)));
+
+    // Have a train start moving
     VERIFY(SUCCESSFUL(TrainSetSpeed(68, 11)));
+
+    // Wait for a bit, then reverse the train's direction
     VERIFY(SUCCESSFUL(Delay(400)));
     VERIFY(SUCCESSFUL(TrainReverse(68)));
+
+    // Try moving a switch near the operator's chair
+    VERIFY(SUCCESSFUL(SwitchSetDirection(156, SwitchStraight)));
 }
 
 VOID
@@ -99,7 +109,8 @@ InitTask
 
     // Initialize train tasks
     // TODO - This should be done in a different file
-    TrainServerCreate();
+    TrainServerCreate(); // MUST be created first (turns on the train controller)
+    SwitchServerCreate();
 
     // TODO - move this to a new home
     Create(LowestUserPriority, UserPerformanceTask);

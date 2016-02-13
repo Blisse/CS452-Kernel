@@ -3,6 +3,8 @@
 #include <rtosc/assert.h>
 #include <rtos.h>
 
+#include "trains.h"
+
 #define TRAIN_SERVER_NAME "train"
 #define NUM_TRAINS 80
 
@@ -233,6 +235,7 @@ TrainSetSpeed
 {
     TRAIN_REQUEST request = { SetSpeedRequest, train, speed };
 
+    // TODO - Validate train and speed
     return TrainpSendRequest(&request);
 }
 
@@ -244,6 +247,7 @@ TrainReverse
 {
     TRAIN_REQUEST request = { ReverseRequest, train };
 
+    // TODO - Validate train
     return TrainpSendRequest(&request);
 }
 
