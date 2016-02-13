@@ -9,6 +9,9 @@
 #include "shutdown.h"
 #include "uart.h"
 
+#include "train_server.h"
+#include "trains.h"
+
 #define K3_TASKS 14
 
 static
@@ -18,7 +21,7 @@ UserPerformanceTask
         VOID
     )
 {
-    DelayUntil(300);
+    DelayUntil(1000);
 
     bwprintf(BWCOM2, "\r\n");
     bwprintf(BWCOM2, "--PERFORMANCE--\r\n");
@@ -70,54 +73,14 @@ TestEchoTask
 
 static
 VOID
-TestTrainTaskShutdown
-    (
-        VOID
-    )
-{
-    IO_DEVICE com1;
-    bwprintf(BWCOM2, "S!\r\n");
-    // Open handles to com1
-    VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1)));
-
-    // Turn off the train
-    VERIFY(SUCCESSFUL(WriteChar(&com1, 0x61)));
-}
-
-static
-VOID
 TestTrainTask
     (
         VOID
     )
 {
-    IO_DEVICE com1;
-    IO_DEVICE com2;
-
-    // Open handles to com1 and com2
-    VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1)));
-    VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom2, &com2)));
-
-    // Turn on the train
-    VERIFY(SUCCESSFUL(WriteChar(&com1, 0x60)));
-
-    // Register a shutdown hook
-    VERIFY(SUCCESSFUL(ShutdownRegisterHook(TestTrainTaskShutdown)));
-
-    while(1)
-    {
-        CHAR sensorData[10];
-
-        // Grab sensor data
-        VERIFY(SUCCESSFUL(WriteChar(&com1, 0x85)));
-        VERIFY(SUCCESSFUL(Read(&com1, sensorData, sizeof(sensorData))));
-
-        // Display the sensor data
-        VERIFY(SUCCESSFUL(WriteString(&com2, "Sensor: \r\n")));
-
-        // Sensors can only change every so often
-        VERIFY(SUCCESSFUL(Delay(5)));
-    }
+    VERIFY(SUCCESSFUL(TrainSetSpeed(68, 11)));
+    VERIFY(SUCCESSFUL(Delay(400)));
+    VERIFY(SUCCESSFUL(TrainReverse(68)));
 }
 
 VOID
@@ -126,13 +89,22 @@ InitTask
         VOID
     )
 {
+    // Initialize RTOS
     IdleCreateTask();
     NameServerCreateTask();
     ShutdownCreateTask();
     ClockServerCreateTask();
     IoCreateTask();
     UartCreateTasks();
+
+    // Initialize train tasks
+    // TODO - This should be done in a different file
+    TrainServerCreate();
+
+    // TODO - move this to a new home
     Create(LowestUserPriority, UserPerformanceTask);
-    Create(HighestUserPriority, TestEchoTask);
-    Create(HighestUserPriority, TestTrainTask);
+
+    // TODO - take these out
+    Create(LowestUserPriority, TestEchoTask);
+    Create(LowestUserPriority, TestTrainTask);
 }
