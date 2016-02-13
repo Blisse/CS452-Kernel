@@ -1,7 +1,6 @@
 #include "scheduler.h"
 
 #include <rtosc/priority_queue.h>
-#include <rtos.h>
 
 TASK_DESCRIPTOR* g_currentTd;
 

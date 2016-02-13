@@ -3,6 +3,7 @@
 #include <bwio/bwio.h>
 #include <rtosc/assert.h>
 #include <rtos.h>
+#include <rtkernel.h>
 
 #define RPS_SERVER_NAME "RpsServer"
 

@@ -2,6 +2,7 @@
 
 #include <rt.h>
 #include <rtos.h>
+#include <rtkernel.h>
 
 typedef
 INT

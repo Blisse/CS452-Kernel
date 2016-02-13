@@ -1,7 +1,7 @@
 #pragma once
 
 #include <rt.h>
-#include "task.h"
+#include "task_descriptor.h"
 
 VOID
 IpcInitializeMailbox

@@ -1,4 +1,5 @@
-#include "init.h"
+#include <rtos.h>
+#include <rtkernel.h>
 
 #include <bwio/bwio.h>
 #include <rtosc/assert.h>

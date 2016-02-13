@@ -2,6 +2,7 @@
 
 #include <rtosc/assert.h>
 #include <rtosc/buffer.h>
+#include <rtos.h>
 #include "courier.h"
 
 #define DEFAULT_BUFFER_SIZE 512

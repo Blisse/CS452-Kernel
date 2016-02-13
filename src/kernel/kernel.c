@@ -1,6 +1,6 @@
 #include "kernel.h"
 
-#include <init.h>
+#include <rtos.h>
 #include <rtosc/assert.h>
 
 #include "cache.h"

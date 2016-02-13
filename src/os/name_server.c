@@ -1,6 +1,6 @@
 #include "name_server.h"
 
-#include <rtos.h>
+#include <rtkernel.h>
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
 

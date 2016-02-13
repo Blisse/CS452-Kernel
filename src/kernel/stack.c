@@ -1,7 +1,7 @@
 #include "stack.h"
 
 #include <rtosc/buffer.h>
-#include <rtos.h>
+#include <rtkernel.h>
 
 #define STACK_SIZE  0x10000
 #define STACK_ADDRESS_START 0x00400000
