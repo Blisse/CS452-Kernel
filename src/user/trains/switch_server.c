@@ -1,9 +1,10 @@
 #include "switch_server.h"
 
 #include <rtosc/assert.h>
+#include <rtkernel.h>
 #include <rtos.h>
 
-#include "trains.h"
+#include <user/trains.h>
 
 #define SWITCH_SERVER_NAME "switch"
 
@@ -64,7 +65,7 @@ static
 INT
 SwitchpSendOneByteCommand
     (
-        IN IO_DEVICE* device, 
+        IN IO_DEVICE* device,
         IN UCHAR byte
     )
 {
@@ -75,8 +76,8 @@ static
 INT
 SwitchpSendTwoByteCommand
     (
-        IN IO_DEVICE* device, 
-        IN UCHAR byte1, 
+        IN IO_DEVICE* device,
+        IN UCHAR byte1,
         IN UCHAR byte2
     )
 {
@@ -89,8 +90,8 @@ static
 INT
 SwitchpDirection
     (
-        IN IO_DEVICE* device, 
-        IN UCHAR sw, 
+        IN IO_DEVICE* device,
+        IN UCHAR sw,
         IN SWITCH_DIRECTION direction
     )
 {
@@ -98,14 +99,14 @@ SwitchpDirection
     // Send the direction first, then the switch
     if(SwitchCurved == direction)
     {
-        return SwitchpSendTwoByteCommand(device, 
-                                         SWITCH_COMMAND_DIRECTION_CURVED, 
+        return SwitchpSendTwoByteCommand(device,
+                                         SWITCH_COMMAND_DIRECTION_CURVED,
                                          sw);
     }
     else
     {
         return SwitchpSendTwoByteCommand(device,
-                                         SWITCH_COMMAND_DIRECTION_STRAIGHT, 
+                                         SWITCH_COMMAND_DIRECTION_STRAIGHT,
                                          sw);
     }
 }
@@ -159,8 +160,8 @@ SwitchpTask
         {
             case SetDirectionRequest:
                 // Turn the switch direction
-                VERIFY(SUCCESSFUL(SwitchpDirection(&com1, 
-                                                   request.sw, 
+                VERIFY(SUCCESSFUL(SwitchpDirection(&com1,
+                                                   request.sw,
                                                    request.direction)));
 
                 // Turn off the solenoid
@@ -193,10 +194,10 @@ SwitchpSendRequest
     {
         INT switchServerId = result;
 
-        result = Send(switchServerId, 
-                      request, 
-                      sizeof(*request), 
-                      NULL, 
+        result = Send(switchServerId,
+                      request,
+                      sizeof(*request),
+                      NULL,
                       0);
     }
 
@@ -206,7 +207,7 @@ SwitchpSendRequest
 INT
 SwitchSetDirection
     (
-        IN UCHAR sw, 
+        IN UCHAR sw,
         IN SWITCH_DIRECTION direction
     )
 {

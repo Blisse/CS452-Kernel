@@ -51,7 +51,7 @@ KernelpInit
     TaskInit();
     TrapInstallHandler();
 
-    VERIFY(RT_SUCCESS(KernelCreateTask(LowestSystemPriority, InitTask)));
+    VERIFY(RT_SUCCESS(KernelCreateTask(LowestSystemPriority, InitOsTasks)));
 }
 
 VOID

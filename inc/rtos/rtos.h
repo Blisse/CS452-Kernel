@@ -151,12 +151,11 @@ Shutdown
     );
 
 /************************************
- *       PERFORMANCE API            *
+ *            INIT TASK             *
  ************************************/
 
 VOID
-InitTask
+InitOsTasks
     (
         VOID
     );
-

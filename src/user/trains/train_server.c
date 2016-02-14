@@ -1,9 +1,10 @@
 #include "train_server.h"
 
 #include <rtosc/assert.h>
+#include <rtkernel.h>
 #include <rtos.h>
 
-#include "trains.h"
+#include <user/trains.h>
 
 #define TRAIN_SERVER_NAME "train"
 #define NUM_TRAINS 80
@@ -14,8 +15,8 @@
 
 typedef enum _TRAIN_REQUEST_TYPE
 {
-    ShutdownRequest = 0, 
-    SetSpeedRequest, 
+    ShutdownRequest = 0,
+    SetSpeedRequest,
     ReverseRequest
 } TRAIN_REQUEST_TYPE;
 
@@ -41,10 +42,10 @@ TrainpSendRequest
 
         // TODO - Probably going to want to change this
         // in the future so that we can get a response
-        result = Send(trainServerId, 
-                      request, 
-                      sizeof(*request), 
-                      NULL, 
+        result = Send(trainServerId,
+                      request,
+                      sizeof(*request),
+                      NULL,
                       0);
     }
 
@@ -67,7 +68,7 @@ static
 INT
 TrainpSendOneByteCommand
     (
-        IN IO_DEVICE* device, 
+        IN IO_DEVICE* device,
         IN UCHAR byte
     )
 {
@@ -78,8 +79,8 @@ static
 INT
 TrainpSendTwoByteCommand
     (
-        IN IO_DEVICE* device, 
-        IN UCHAR byte1, 
+        IN IO_DEVICE* device,
+        IN UCHAR byte1,
         IN UCHAR byte2
     )
 {
@@ -112,8 +113,8 @@ static
 INT
 TrainpSetSpeed
     (
-        IN IO_DEVICE* device, 
-        IN UCHAR train, 
+        IN IO_DEVICE* device,
+        IN UCHAR train,
         IN UCHAR speed
     )
 {
@@ -126,7 +127,7 @@ static
 INT
 TrainpReverse
     (
-        IN IO_DEVICE* device, 
+        IN IO_DEVICE* device,
         IN UCHAR train
     )
 {
@@ -173,8 +174,8 @@ TrainpTask
                 break;
 
             case SetSpeedRequest:
-                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 
-                                                 request.train, 
+                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1,
+                                                 request.train,
                                                  request.speed)));
 
                 speeds[request.train - 1] = request.speed;
@@ -187,8 +188,8 @@ TrainpTask
                 UCHAR oldSpeed = speeds[request.train - 1];
 
                 // Stop the train
-                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 
-                                                 request.train, 
+                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1,
+                                                 request.train,
                                                  0)));
 
                 // Wait for the train to come to a stop
@@ -199,8 +200,8 @@ TrainpTask
                 VERIFY(SUCCESSFUL(TrainpReverse(&com1, request.train)));
 
                 // Speed the train back up to its original speed
-                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 
-                                                 request.train, 
+                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1,
+                                                 request.train,
                                                  oldSpeed)));
 
                 VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
@@ -229,7 +230,7 @@ TrainpTask
 INT
 TrainSetSpeed
     (
-        IN UCHAR train, 
+        IN UCHAR train,
         IN UCHAR speed
     )
 {

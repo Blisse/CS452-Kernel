@@ -1,6 +1,7 @@
 #include "shutdown.h"
 
 #include <rtosc/assert.h>
+#include <rtkernel.h>
 #include <rtos.h>
 #include "idle.h"
 

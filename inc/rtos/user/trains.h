@@ -9,7 +9,7 @@
 INT
 TrainSetSpeed
     (
-        IN UCHAR train, 
+        IN UCHAR train,
         IN UCHAR speed
     );
 
@@ -25,13 +25,23 @@ TrainReverse
 
 typedef enum _SWITCH_DIRECTION
 {
-    SwitchCurved = 0, 
+    SwitchCurved = 0,
     SwitchStraight
 } SWITCH_DIRECTION;
 
 INT
 SwitchSetDirection
     (
-        IN UCHAR sw, 
+        IN UCHAR sw,
         IN SWITCH_DIRECTION direction
+    );
+
+/************************************
+ *           INIT TASK              *
+ ************************************/
+
+VOID
+InitTrainTasks
+    (
+        VOID
     );
