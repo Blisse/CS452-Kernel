@@ -2,6 +2,7 @@
 
 #include <bwio/bwio.h>
 #include <rtos.h>
+#include <rtkernel.h>
 
 typedef struct _CLOCK_CLIENT_DELAY_REQUEST
 {

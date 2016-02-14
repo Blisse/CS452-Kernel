@@ -1,20 +1,24 @@
 set(EXE_RTOS "rtos.elf")
 
 set(SRC_KERNEL
-    "arm.asm"
-    "cache.asm"
-    "interrupt.asm"
-    "interrupt.c"
-    "ipc.c"
-    "kernel.asm"
-    "kernel.c"
-    "performance.c"
-    "scheduler.c"
-    "stack.c"
-    "syscall.c"
-    "task.c"
-    "task_descriptor.c"
-    "trap.asm"
+    ${CMAKE_CURRENT_SOURCE_DIR}/arm.asm
+    ${CMAKE_CURRENT_SOURCE_DIR}/cache.asm
+    ${CMAKE_CURRENT_SOURCE_DIR}/interrupt.asm
+    ${CMAKE_CURRENT_SOURCE_DIR}/interrupt.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/ipc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel.asm
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/performance.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/stack.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/syscall.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/task.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/task_descriptor.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/trap.asm
+    )
+
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
 add_c_library(

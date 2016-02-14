@@ -1,6 +1,6 @@
 #include "idle.h"
 
-#include <rtos.h>
+#include <rtkernel.h>
 #include <rtosc/assert.h>
 
 static volatile BOOLEAN g_running;

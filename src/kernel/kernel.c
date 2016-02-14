@@ -1,6 +1,6 @@
 #include "kernel.h"
 
-#include <init.h>
+#include <rtos.h>
 #include <rtosc/assert.h>
 
 #include "cache.h"
@@ -51,7 +51,7 @@ KernelpInit
     TaskInit();
     TrapInstallHandler();
 
-    VERIFY(RT_SUCCESS(KernelCreateTask(LowestSystemPriority, InitTask)));
+    VERIFY(RT_SUCCESS(KernelCreateTask(LowestSystemPriority, InitOsTasks)));
 }
 
 VOID

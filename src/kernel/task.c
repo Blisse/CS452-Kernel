@@ -2,7 +2,6 @@
 
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
-#include <rtos.h>
 
 #include "ipc.h"
 #include "scheduler.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rt.h"
+#include <rt.h>
 
 extern
 INT

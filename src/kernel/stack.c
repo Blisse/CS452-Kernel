@@ -1,7 +1,7 @@
 #include "stack.h"
 
 #include <rtosc/buffer.h>
-#include "rtos.h"
+#include <rtkernel.h>
 
 #define STACK_SIZE  0x10000
 #define STACK_ADDRESS_START 0x00400000
@@ -28,12 +28,12 @@ StackInit
     )
 {
     UINT i;
-    RT_STATUS status = STATUS_SUCCESS;    
+    RT_STATUS status = STATUS_SUCCESS;
 
     RtCircularBufferInit(&g_availableStacksQueue,
                          g_availableStacksBuffer,
                          sizeof(g_availableStacksBuffer));
-    
+
     for(i = 0; i < NUM_TASKS && RT_SUCCESS(status); i++)
     {
         STACK* stack = &g_stacks[i];

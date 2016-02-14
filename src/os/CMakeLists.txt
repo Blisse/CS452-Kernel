@@ -13,10 +13,12 @@ set(SRC_OS
     ${CMAKE_CURRENT_SOURCE_DIR}/uart.c
     )
 
-add_subdirectory("tasks")
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    )
 
 add_c_library(
     "${LIB_OS}"
     "${SRC_OS}"
-    "${LIB_RTOSC}"
+    "${LIB_RTOSC} ${LIB_BWIO}"
     )

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rt.h"
+#include <rt.h>
 
 typedef struct _RT_CIRCULAR_BUFFER {
     PVOID underlyingBuffer;

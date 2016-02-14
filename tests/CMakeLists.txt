@@ -10,6 +10,11 @@ function(add_c_test TEST_NAME TEST_MAIN TEST_DEPENDENCIES)
     add_test(NAME ${TEST_NAME} COMMAND $<TARGET_FILE:${TEST_NAME}>)
 endfunction()
 
+include_directories(
+    ${CMAKE_SOURCE_DIR}/src/kernel
+    ${CMAKE_SOURCE_DIR}/src/os
+    )
+
 add_c_test("${EXE_TEST_BUFFER}" "test_buffer_main.c" "${LIB_RTOSC}")
 add_c_test("${EXE_TEST_STRING}" "test_string_main.c" "${LIB_RTOSC}")
 add_c_test("${EXE_TEST_LINKED_LIST}" "test_linked_list_main.c" "${LIB_RTOSC}")

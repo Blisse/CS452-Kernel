@@ -1,7 +1,7 @@
 #pragma once
 
 #include <rt.h>
-#include <rtos.h>
+#include <rtkernel.h>
 
 VOID
 PerformanceInit
