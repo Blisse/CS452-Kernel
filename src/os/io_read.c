@@ -246,9 +246,9 @@ Read
     request.buffer = buffer;
     request.bufferLength = bufferLength;
 
-    return Send(device->readTaskID, 
-                &request, 
-                sizeof(request), 
-                NULL, 
+    return Send(device->readTaskId,
+                &request,
+                sizeof(request),
+                NULL,
                 0);
 }

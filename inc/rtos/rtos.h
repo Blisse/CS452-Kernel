@@ -59,8 +59,8 @@ typedef enum _IO_CHANNEL
 
 typedef struct _IO_DEVICE
 {
-    INT readTaskID;
-    INT writeTaskID;
+    INT readTaskId;
+    INT writeTaskId;
 } IO_DEVICE;
 
 INT

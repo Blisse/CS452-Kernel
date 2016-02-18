@@ -16,27 +16,27 @@ static
 INT
 UartpOpen
     (
-        IN IO_CHANNEL channel, 
+        IN IO_CHANNEL channel,
         OUT IO_DEVICE* device
     )
 {
     if(ChannelCom1 == channel)
     {
-        device->readTaskID = WhoIs(UART_COM1_READ_NAME);
-        ASSERT(SUCCESSFUL(device->readTaskID));
+        device->readTaskId = WhoIs(UART_COM1_READ_NAME);
+        ASSERT(SUCCESSFUL(device->readTaskId));
 
-        device->writeTaskID = WhoIs(UART_COM1_WRITE_NAME);
-        ASSERT(SUCCESSFUL(device->writeTaskID));
+        device->writeTaskId = WhoIs(UART_COM1_WRITE_NAME);
+        ASSERT(SUCCESSFUL(device->writeTaskId));
 
         return 0;
     }
     else if(ChannelCom2 == channel)
     {
-        device->readTaskID = WhoIs(UART_COM2_READ_NAME);
-        ASSERT(SUCCESSFUL(device->readTaskID));
+        device->readTaskId = WhoIs(UART_COM2_READ_NAME);
+        ASSERT(SUCCESSFUL(device->readTaskId));
 
-        device->writeTaskID = WhoIs(UART_COM2_WRITE_NAME);
-        ASSERT(SUCCESSFUL(device->writeTaskID));
+        device->writeTaskId = WhoIs(UART_COM2_WRITE_NAME);
+        ASSERT(SUCCESSFUL(device->writeTaskId));
 
         return 0;
     }
