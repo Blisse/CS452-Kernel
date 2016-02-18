@@ -1,6 +1,8 @@
 #include "performance.h"
 
+#include <rtos.h>
 #include <ts7200.h>
+
 #include "task_descriptor.h"
 
 static TASK_PERFORMANCE g_taskPerformanceCounters[NUM_TASKS];

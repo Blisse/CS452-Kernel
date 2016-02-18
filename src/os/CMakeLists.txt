@@ -9,6 +9,7 @@ set(SRC_OS
     ${CMAKE_CURRENT_SOURCE_DIR}/io_server.c
     ${CMAKE_CURRENT_SOURCE_DIR}/io_write.c
     ${CMAKE_CURRENT_SOURCE_DIR}/name_server.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/performance.c
     ${CMAKE_CURRENT_SOURCE_DIR}/shutdown.c
     ${CMAKE_CURRENT_SOURCE_DIR}/uart.c
     )
