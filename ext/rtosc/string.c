@@ -142,7 +142,7 @@ RtStrFind
 static
 inline
 VOID
-memcpy_unaligned
+RtMemcpypUnaligned
     (
         PVOID dest, 
         PVOID src, 
@@ -162,7 +162,7 @@ memcpy_unaligned
 static
 inline
 VOID
-memcpy_aligned
+RtMemcpypAligned
     (
         PVOID dest, 
         PVOID src, 
@@ -179,7 +179,7 @@ memcpy_aligned
         words--;
     }
 
-    memcpy_unaligned(d, s, bytes % sizeof(INT));
+    RtMemcpypUnaligned(d, s, bytes % sizeof(INT));
 }
 
 VOID
@@ -193,12 +193,12 @@ RtMemcpy
     if(0 == ((UINT) dest) % sizeof(UINT) &&
        0 == ((UINT) src) % sizeof(UINT))
     {
-        memcpy_aligned(dest, src, bytes);
+        RtMemcpypAligned(dest, src, bytes);
     }
     else
     {
-        memcpy_unaligned(dest, src, bytes);
-    }    
+        RtMemcpypUnaligned(dest, src, bytes);
+    }
 }
 
 // These functions were taken from bwio
