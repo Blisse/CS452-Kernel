@@ -9,23 +9,17 @@ RtStrCmp
         STRING str2
     );
 
+BOOLEAN
+RtStrEqual
+    (
+        STRING str1,
+        STRING str2
+    );
+
 UINT
 RtStrLen
     (
         STRING str
-    );
-
-INT
-RtAtoi
-    (
-        STRING str
-    );
-
-STRING
-RtStrFind
-    (
-        STRING str,
-        STRING subStr
     );
 
 INT
@@ -36,8 +30,6 @@ RtStrPrintFormatted
         IN STRING fmt,
         ...
     );
-
-#define RtStrEqual(str1, str2) (0 == RtStrCmp(str1, str2))
 
 VOID
 RtMemcpy

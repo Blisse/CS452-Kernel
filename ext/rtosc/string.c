@@ -47,6 +47,16 @@ RtStrCmp
     }
 }
 
+BOOLEAN
+RtStrEqual
+    (
+        STRING str1,
+        STRING str2
+    )
+{
+    return RtStrCmp(str1, str2) == 0;
+}
+
 UINT
 RtStrLen
     (
@@ -61,83 +71,6 @@ RtStrLen
     }
 
     return iter - str;
-}
-
-INT
-RtAtoi
-    (
-        STRING str
-    )
-{
-    INT result = 0;
-    INT sign = 1;
-    STRING iter = str;
-
-    //Skip all whitespace
-    while(' ' == *iter)
-    {
-        iter++;
-    }
-
-    //Check for sign bit
-    if('+' == *iter || '-' == *iter)
-    {
-        //Check if sign is negative
-        if('-' == *iter)
-        {
-            sign = -1;
-        }
-
-        iter++;
-    }
-
-    //While we're still looking at a number
-    while(*iter >= '0' && *iter <= '9')
-    {
-        result *= 10;
-        result += *iter - '0';
-        iter++;
-    }
-
-    return sign * result;
-}
-
-CHAR*
-RtStrFind
-    (
-        STRING str,
-        STRING substr
-    )
-{
-    STRING pos = NULL;
-
-    if(*substr != '\0')
-    {
-        while(*str != '\0')
-        {
-            if(*str == *substr)
-            {
-                STRING posInString = str + 1;
-                STRING posInSubstring = substr + 1;
-
-                while(*posInString != '\0' &&
-                      *posInSubstring != '\0' &&
-                      *posInString++ == *posInSubstring++)
-                {
-                }
-
-                if(*posInSubstring == '\0')
-                {
-                    pos = str;
-                    break;
-                }
-            }
-
-            str++;
-        }
-    }
-
-    return pos;
 }
 
 typedef struct _RT_STR_FORMAT_PARAMS

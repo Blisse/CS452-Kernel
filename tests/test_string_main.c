@@ -3,6 +3,22 @@
 
 #include <stdio.h>
 
+void test_string_cmp() {
+    T_ASSERT(RtStrCmp("", "") == 0);
+    T_ASSERT(RtStrCmp("1", "1") == 0);
+    T_ASSERT(RtStrCmp("1", "2") == -1);
+    T_ASSERT(RtStrCmp("1", "12") == -1);
+    T_ASSERT(RtStrCmp("12", "1") == 1);
+}
+
+void test_string_len() {
+    T_ASSERT(RtStrLen("") == 0);
+    T_ASSERT(RtStrLen("1") == 1);
+    T_ASSERT(RtStrLen("12") == 2);
+    T_ASSERT(RtStrLen("123") == 3);
+    T_ASSERT(RtStrLen("1234") == 4);
+}
+
 void test_string_format_nothing() {
     char* buffer;
     int length;
@@ -276,6 +292,7 @@ void test_string_format_leading() {
 
 int main(int argc, char* argv[]) {
 
+    test_string_cmp();
     test_string_format_nothing();
     test_string_format_overflow();
     test_string_format_integer();
