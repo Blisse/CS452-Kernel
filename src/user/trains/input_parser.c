@@ -7,6 +7,22 @@
 #include <rtosc/string.h>
 #include <user/trains.h>
 
+#include "display.h"
+
+static
+CHAR
+InputParserpReadChar
+    (
+        IN IO_DEVICE* com2Device
+    )
+{
+    CHAR c = ReadChar(com2Device);
+
+    ShowKeyboardChar(c);
+
+    return c;
+}
+
 static
 VOID
 InputParserpReadToken
@@ -18,7 +34,7 @@ InputParserpReadToken
 {
     CHAR c;
     // ignore leading space
-    while ((c = ReadChar(com2Device)) && isspace(c))
+    while ((c = InputParserpReadChar(com2Device)) && isspace(c))
     {
     }
 
@@ -27,7 +43,7 @@ InputParserpReadToken
     while (!isspace(c) && i < (bufferLength-1))
     {
         buffer[i++] = c;
-        c = ReadChar(com2Device);
+        c = InputParserpReadChar(com2Device);
     }
 
     buffer[min(i, bufferLength)] = '\0';
@@ -45,14 +61,14 @@ InputParserpTask
 
     while (1)
     {
-        CHAR buffer[12] = { 0 };
+        CHAR buffer[12];
 
         InputParserpReadToken(&com2Device, buffer, sizeof(buffer));
 
         if (RtStrEqual(buffer, "tr"))
         {
-            CHAR arg1Buffer[12] = { 0 };
-            CHAR arg2Buffer[12] = { 0 };
+            CHAR arg1Buffer[12];
+            CHAR arg2Buffer[12];
 
             INT arg1;
             INT arg2;
@@ -69,8 +85,8 @@ InputParserpTask
         }
         else if (RtStrEqual(buffer, "sw"))
         {
-            CHAR arg1Buffer[12] = { 0 };
-            CHAR arg2Buffer[12] = { 0 };
+            CHAR arg1Buffer[12];
+            CHAR arg2Buffer[12];
 
             INT arg1;
             INT arg2;
@@ -87,7 +103,7 @@ InputParserpTask
         }
         else if (RtStrEqual(buffer, "rv"))
         {
-            CHAR arg1Buffer[12] = { 0 };
+            CHAR arg1Buffer[12];
 
             INT arg1;
 
@@ -110,5 +126,5 @@ InputParserCreateTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority10, InputParserpTask)));
+    VERIFY(SUCCESSFUL(Create(HighestUserPriority, InputParserpTask)));
 }

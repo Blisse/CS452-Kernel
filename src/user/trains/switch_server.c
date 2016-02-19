@@ -6,6 +6,8 @@
 
 #include <user/trains.h>
 
+#include "display.h"
+
 #define SWITCH_SERVER_NAME "switch"
 
 #define NUM_SWITCHES 22
@@ -142,7 +144,10 @@ SwitchpTask
         UCHAR sw = SwitchpFromIndex(i);
 
         VERIFY(SUCCESSFUL(SwitchpDirection(&com1, sw, SwitchCurved)));
+
         directions[i] = SwitchCurved;
+
+        ShowSwitchDirection(i, sw, 'C');
     }
 
     // Remember to turn off the solenoid!
@@ -168,10 +173,14 @@ SwitchpTask
                 VERIFY(SUCCESSFUL(SwitchpDisableSolenoid(&com1)));
 
                 // Update the switch direction
-                directions[SwitchpToIndex(request.sw)] = request.direction;
+                INT switchIndex = SwitchpToIndex(request.sw);
+                directions[switchIndex] = request.direction;
 
                 // Reply to the sender
                 VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
+
+                ShowSwitchDirection(switchIndex, request.sw, request.direction == SwitchCurved ? 'C' : 'S');
+
                 break;
 
             default:
