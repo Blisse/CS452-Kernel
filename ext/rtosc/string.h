@@ -28,8 +28,14 @@ RtStrFind
         STRING subStr
     );
 
-
-void RtUitoa( unsigned int num, char *bf, unsigned int* len );
+INT
+RtStrPrintFormatted
+    (
+        OUT STRING ret,
+        IN INT retLength,
+        IN STRING fmt,
+        ...
+    );
 
 #define RtStrEqual(str1, str2) (0 == RtStrCmp(str1, str2))
 

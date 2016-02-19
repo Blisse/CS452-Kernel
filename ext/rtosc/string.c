@@ -1,6 +1,7 @@
 #include "string.h"
 
 #include "assert.h"
+#include "stdlib.h"
 
 // TODO: Optimize all of these functions
 // NOTE: Much of this code is copied from code I wrote in SE350.
@@ -139,6 +140,207 @@ RtStrFind
     return pos;
 }
 
+typedef struct _RT_STR_FORMAT_PARAMS
+{
+    CHAR lz;
+    CHAR sign;
+    INT width;
+    UINT base;
+    STRING bf;
+} RT_STR_FORMAT_PARAMS;
+
+typedef struct _RT_STR_FORMAT_OUTPUT
+{
+    STRING destination;
+    INT capacity;
+    INT length;
+} RT_STR_FORMAT_OUTPUT;
+
+VOID
+RtStrpFormatParamsInit
+    (
+        RT_STR_FORMAT_PARAMS* params,
+        STRING bf
+    )
+{
+    params->lz = ' ';
+    params->sign = 0;
+    params->width = 0;
+    params->base = 0;
+    params->bf = bf;
+}
+
+VOID
+RtStrpFormatOutputInit
+    (
+        RT_STR_FORMAT_OUTPUT* output,
+        STRING destination,
+        INT capacity
+    )
+{
+    output->destination = destination;
+    output->capacity = capacity;
+    output->length = 0;
+}
+
+static
+inline
+VOID
+RtStrpPutChar
+    (
+        RT_STR_FORMAT_OUTPUT* output,
+        CHAR c
+    )
+{
+    if (output->length < output->capacity)
+    {
+        output->destination[output->length] = c;
+    }
+    output->length += 1;
+}
+
+static
+inline
+VOID
+RtStrpPutBf
+    (
+        RT_STR_FORMAT_OUTPUT* output,
+        RT_STR_FORMAT_PARAMS* params
+    )
+{
+    CHAR* p;
+    INT n = params->width;
+
+    p = params->bf;
+
+    // Correct for padding
+    while (*p++ && n > 0)
+    {
+        n--;
+    }
+
+    // Put sign
+    if (params->sign)
+    {
+        n--;
+        RtStrpPutChar(output, params->sign);
+    }
+
+    // Put padding
+    if (params->lz)
+    {
+        while (n-- > 0)
+        {
+            RtStrpPutChar(output, params->lz);
+        }
+    }
+
+    p = params->bf;
+
+    // Put string
+    CHAR c;
+    while ((c = *(p++)))
+    {
+        RtStrpPutChar(output, c);
+    }
+}
+
+static
+VOID
+RtStrpPrintFormatted
+    (
+        IN STRING fmt,
+        RT_STR_FORMAT_OUTPUT* output,
+        OPTIONAL IN VA_LIST va
+    )
+{
+    char bf[12];
+
+    RT_STR_FORMAT_PARAMS params;
+
+    CHAR c;
+    while ((c = *(fmt++)))
+    {
+        if (c != '%')
+        {
+            RtStrpPutChar(output, c);
+        }
+        else
+        {
+            RtStrpFormatParamsInit(&params, bf);
+
+            c = *(fmt++);
+
+            if (c == '0')
+            {
+                params.lz = '0';
+                c = *(fmt++);
+            }
+
+            if (c >= '0' && c <= '9')
+            {
+                c = a2i(c, &fmt, 10, &params.width);
+            }
+
+            switch (c) {
+                case 'c':
+                    RtStrpPutChar(output, VA_ARG(va, CHAR));
+                    break;
+                case 's':
+                    params.lz = 0;
+                    params.bf = VA_ARG(va, STRING);
+                    RtStrpPutBf(output, &params);
+                    break;
+                case 'u':
+                    params.base = 10;
+                    ui2a(VA_ARG(va, UINT), params.base, params.bf);
+                    RtStrpPutBf(output, &params);
+                    break;
+                case 'd':
+                    params.base = 10;
+                    i2a(VA_ARG(va, INT), params.bf);
+                    RtStrpPutBf(output, &params);
+                    break;
+                case 'x':
+                    params.base = 16;
+                    ui2a(VA_ARG(va, UINT), params.base, params.bf);
+                    RtStrpPutBf(output, &params);
+                    break;
+                case '%':
+                    RtStrpPutChar(output, '%');
+                    break;
+            }
+        }
+    }
+}
+
+INT
+RtStrPrintFormatted
+    (
+        OUT STRING ret,
+        IN INT retLength,
+        IN STRING fmt,
+        ...
+    )
+{
+    if (retLength < 1)
+    {
+        return 0;
+    }
+
+    RT_STR_FORMAT_OUTPUT output;
+    RtStrpFormatOutputInit(&output, ret, retLength - 1);
+
+    VA_LIST va;
+    VA_START(va, fmt);
+    RtStrpPrintFormatted(fmt, &output, va);
+    VA_END(va);
+
+    output.destination[min(output.length, output.capacity)] = '\0';
+
+    return output.length;
+}
+
 static
 inline
 VOID
@@ -199,27 +401,4 @@ RtMemcpy
     {
         RtMemcpypUnaligned(dest, src, bytes);
     }
-}
-
-// These functions were taken from bwio
-// All credit goes to the authors of bwio
-void RtUitoa( unsigned int num, char *bf, unsigned int* len ) {
-    int n = 0;
-    int dgt;
-    unsigned int d = 1;
-    unsigned int base = 10;
-    char* orig = bf;
-
-    while( (num / d) >= base ) d *= base;
-    while( d != 0 ) {
-        dgt = num / d;
-        num %= d;
-        d /= base;
-        if( n || dgt > 0 || d == 0 ) {
-            *bf++ = dgt + ( dgt < 10 ? '0' : 'a' - 10 );
-            ++n;
-        }
-    }
-    *bf = 0;
-    *len = bf - orig;
 }

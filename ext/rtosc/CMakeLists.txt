@@ -3,6 +3,7 @@ set(SRC_UTILITIES
     "buffer.c"
     "linked_list.c"
     "priority_queue.c"
+    "stdlib.c"
     "string.c"
     )
 
