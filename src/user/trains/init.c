@@ -1,5 +1,6 @@
 #include <user/trains.h>
 
+#include "input_parser.h"
 #include "switch_server.h"
 #include "train_server.h"
 
@@ -11,4 +12,5 @@ InitTrainTasks
 {
     TrainServerCreate();
     SwitchServerCreate();
+    InputParserCreateTask();
 }
