@@ -203,7 +203,6 @@ RtStrpPrintFormatted
             RtStrpFormatParamsInit(&params, bf);
 
             c = *(fmt++);
-
             if (c == '0')
             {
                 params.lz = '0';

@@ -1,7 +1,6 @@
 #include <rtosc/string.h>
 #include <rtosc/assert.h>
-
-#include <stdio.h>
+#include <rtosc/stdlib.h>
 
 void test_string_cmp() {
     T_ASSERT(RtStrCmp("", "") == 0);
@@ -293,6 +292,7 @@ void test_string_format_leading() {
 int main(int argc, char* argv[]) {
 
     test_string_cmp();
+    test_string_len();
     test_string_format_nothing();
     test_string_format_overflow();
     test_string_format_integer();
