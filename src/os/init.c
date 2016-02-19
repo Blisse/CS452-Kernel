@@ -9,7 +9,6 @@
 #include "clock_server.h"
 #include "idle.h"
 #include "io.h"
-#include "performance.h"
 #include "name_server.h"
 #include "shutdown.h"
 #include "uart.h"
@@ -27,7 +26,6 @@ InitOsTasks
     ClockServerCreateTask();
     IoCreateTask();
     UartCreateTasks();
-    PerformanceCreateTask();
 
     VERIFY(SUCCESSFUL(Create(HighestUserPriority, InitUserTasks)));
 }
