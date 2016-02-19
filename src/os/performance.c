@@ -47,5 +47,5 @@ PerformanceCreateTask
         VOID
     )
 {
-    Create(LowestUserPriority, PerformancepTask);
+    VERIFY(SUCCESSFUL(Create(LowestUserPriority, PerformancepTask)));
 }

@@ -55,7 +55,7 @@ InitUserTasks
         VOID
     )
 {
-    VERIFY(RT_SUCCESS(Create(HighestUserPriority, InitTrainTasks)));
-    VERIFY(RT_SUCCESS(Create(LowestUserPriority, TestEchoTask)));
-    VERIFY(RT_SUCCESS(Create(LowestUserPriority, TestTrainTask)));
+    VERIFY(SUCCESSFUL(Create(HighestUserPriority, InitTrainTasks)));
+    VERIFY(SUCCESSFUL(Create(LowestUserPriority, TestEchoTask)));
+    VERIFY(SUCCESSFUL(Create(LowestUserPriority, TestTrainTask)));
 }

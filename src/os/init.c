@@ -29,5 +29,5 @@ InitOsTasks
     UartCreateTasks();
     PerformanceCreateTask();
 
-    VERIFY(RT_SUCCESS(Create(HighestUserPriority, InitUserTasks)));
+    VERIFY(SUCCESSFUL(Create(HighestUserPriority, InitUserTasks)));
 }
