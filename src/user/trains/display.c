@@ -30,6 +30,12 @@ typedef struct _DISPLAY_REQUEST
     UINT bufferLength;
 } DISPLAY_REQUEST;
 
+typedef struct _DISPLAY_SENSOR_REQUEST
+{
+    INT index;
+    CHAR sensorState;
+} DISPLAY_SENSOR_REQUEST;
+
 typedef struct _DISPLAY_SWITCH_REQUEST
 {
     INT index;
@@ -37,17 +43,20 @@ typedef struct _DISPLAY_SWITCH_REQUEST
     CHAR direction;
 } DISPLAY_SWITCH_REQUEST;
 
-#define CURSOR_CMD_X 4
-#define CURSOR_CMD_Y 4
+#define CURSOR_CMD_X 13
+#define CURSOR_CMD_Y 2
 
 #define CURSOR_CLOCK_X 4
 #define CURSOR_CLOCK_Y 2
 
 #define CURSOR_IDLE_X 4
-#define CURSOR_IDLE_Y 6
+#define CURSOR_IDLE_Y 4
 
 #define CURSOR_SWITCH_X 4
-#define CURSOR_SWITCH_Y 8
+#define CURSOR_SWITCH_Y 6
+
+#define CURSOR_SENSOR_X 16
+#define CURSOR_SENSOR_Y 6
 
 typedef struct _CURSOR_POSITION
 {
@@ -118,8 +127,8 @@ DisplaypClock
     INT s = (ts / 10);
     INT m = (s / 60);
 
-    CHAR buffer[9];
-    RtStrPrintFormatted(buffer, sizeof(buffer), "%02d:%02d:%d", m % 60, s % 60, ts % 10);
+    CHAR buffer[25];
+    RtStrPrintFormatted(buffer, sizeof(buffer), "\033[31m" "%02d:%02d:%d>" "\033[0m", m % 60, s % 60, ts % 10);
 
     CURSOR_POSITION cursor = { CURSOR_CLOCK_X, CURSOR_CLOCK_Y };
     DisplaypMoveToCursor(com2Device, &cursor);
@@ -134,8 +143,8 @@ DisplaypIdlePercentage
         IN INT idlePercentage
     )
 {
-    CHAR buffer[7];
-    RtStrPrintFormatted(buffer, sizeof(buffer), "%02d.%02d%%", idlePercentage / 100, idlePercentage % 100);
+    CHAR buffer[20];
+    RtStrPrintFormatted(buffer, sizeof(buffer), "\033[33m" "%02d.%02d%%" "\033[0m", idlePercentage / 100, idlePercentage % 100);
 
     CURSOR_POSITION cursor = { CURSOR_IDLE_X, CURSOR_IDLE_Y };
     DisplaypMoveToCursor(com2Device, &cursor);
@@ -150,10 +159,26 @@ DisplaypSwitchRequest
         IN DISPLAY_SWITCH_REQUEST* switchRequest
     )
 {
-    CHAR buffer[7];
-    RtStrPrintFormatted(buffer, sizeof(buffer), "s%03d %c", switchRequest->number, switchRequest->direction);
+    CHAR buffer[8];
+    RtStrPrintFormatted(buffer, sizeof(buffer), "sw%03d %c", switchRequest->number, switchRequest->direction);
 
     CURSOR_POSITION cursor = { CURSOR_SWITCH_X, CURSOR_SWITCH_Y + switchRequest->index };
+    DisplaypMoveToCursor(com2Device, &cursor);
+    WriteString(com2Device, buffer);
+}
+
+static
+VOID
+DisplaypSensorRequest
+    (
+        IN IO_DEVICE* com2Device,
+        IN DISPLAY_SENSOR_REQUEST* sensorRequest
+    )
+{
+    CHAR buffer[8];
+    RtStrPrintFormatted(buffer, sizeof(buffer), "s%02d", sensorRequest->sensorState);
+
+    CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + sensorRequest->index };
     DisplaypMoveToCursor(com2Device, &cursor);
     WriteString(com2Device, buffer);
 }
@@ -222,7 +247,11 @@ DisplaypTask
                 break;
             }
             case DisplaySensorRequest:
+            {
+                DISPLAY_SENSOR_REQUEST sensorRequest = *((DISPLAY_SENSOR_REQUEST*) request.buffer);
+                DisplaypSensorRequest(&com2Device, &sensorRequest);
                 break;
+            }
         }
 
         DisplaypMoveToCursor(&com2Device, &cursor);
@@ -296,4 +325,15 @@ ShowSwitchDirection
 {
     DISPLAY_SWITCH_REQUEST switchRequest = { idx, number, direction };
     VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySwitchRequest, &switchRequest, sizeof(switchRequest))));
+}
+
+VOID
+ShowSensorState
+    (
+        IN INT idx,
+        IN CHAR sensorState
+    )
+{
+    DISPLAY_SENSOR_REQUEST sensorRequest = { idx, sensorState };
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySensorRequest, &sensorRequest, sizeof(sensorRequest))));
 }

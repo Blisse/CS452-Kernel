@@ -33,3 +33,10 @@ ShowSwitchDirection
         IN INT number,
         IN CHAR direction
     );
+
+VOID
+ShowSensorState
+    (
+        IN INT idx,
+        IN CHAR sensorState
+    );

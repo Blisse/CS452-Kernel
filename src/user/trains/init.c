@@ -4,6 +4,7 @@
 #include "display.h"
 #include "input_parser.h"
 #include "performance.h"
+#include "sensor_reader.h"
 #include "switch_server.h"
 #include "train_server.h"
 
@@ -16,6 +17,7 @@ InitTrainTasks
     DisplayCreateTask();
     TrainServerCreate();
     SwitchServerCreate();
+    SensorReaderCreateTask();
     InputParserCreateTask();
     ClockCreateTask();
     PerformanceCreateTask();
