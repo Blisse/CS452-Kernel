@@ -127,12 +127,9 @@ DisplaypClock
     INT s = (ts / 10);
     INT m = (s / 60);
 
-    CHAR buffer[25];
-    RtStrPrintFormatted(buffer, sizeof(buffer), "\033[31m" "%02d:%02d:%d>" "\033[0m", m % 60, s % 60, ts % 10);
-
     CURSOR_POSITION cursor = { CURSOR_CLOCK_X, CURSOR_CLOCK_Y };
     DisplaypMoveToCursor(com2Device, &cursor);
-    WriteString(com2Device, buffer);
+    WriteFormattedString(com2Device, "\033[31m" "%02d:%02d:%d>" "\033[0m", m % 60, s % 60, ts % 10);
 }
 
 static
@@ -143,12 +140,9 @@ DisplaypIdlePercentage
         IN INT idlePercentage
     )
 {
-    CHAR buffer[20];
-    RtStrPrintFormatted(buffer, sizeof(buffer), "\033[33m" "%02d.%02d%%" "\033[0m", idlePercentage / 100, idlePercentage % 100);
-
     CURSOR_POSITION cursor = { CURSOR_IDLE_X, CURSOR_IDLE_Y };
     DisplaypMoveToCursor(com2Device, &cursor);
-    WriteString(com2Device, buffer);
+    WriteFormattedString(com2Device, "\033[33m" "%02d.%02d%%" "\033[0m", idlePercentage / 100, idlePercentage % 100);
 }
 
 static
@@ -159,12 +153,9 @@ DisplaypSwitchRequest
         IN DISPLAY_SWITCH_REQUEST* switchRequest
     )
 {
-    CHAR buffer[8];
-    RtStrPrintFormatted(buffer, sizeof(buffer), "sw%03d %c", switchRequest->number, switchRequest->direction);
-
     CURSOR_POSITION cursor = { CURSOR_SWITCH_X, CURSOR_SWITCH_Y + switchRequest->index };
     DisplaypMoveToCursor(com2Device, &cursor);
-    WriteString(com2Device, buffer);
+    WriteFormattedString(com2Device, "sw%03d %c", switchRequest->number, switchRequest->direction);
 }
 
 static
@@ -175,12 +166,9 @@ DisplaypSensorRequest
         IN DISPLAY_SENSOR_REQUEST* sensorRequest
     )
 {
-    CHAR buffer[8];
-    RtStrPrintFormatted(buffer, sizeof(buffer), "s%02d", sensorRequest->sensorState);
-
     CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + sensorRequest->index };
     DisplaypMoveToCursor(com2Device, &cursor);
-    WriteString(com2Device, buffer);
+    WriteFormattedString(com2Device, "s%02d", sensorRequest->sensorState);
 }
 
 static
