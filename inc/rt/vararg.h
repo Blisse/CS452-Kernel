@@ -2,14 +2,14 @@
 
 #include "types.h"
 
-typedef CHAR *va_list;
+typedef CHAR* VA_LIST;
 
-#define __va_argsiz(t)  \
+#define __VA_ARGSIZ(t)  \
         (((sizeof(t) + sizeof(INT) - 1) / sizeof(INT)) * sizeof(INT))
 
-#define va_start(ap, pN) ((ap) = ((va_list) __builtin_next_arg(pN)))
+#define VA_START(ap, pN) ((ap) = ((VA_LIST) __builtin_next_arg(pN)))
 
-#define va_end(ap)  ((VOID)0)
+#define VA_END(ap)  ((VOID)0)
 
-#define va_arg(ap, t)   \
-         (((ap) = (ap) + __va_argsiz(t)), *((t*) (PVOID) ((ap) - __va_argsiz(t))))
+#define VA_ARG(ap, t)   \
+         (((ap) = (ap) + __VA_ARGSIZ(t)), *((t*) (PVOID) ((ap) - __VA_ARGSIZ(t))))

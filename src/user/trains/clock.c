@@ -1,0 +1,32 @@
+#include "clock.h"
+
+#include <rtkernel.h>
+#include <rtos.h>
+#include <rtosc/assert.h>
+
+#include "display.h"
+
+VOID
+ClockpTask
+    (
+        VOID
+    )
+{
+    while (1)
+    {
+        INT ticks = Time();
+
+        ShowClockTime(ticks);
+
+        Delay(50);
+    }
+}
+
+VOID
+ClockCreateTask
+    (
+        VOID
+    )
+{
+    VERIFY(SUCCESSFUL(Create(Priority10, ClockpTask)));
+}

@@ -191,7 +191,7 @@ void bwi2a( int num, char *bf ) {
 	bwui2a( num, 10, bf );
 }
 
-void bwformat ( int channel, char *fmt, va_list va ) {
+void bwformat ( int channel, char *fmt, VA_LIST va ) {
 	char bf[12];
 	char ch, lz;
 	int w;
@@ -222,21 +222,21 @@ void bwformat ( int channel, char *fmt, va_list va ) {
 			switch( ch ) {
 			case 0: return;
 			case 'c':
-				bwputc( channel, va_arg( va, char ) );
+				bwputc( channel, VA_ARG( va, char ) );
 				break;
 			case 's':
-				bwputw( channel, w, 0, va_arg( va, char* ) );
+				bwputw( channel, w, 0, VA_ARG( va, char* ) );
 				break;
 			case 'u':
-				bwui2a( va_arg( va, unsigned int ), 10, bf );
+				bwui2a( VA_ARG( va, unsigned int ), 10, bf );
 				bwputw( channel, w, lz, bf );
 				break;
 			case 'd':
-				bwi2a( va_arg( va, int ), bf );
+				bwi2a( VA_ARG( va, int ), bf );
 				bwputw( channel, w, lz, bf );
 				break;
 			case 'x':
-				bwui2a( va_arg( va, unsigned int ), 16, bf );
+				bwui2a( VA_ARG( va, unsigned int ), 16, bf );
 				bwputw( channel, w, lz, bf );
 				break;
 			case '%':
@@ -248,10 +248,10 @@ void bwformat ( int channel, char *fmt, va_list va ) {
 }
 
 void bwprintf( int channel, char *fmt, ... ) {
-        va_list va;
+        VA_LIST va;
 
-        va_start(va,fmt);
+        VA_START(va,fmt);
         bwformat( channel, fmt, va );
-        va_end(va);
+        VA_END(va);
 }
 

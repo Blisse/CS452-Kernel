@@ -198,9 +198,9 @@ Write
 {
     IO_WRITE_REQUEST request = { WriteRequest, buffer, bufferLength };
 
-    return Send(device->writeTaskID, 
-                &request, 
-                sizeof(request), 
-                NULL, 
+    return Send(device->writeTaskId,
+                &request,
+                sizeof(request),
+                NULL,
                 0);
 }

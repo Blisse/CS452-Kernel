@@ -68,7 +68,7 @@ RtCircularBufferIsFull
         IN RT_CIRCULAR_BUFFER* buffer
     )
 {
-    return 0 != buffer->size;
+    return buffer->capacity == buffer->size;
 }
 
 static

@@ -56,9 +56,14 @@ WriteFormattedString
         ...
     )
 {
-    // TODO
-    // Cannibalize bwio and use the other functions in this file
-    // That's why the other write functions in this file are inlined
-    ASSERT(FALSE);
-    return -1;
+    CHAR buffer[80];
+
+    VA_LIST va;
+    VA_START(va, str);
+    INT size = RtStrPrintFormatted(buffer, sizeof(buffer), str, va);
+    VA_END(va);
+
+    ASSERT(size < sizeof(buffer));
+
+    return Write(device, buffer, RtStrLen(buffer));
 }
