@@ -1,6 +1,7 @@
 #include <user/trains.h>
 
 #include "clock.h"
+#include "display.h"
 #include "input_parser.h"
 #include "performance.h"
 #include "switch_server.h"
@@ -12,6 +13,7 @@ InitTrainTasks
         VOID
     )
 {
+    DisplayCreateTask();
     TrainServerCreate();
     SwitchServerCreate();
     InputParserCreateTask();

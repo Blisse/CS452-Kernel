@@ -1,6 +1,8 @@
 #include "clock.h"
 
+#include <rtkernel.h>
 #include <rtos.h>
+#include <rtosc/assert.h>
 
 #include "display.h"
 
@@ -16,7 +18,7 @@ ClockpTask
 
         ShowClockTime(ticks);
 
-        Delay(500);
+        Delay(50);
     }
 }
 
@@ -26,5 +28,5 @@ ClockCreateTask
         VOID
     )
 {
-
+    VERIFY(SUCCESSFUL(Create(Priority10, ClockpTask)));
 }

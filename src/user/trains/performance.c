@@ -28,11 +28,11 @@ PerformancepTask
             totalTime += performanceCounters[i].activeTicks;
         }
 
-        float idleTime = (performanceCounters[IDLE_TASK_ID].activeTicks / ((float) totalTime)) * 100;
+        INT idleTime = (performanceCounters[IDLE_TASK_ID].activeTicks / ((float) totalTime)) * 10000;
 
         ShowIdleTime(idleTime);
 
-        Delay(500);
+        Delay(50);
     }
 }
 

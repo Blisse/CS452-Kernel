@@ -75,9 +75,6 @@ InputParserpParseCommand
     CHAR token[12];
     InputParserpConsumeToken(&buffer, token, sizeof(token));
 
-    bwprintf(BWCOM2, "token : %s \r\n", token);
-    bwprintf(BWCOM2, "buffer : %s \r\n", buffer);
-
     if (RtStrEqual(token, "tr"))
     {
         InputParserpConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
@@ -141,20 +138,6 @@ InputParserpParseCommand
 }
 
 static
-CHAR
-InputParserpReadChar
-    (
-        IN IO_DEVICE* com2Device
-    )
-{
-    CHAR c = ReadChar(com2Device);
-
-    ShowKeyboardChar(c);
-
-    return c;
-}
-
-static
 VOID
 InputParserpTask
     (
@@ -167,41 +150,40 @@ InputParserpTask
     CHAR buffer[256];
 
     INT i;
-    for (i = 0; i < sizeof(buffer); i++)
-    {
-        buffer[i] = '\0';
-    }
-
     while (1)
     {
         for (i = 0; i < sizeof(buffer); i++)
         {
-            CHAR c = InputParserpReadChar(&com2Device);
+            buffer[i] = '\0';
+        }
+
+        i = 0;
+        while (i < sizeof(buffer))
+        {
+            CHAR c = ReadChar(&com2Device);
+
+            ShowKeyboardChar(c);
 
             if (c == '\r')
             {
                 break;
             }
-            else if (c == '\b')
+
+            if (c == '\b')
             {
-                i--;
+                if (i > 0)
+                {
+                    buffer[--i] = '\0';
+                }
             }
             else
             {
-                buffer[i] = c;
+                buffer[i++] = c;
             }
+
         }
 
-        INT endIdx = min(i, 255);
-
-        buffer[endIdx] = '\0';
-
-        InputParserpParseCommand(buffer, endIdx);
-
-        while (i > 0)
-        {
-            buffer[i--] = '\0';
-        }
+        InputParserpParseCommand(buffer, i);
     }
 }
 
