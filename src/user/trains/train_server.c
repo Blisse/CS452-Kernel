@@ -194,7 +194,7 @@ TrainpTask
 
                 // Wait for the train to come to a stop
                 // TODO - Better implementation
-                Delay(100);
+                Delay(100 * (oldSpeed / 3 + 1));
 
                 // Reverse the train
                 VERIFY(SUCCESSFUL(TrainpReverse(&com1, request.train)));
