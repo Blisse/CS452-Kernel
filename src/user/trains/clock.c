@@ -18,7 +18,7 @@ ClockpTask
 
         ShowClockTime(ticks);
 
-        Delay(50);
+        Delay(10);
     }
 }
 

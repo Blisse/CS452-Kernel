@@ -37,7 +37,7 @@ SensorReaderpTask
 
     while (1)
     {
-        Delay(40);
+        Delay(25);
         SensorReaderpSendSensorCommand(&com1Device);
 
         UINT i;
