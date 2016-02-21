@@ -216,13 +216,17 @@ SwitchpSendRequest
 INT
 SwitchSetDirection
     (
-        IN UCHAR sw,
+        IN INT sw,
         IN SWITCH_DIRECTION direction
     )
 {
-    SWITCH_REQUEST request = { SetDirectionRequest, sw, direction };
+    INT index = SwitchpToIndex(sw);
+    if (!(0 <= index && index < NUM_SWITCHES))
+    {
+        return -1;
+    }
 
-    // TODO - Validate switch
+    SWITCH_REQUEST request = { SetDirectionRequest, (UCHAR) sw, direction };
     return SwitchpSendRequest(&request);
 }
 
