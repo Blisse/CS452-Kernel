@@ -180,7 +180,7 @@ RtStrpPutBf
 
 static
 VOID
-RtStrpPrintFormatted
+RtStrpPrintFormattedOutput
     (
         IN STRING fmt,
         RT_STR_FORMAT_OUTPUT* output,
@@ -247,12 +247,12 @@ RtStrpPrintFormatted
 }
 
 INT
-RtStrPrintFormatted
+RtStrpPrintFormatted
     (
         OUT STRING ret,
         IN INT retLength,
         IN STRING fmt,
-        ...
+        IN VA_LIST va
     )
 {
     if (retLength < 1)
@@ -263,14 +263,42 @@ RtStrPrintFormatted
     RT_STR_FORMAT_OUTPUT output;
     RtStrpFormatOutputInit(&output, ret, retLength - 1);
 
-    VA_LIST va;
-    VA_START(va, fmt);
-    RtStrpPrintFormatted(fmt, &output, va);
-    VA_END(va);
+    RtStrpPrintFormattedOutput(fmt, &output, va);
 
     output.destination[min(output.length, output.capacity)] = '\0';
 
     return output.length;
+}
+
+INT
+RtStrPrintFormattedVa
+    (
+        OUT STRING ret,
+        IN INT retLength,
+        IN STRING fmt,
+        IN VA_LIST va
+    )
+{
+    return RtStrpPrintFormatted(ret, retLength, fmt, va);
+}
+
+INT
+RtStrPrintFormatted
+    (
+        OUT STRING ret,
+        IN INT retLength,
+        IN STRING fmt,
+        ...
+    )
+{
+    INT status;
+
+    VA_LIST va;
+    VA_START(va, fmt);
+    status = RtStrpPrintFormatted(ret, retLength, fmt, va);
+    VA_END(va);
+
+    return status;
 }
 
 static
