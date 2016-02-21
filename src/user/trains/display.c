@@ -72,9 +72,7 @@ DisplaypMoveToCursor
         IN CURSOR_POSITION* cursor
     )
 {
-    CHAR buffer[10];
-    RtStrPrintFormatted(buffer, sizeof(buffer), CURSOR_MOVE, cursor->y, cursor->x);
-    WriteString(com2Device, buffer);
+    WriteFormattedString(com2Device, CURSOR_MOVE, cursor->y, cursor->x);
 }
 
 static
