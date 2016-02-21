@@ -64,6 +64,7 @@ WriteFormattedString
     VA_END(va);
 
     ASSERT(size < sizeof(buffer));
+    UNREFERENCED_PARAMETER(size);
 
     return Write(device, buffer, RtStrLen(buffer));
 }
