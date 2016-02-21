@@ -37,6 +37,6 @@ ShowSwitchDirection
 VOID
 ShowSensorState
     (
-        IN INT idx,
-        IN CHAR sensorState
+        IN CHAR* sensors, 
+        IN UINT size
     );

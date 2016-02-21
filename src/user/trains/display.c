@@ -14,6 +14,8 @@
 
 #define DISPLAY_NAME "display"
 
+#define BIT_SET(x, bit) (!!(x & (1 << bit)))
+
 typedef enum _DISPLAY_REQUEST_TYPE
 {
     DisplayCharRequest = 0,
@@ -33,8 +35,8 @@ typedef struct _DISPLAY_REQUEST
 
 typedef struct _DISPLAY_SENSOR_REQUEST
 {
-    INT index;
-    CHAR sensorState;
+    CHAR* sensors;
+    UINT size;
 } DISPLAY_SENSOR_REQUEST;
 
 typedef struct _DISPLAY_SWITCH_REQUEST
@@ -66,14 +68,15 @@ typedef struct _CURSOR_POSITION
 } CURSOR_POSITION;
 
 static
-VOID
+inline
+INT
 DisplaypMoveToCursor
     (
         IN IO_DEVICE* com2Device,
         IN CURSOR_POSITION* cursor
     )
 {
-    WriteFormattedString(com2Device, CURSOR_MOVE, cursor->y, cursor->x);
+    return WriteFormattedString(com2Device, CURSOR_MOVE, cursor->y, cursor->x);
 }
 
 static
@@ -165,20 +168,32 @@ DisplaypSensorRequest
         IN DISPLAY_SENSOR_REQUEST* sensorRequest
     )
 {
-    INT idx = sensorRequest->index;
-    CHAR c = sensorRequest->sensorState;
+    UINT i;
 
-    CHAR sensorChar = 'A' + idx / 2;
-    INT sensorNumberLow = (idx % 2) * 8;
-    INT sensorNumberHigh = (idx % 2 + 1) * 8 - 1;
+    for(i = 0; i < sensorRequest->size; i++)
+    {
+        CHAR sensor = sensorRequest->sensors[i];
+        CHAR sensorModule = 'A' + (i / 2);
+        UINT sensorNumberLow = (i % 2) * 8 + 1;
+        UINT sensorNumberHigh = (i % 2 + 1) * 8;
 
-    CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + sensorRequest->index };
-    DisplaypMoveToCursor(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[36m%c%02d-%c%02d\033[0m ", sensorChar, sensorNumberLow, sensorChar, sensorNumberHigh);
+        CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + i };
+        VERIFY(SUCCESSFUL(DisplaypMoveToCursor(com2Device, &cursor)));
+        VERIFY(SUCCESSFUL(WriteFormattedString(com2Device, 
+                                               "\033[36m%c%02d-%c%02d\033[0m %d%d%d%d%d%d%d%d", 
+                                               sensorModule, 
+                                               sensorNumberLow, 
+                                               sensorModule, 
+                                               sensorNumberHigh, 
+                                               BIT_SET(sensor, 7), 
+                                               BIT_SET(sensor, 6), 
+                                               BIT_SET(sensor, 5), 
+                                               BIT_SET(sensor, 4), 
+                                               BIT_SET(sensor, 3), 
+                                               BIT_SET(sensor, 2), 
+                                               BIT_SET(sensor, 1), 
+                                               BIT_SET(sensor, 0))));
 
-    INT i;
-    for (i = 7; i >= 0; i--) {
-        WriteFormattedString(com2Device, "%d", (c >> i) & 0x1);
     }
 }
 
@@ -331,10 +346,10 @@ ShowSwitchDirection
 VOID
 ShowSensorState
     (
-        IN INT idx,
-        IN CHAR sensorState
+        IN CHAR* sensors, 
+        IN UINT size
     )
 {
-    DISPLAY_SENSOR_REQUEST sensorRequest = { idx, sensorState };
+    DISPLAY_SENSOR_REQUEST sensorRequest = { sensors, size };
     VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySensorRequest, &sensorRequest, sizeof(sensorRequest))));
 }

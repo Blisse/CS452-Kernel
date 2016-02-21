@@ -12,16 +12,6 @@
 #define SENSOR_COMMAND_QUERY 0x85
 
 static
-INT
-SensorReaderpSendSensorCommand
-    (
-        IN IO_DEVICE* device
-    )
-{
-    return WriteChar(device, SENSOR_COMMAND_QUERY);
-}
-
-static
 VOID
 SensorReaderpTask
     (
@@ -37,15 +27,10 @@ SensorReaderpTask
 
     while (1)
     {
-        Delay(5);
-        SensorReaderpSendSensorCommand(&com1Device);
-
-        UINT i;
-        for (i = 0; i < NUM_SENSORS; i++)
-        {
-            sensors[i] = ReadChar(&com1Device);
-            ShowSensorState(i, sensors[i]);
-        }
+        VERIFY(SUCCESSFUL(Delay(5)));
+        VERIFY(SUCCESSFUL(WriteChar(&com1Device, SENSOR_COMMAND_QUERY)));
+        VERIFY(SUCCESSFUL(Read(&com1Device, sensors, sizeof(sensors))));
+        ShowSensorState(sensors, sizeof(sensors));
     }
 }
 

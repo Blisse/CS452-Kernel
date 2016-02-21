@@ -56,7 +56,7 @@ WriteFormattedString
         ...
     )
 {
-    CHAR buffer[80];
+    CHAR buffer[128];
 
     VA_LIST va;
     VA_START(va, str);
