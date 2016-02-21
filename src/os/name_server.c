@@ -188,7 +188,7 @@ NameServerCreateTask
         VOID
     )
 {
-    g_nameServerId = Create(Priority28, NameServerpTask);
+    g_nameServerId = Create(Priority29, NameServerpTask);
     ASSERT(SUCCESSFUL(g_nameServerId));
 }
 
