@@ -362,3 +362,19 @@ RtMemcpy
         RtMemcpypUnaligned(dest, src, bytes);
     }
 }
+
+VOID
+RtMemset
+    (
+        PVOID dest,
+        UINT size
+    )
+{
+    CHAR* p = dest;
+
+    UINT i;
+    for (i = 0; i < size; i++)
+    {
+        p[i] = '\0';
+    }
+}

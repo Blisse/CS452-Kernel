@@ -48,3 +48,9 @@ RtMemcpy
         UINT bytes
     );
 
+VOID
+RtMemset
+    (
+        PVOID dest,
+        UINT size
+    );
