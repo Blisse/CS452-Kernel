@@ -20,6 +20,7 @@ typedef enum _DISPLAY_REQUEST_TYPE
     DisplayClockRequest,
     DisplayIdleRequest,
     DisplaySensorRequest,
+    DisplayShutdownRequest,
     DisplaySwitchRequest,
 } DISPLAY_REQUEST_TYPE;
 
@@ -170,16 +171,32 @@ DisplaypSensorRequest
 }
 
 static
+INT
+DisplaypSendRequest
+    (
+        IN DISPLAY_REQUEST_TYPE type,
+        IN PVOID buffer,
+        IN INT bufferLength
+    )
+{
+    DISPLAY_REQUEST request = { type, buffer, bufferLength };
+    INT displayServerId = WhoIs(DISPLAY_NAME);
+
+    return Send(displayServerId,
+                &request,
+                sizeof(request),
+                NULL,
+                0);
+}
+
+static
 VOID
 DisplaypShutdownHook
     (
         VOID
     )
 {
-    IO_DEVICE com2Device;
-    VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom2, &com2Device)));
-
-    WriteString(&com2Device, CURSOR_CLEAR);
+    DisplaypSendRequest(DisplayShutdownRequest, NULL, 0);
 }
 
 static
@@ -200,7 +217,8 @@ DisplaypTask
 
     CURSOR_POSITION cursor = { CURSOR_CMD_X, CURSOR_CMD_Y };
 
-    while (1)
+    BOOLEAN running = TRUE;
+    while (running)
     {
         INT senderId;
         DISPLAY_REQUEST request;
@@ -238,6 +256,10 @@ DisplaypTask
                 DisplaypSensorRequest(&com2Device, &sensorRequest);
                 break;
             }
+            case DisplayShutdownRequest:
+                WriteString(&com2Device, CURSOR_CLEAR);
+                running = FALSE;
+                break;
         }
 
         DisplaypMoveToCursor(&com2Device, &cursor);
@@ -253,25 +275,6 @@ DisplayCreateTask
     )
 {
     VERIFY(SUCCESSFUL(Create(HighestUserPriority, DisplaypTask)));
-}
-
-static
-INT
-DisplaypSendRequest
-    (
-        IN DISPLAY_REQUEST_TYPE type,
-        IN PVOID buffer,
-        IN INT bufferLength
-    )
-{
-    DISPLAY_REQUEST request = { type, buffer, bufferLength };
-    INT displayServerId = WhoIs(DISPLAY_NAME);
-
-    return Send(displayServerId,
-                &request,
-                sizeof(request),
-                NULL,
-                0);
 }
 
 VOID
