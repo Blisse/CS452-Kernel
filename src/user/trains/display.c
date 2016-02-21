@@ -20,6 +20,7 @@ typedef enum _DISPLAY_REQUEST_TYPE
     DisplayClockRequest,
     DisplayIdleRequest,
     DisplaySensorRequest,
+    DisplayShutdownRequest,
     DisplaySwitchRequest,
 } DISPLAY_REQUEST_TYPE;
 
@@ -72,9 +73,7 @@ DisplaypMoveToCursor
         IN CURSOR_POSITION* cursor
     )
 {
-    CHAR buffer[10];
-    RtStrPrintFormatted(buffer, sizeof(buffer), CURSOR_MOVE, cursor->y, cursor->x);
-    WriteString(com2Device, buffer);
+    WriteFormattedString(com2Device, CURSOR_MOVE, cursor->y, cursor->x);
 }
 
 static
@@ -129,7 +128,7 @@ DisplaypClock
 
     CURSOR_POSITION cursor = { CURSOR_CLOCK_X, CURSOR_CLOCK_Y };
     DisplaypMoveToCursor(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[31m" "%02d:%02d:%d>" "\033[0m", m % 60, s % 60, ts % 10);
+    WriteFormattedString(com2Device, "\033[36m" "%02d:%02d:%d>" "\033[0m", m % 60, s % 60, ts % 10);
 }
 
 static
@@ -142,7 +141,7 @@ DisplaypIdlePercentage
 {
     CURSOR_POSITION cursor = { CURSOR_IDLE_X, CURSOR_IDLE_Y };
     DisplaypMoveToCursor(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[33m" "%02d.%02d%%" "\033[0m", idlePercentage / 100, idlePercentage % 100);
+    WriteFormattedString(com2Device, "\033[32m%02d.%02d%%" "\033[0m", idlePercentage / 100, idlePercentage % 100);
 }
 
 static
@@ -155,7 +154,7 @@ DisplaypSwitchRequest
 {
     CURSOR_POSITION cursor = { CURSOR_SWITCH_X, CURSOR_SWITCH_Y + switchRequest->index };
     DisplaypMoveToCursor(com2Device, &cursor);
-    WriteFormattedString(com2Device, "sw%03d %c", switchRequest->number, switchRequest->direction);
+    WriteFormattedString(com2Device, "\033[36msw\033[0m %3d \033[33m%c\033[0m", switchRequest->number, switchRequest->direction);
 }
 
 static
@@ -166,9 +165,40 @@ DisplaypSensorRequest
         IN DISPLAY_SENSOR_REQUEST* sensorRequest
     )
 {
+    INT idx = sensorRequest->index;
+    CHAR c = sensorRequest->sensorState;
+
+    CHAR sensorChar = 'A' + idx / 2;
+    INT sensorNumberLow = (idx % 2) * 8;
+    INT sensorNumberHigh = (idx % 2 + 1) * 8 - 1;
+
     CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + sensorRequest->index };
     DisplaypMoveToCursor(com2Device, &cursor);
-    WriteFormattedString(com2Device, "s%02d", sensorRequest->sensorState);
+    WriteFormattedString(com2Device, "\033[36m%c%02d-%c%02d\033[0m ", sensorChar, sensorNumberLow, sensorChar, sensorNumberHigh);
+
+    INT i;
+    for (i = 7; i >= 0; i--) {
+        WriteFormattedString(com2Device, "%d", (c >> i) & 0x1);
+    }
+}
+
+static
+INT
+DisplaypSendRequest
+    (
+        IN DISPLAY_REQUEST_TYPE type,
+        IN PVOID buffer,
+        IN INT bufferLength
+    )
+{
+    DISPLAY_REQUEST request = { type, buffer, bufferLength };
+    INT displayServerId = WhoIs(DISPLAY_NAME);
+
+    return Send(displayServerId,
+                &request,
+                sizeof(request),
+                NULL,
+                0);
 }
 
 static
@@ -178,10 +208,7 @@ DisplaypShutdownHook
         VOID
     )
 {
-    IO_DEVICE com2Device;
-    VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom2, &com2Device)));
-
-    WriteString(&com2Device, CURSOR_CLEAR);
+    DisplaypSendRequest(DisplayShutdownRequest, NULL, 0);
 }
 
 static
@@ -202,7 +229,8 @@ DisplaypTask
 
     CURSOR_POSITION cursor = { CURSOR_CMD_X, CURSOR_CMD_Y };
 
-    while (1)
+    BOOLEAN running = TRUE;
+    while (running)
     {
         INT senderId;
         DISPLAY_REQUEST request;
@@ -240,6 +268,10 @@ DisplaypTask
                 DisplaypSensorRequest(&com2Device, &sensorRequest);
                 break;
             }
+            case DisplayShutdownRequest:
+                WriteString(&com2Device, CURSOR_CLEAR);
+                running = FALSE;
+                break;
         }
 
         DisplaypMoveToCursor(&com2Device, &cursor);
@@ -255,25 +287,6 @@ DisplayCreateTask
     )
 {
     VERIFY(SUCCESSFUL(Create(HighestUserPriority, DisplaypTask)));
-}
-
-static
-INT
-DisplaypSendRequest
-    (
-        IN DISPLAY_REQUEST_TYPE type,
-        IN PVOID buffer,
-        IN INT bufferLength
-    )
-{
-    DISPLAY_REQUEST request = { type, buffer, bufferLength };
-    INT displayServerId = WhoIs(DISPLAY_NAME);
-
-    return Send(displayServerId,
-                &request,
-                sizeof(request),
-                NULL,
-                0);
 }
 
 VOID

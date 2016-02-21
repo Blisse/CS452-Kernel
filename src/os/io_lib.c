@@ -60,7 +60,7 @@ WriteFormattedString
 
     VA_LIST va;
     VA_START(va, str);
-    INT size = RtStrPrintFormatted(buffer, sizeof(buffer), str, va);
+    INT size = RtStrPrintFormattedVa(buffer, sizeof(buffer), str, va);
     VA_END(va);
 
     ASSERT(size < sizeof(buffer));

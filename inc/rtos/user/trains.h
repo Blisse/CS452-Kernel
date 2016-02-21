@@ -9,14 +9,14 @@
 INT
 TrainSetSpeed
     (
-        IN UCHAR train,
-        IN UCHAR speed
+        IN INT train,
+        IN INT speed
     );
 
 INT
 TrainReverse
     (
-        IN UCHAR train
+        IN INT train
     );
 
 /************************************
@@ -32,7 +32,7 @@ typedef enum _SWITCH_DIRECTION
 INT
 SwitchSetDirection
     (
-        IN UCHAR sw,
+        IN INT sw,
         IN SWITCH_DIRECTION direction
     );
 

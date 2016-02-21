@@ -194,7 +194,7 @@ TrainpTask
 
                 // Wait for the train to come to a stop
                 // TODO - Better implementation
-                Delay(100);
+                Delay(100 * (oldSpeed / 3 + 1));
 
                 // Reverse the train
                 VERIFY(SUCCESSFUL(TrainpReverse(&com1, request.train)));
@@ -230,25 +230,36 @@ TrainpTask
 INT
 TrainSetSpeed
     (
-        IN UCHAR train,
-        IN UCHAR speed
+        IN INT train,
+        IN INT speed
     )
 {
-    TRAIN_REQUEST request = { SetSpeedRequest, train, speed };
+    if (!(0 <= train && train < NUM_TRAINS))
+    {
+        return -1;
+    }
 
-    // TODO - Validate train and speed
+    if (!(0 <= speed && speed < 15))
+    {
+        return -1;
+    }
+
+    TRAIN_REQUEST request = { SetSpeedRequest, (UCHAR) train, (UCHAR) speed };
     return TrainpSendRequest(&request);
 }
 
 INT
 TrainReverse
     (
-        IN UCHAR train
+        IN INT train
     )
 {
-    TRAIN_REQUEST request = { ReverseRequest, train };
+    if (!(0 <= train && train < NUM_TRAINS))
+    {
+        return -1;
+    }
 
-    // TODO - Validate train
+    TRAIN_REQUEST request = { ReverseRequest, (UCHAR) train };
     return TrainpSendRequest(&request);
 }
 

@@ -23,6 +23,15 @@ RtStrLen
     );
 
 INT
+RtStrPrintFormattedVa
+    (
+        OUT STRING ret,
+        IN INT retLength,
+        IN STRING fmt,
+        IN VA_LIST va
+    );
+
+INT
 RtStrPrintFormatted
     (
         OUT STRING ret,
@@ -39,3 +48,9 @@ RtMemcpy
         UINT bytes
     );
 
+VOID
+RtMemset
+    (
+        PVOID dest,
+        UINT size
+    );

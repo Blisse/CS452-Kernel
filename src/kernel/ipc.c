@@ -29,9 +29,10 @@ IpcInitializeMailbox
         IN TASK_DESCRIPTOR* td
     )
 {
+    INT mailboxIndex = td->taskId % NUM_TASKS;
     RtCircularBufferInit(&td->mailbox,
-                         g_mailboxes[td->taskId % NUM_TASKS], 
-                         MAILBOX_SIZE);
+                         g_mailboxes[mailboxIndex],
+                         sizeof(g_mailboxes[mailboxIndex]));
 }
 
 VOID
