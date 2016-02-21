@@ -28,5 +28,5 @@ ClockCreateTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority10, ClockpTask)));
+    VERIFY(SUCCESSFUL(Create(LowestUserPriority, ClockpTask)));
 }

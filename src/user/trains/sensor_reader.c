@@ -40,5 +40,5 @@ SensorReaderCreateTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority15, SensorReaderpTask)));
+    VERIFY(SUCCESSFUL(Create(Priority18, SensorReaderpTask)));
 }
