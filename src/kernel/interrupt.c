@@ -39,8 +39,8 @@ InterruptInstallHandler
     );
 
 static TASK_DESCRIPTOR* g_eventHandlers[NumEvent];
-static BOOLEAN g_clearToSend;
-static BOOLEAN g_transmitReady;
+static volatile BOOLEAN g_clearToSend;
+static volatile BOOLEAN g_transmitReady;
 
 static
 inline
