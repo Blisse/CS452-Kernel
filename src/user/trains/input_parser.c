@@ -193,5 +193,5 @@ InputParserCreateTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(HighestUserPriority, InputParserpTask)));
+    VERIFY(SUCCESSFUL(Create(Priority24, InputParserpTask)));
 }

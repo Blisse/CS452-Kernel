@@ -301,7 +301,7 @@ DisplayCreateTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority24, DisplaypTask)));
+    VERIFY(SUCCESSFUL(Create(Priority25, DisplaypTask)));
 }
 
 VOID
