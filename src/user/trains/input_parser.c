@@ -10,7 +10,7 @@
 #include "display.h"
 
 static
-VOID
+INT
 InputParserpConsumeToken
     (
         IN STRING* str,
@@ -27,7 +27,7 @@ InputParserpConsumeToken
 
     // read until space
     UINT i = 0;
-    while (!isspace(c) && (i < bufferLength))
+    while (c != '\0' && !isspace(c) && (i < bufferLength))
     {
         buffer[i++] = c;
         c = *p++;
@@ -38,6 +38,8 @@ InputParserpConsumeToken
 
     // consume token
     *str = p;
+
+    return i;
 }
 
 static
@@ -59,6 +61,27 @@ InputParserpIsWhitespace
 }
 
 static
+BOOLEAN
+InputParserpIsSwitchDirection
+    (
+        CHAR c
+    )
+{
+    switch (c)
+    {
+        case 'S':
+        case 's':
+        case 'C':
+        case 'c':
+            return TRUE;
+            break;
+        default:
+            break;
+    }
+    return FALSE;
+}
+
+static
 VOID
 InputParserpParseCommand
     (
@@ -73,15 +96,20 @@ InputParserpParseCommand
     INT arg2;
 
     CHAR token[12];
-    InputParserpConsumeToken(&buffer, token, sizeof(token));
+    INT read = InputParserpConsumeToken(&buffer, token, sizeof(token));
+
+    if (read == 0)
+    {
+        return;
+    }
 
     if (RtStrEqual(token, "tr"))
     {
-        InputParserpConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
-        if (RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
+        read = InputParserpConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
+        if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
-            InputParserpConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
-            if (RT_SUCCESS(RtAtoi(arg2Buffer, &arg2)))
+            read = InputParserpConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
+            if (read && RT_SUCCESS(RtAtoi(arg2Buffer, &arg2)))
             {
                 if (InputParserpIsWhitespace(buffer))
                 {
@@ -89,28 +117,23 @@ InputParserpParseCommand
                 }
             }
         }
+
     }
     else if (RtStrEqual(token, "sw"))
     {
-        InputParserpConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
-        if (RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
+        read = InputParserpConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
+        if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
-            InputParserpConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
-
-            if ((arg2Buffer[0] == 'S'
-                || arg2Buffer[0] == 's'
-                || arg2Buffer[0] == 'C'
-                || arg2Buffer[0] == 'c')
-                && arg2Buffer[1] == '\0')
+            read = InputParserpConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
+            if (read && InputParserpIsSwitchDirection(arg2Buffer[0]) && arg2Buffer[1] == '\0')
             {
-                SWITCH_DIRECTION direction = SwitchCurved;
-                if (arg2Buffer[0] == 'S' || arg2Buffer[0] == 's')
-                {
-                    direction = SwitchStraight;
-                }
-
                 if (InputParserpIsWhitespace(buffer))
                 {
+                    SWITCH_DIRECTION direction = SwitchCurved;
+                    if (arg2Buffer[0] == 'S' || arg2Buffer[0] == 's')
+                    {
+                        direction = SwitchStraight;
+                    }
                     SwitchSetDirection(arg1, direction);
                 }
             }
@@ -118,15 +141,14 @@ InputParserpParseCommand
     }
     else if (RtStrEqual(token, "rv"))
     {
-        InputParserpConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
-        if (RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
+        read = InputParserpConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
+        if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
             if (InputParserpIsWhitespace(buffer))
             {
                 TrainReverse(arg1);
             }
         }
-
     }
     else if (RtStrEqual(token, "q"))
     {
