@@ -3,7 +3,7 @@
 #include <rt.h>
 
 VOID
-SensorReaderCreateTask
+SensorServerCreateTask
     (
         VOID
     );

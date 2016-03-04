@@ -1,4 +1,4 @@
-#include "sensor_reader.h"
+#include "sensor_server.h"
 
 #include <rtkernel.h>
 #include <rtos.h>
@@ -13,7 +13,7 @@
 
 static
 VOID
-SensorReaderpTask
+SensorServerpTask
     (
         VOID
     )
@@ -27,7 +27,6 @@ SensorReaderpTask
 
     while (1)
     {
-        VERIFY(SUCCESSFUL(Delay(5)));
         VERIFY(SUCCESSFUL(WriteChar(&com1Device, SENSOR_COMMAND_QUERY)));
         VERIFY(SUCCESSFUL(Read(&com1Device, sensors, sizeof(sensors))));
         ShowSensorState(sensors, sizeof(sensors));
@@ -35,10 +34,10 @@ SensorReaderpTask
 }
 
 VOID
-SensorReaderCreateTask
+SensorServerCreateTask
     (
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority18, SensorReaderpTask)));
+    VERIFY(SUCCESSFUL(Create(Priority18, SensorServerpTask)));
 }
