@@ -310,7 +310,7 @@ ShowKeyboardChar
         IN CHAR c
     )
 {
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayCharRequest, &c, sizeof(c))));
+    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayCharRequest, &c, sizeof(c))));
 }
 
 VOID
@@ -319,7 +319,7 @@ ShowClockTime
         IN INT clockTicks
     )
 {
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayClockRequest, &clockTicks, sizeof(clockTicks))));
+    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayClockRequest, &clockTicks, sizeof(clockTicks))));
 }
 
 VOID
@@ -328,7 +328,7 @@ ShowIdleTime
         IN INT idlePercentage
     )
 {
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayIdleRequest, &idlePercentage, sizeof(idlePercentage))));
+    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayIdleRequest, &idlePercentage, sizeof(idlePercentage))));
 }
 
 VOID
@@ -339,8 +339,8 @@ ShowSwitchDirection
         IN CHAR direction
     )
 {
-    DISPLAY_SWITCH_REQUEST switchRequest = { idx, number, direction };
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySwitchRequest, &switchRequest, sizeof(switchRequest))));
+    //DISPLAY_SWITCH_REQUEST switchRequest = { idx, number, direction };
+    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySwitchRequest, &switchRequest, sizeof(switchRequest))));
 }
 
 VOID
@@ -350,6 +350,6 @@ ShowSensorState
         IN UINT size
     )
 {
-    DISPLAY_SENSOR_REQUEST sensorRequest = { sensors, size };
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySensorRequest, &sensorRequest, sizeof(sensorRequest))));
+    //DISPLAY_SENSOR_REQUEST sensorRequest = { sensors, size };
+    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySensorRequest, &sensorRequest, sizeof(sensorRequest))));
 }
