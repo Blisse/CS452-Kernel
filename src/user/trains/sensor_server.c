@@ -59,7 +59,7 @@ SensorServerpTask
             tripped = TRUE;
             VERIFY(SUCCESSFUL(Delay(100)));
 
-            if(currentSpeed == 4)
+            if(currentSpeed == 5)
             {
                 bwprintf(BWCOM2, "\r\n");
                 currentSpeed = 14;
