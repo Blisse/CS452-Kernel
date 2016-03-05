@@ -49,10 +49,10 @@ include_directories(
 
 if(LOCAL)
     set(CMAKE_C_COMPILER "/usr/bin/gcc")
-    set(CMAKE_C_FLAGS "-Wall -Werror")
+    set(CMAKE_C_FLAGS "-Wall -Werror -std=gnu99")
 else()
     set(CMAKE_C_COMPILER "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc")
-    set(CMAKE_C_FLAGS "-fPIC -Wall -Werror -mcpu=arm920t -mfloat-abi=soft")
+    set(CMAKE_C_FLAGS "-fPIC -Wall -Werror -mcpu=arm920t -mfloat-abi=soft -std=gnu99")
     set(CMAKE_C_FLAGS_DEBUG "-O0 -DNLOCAL")
     set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -DNLOCAL")
 
