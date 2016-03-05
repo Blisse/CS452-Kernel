@@ -9,6 +9,8 @@
 
 #include <bwio/bwio.h>
 
+#include <user/trains.h>
+
 #define CURSOR_MOVE "\033[%d;%dH"
 #define CURSOR_CLEAR "\033[2J"
 #define CURSOR_DELETE_LINE "\033[K"
@@ -42,7 +44,7 @@ typedef struct _DISPLAY_SWITCH_REQUEST
 {
     INT index;
     INT number;
-    CHAR direction;
+    SWITCH_DIRECTION direction;
 } DISPLAY_SWITCH_REQUEST;
 
 #define CURSOR_CMD_X 13
@@ -156,7 +158,7 @@ DisplaypSwitchRequest
 {
     CURSOR_POSITION cursor = { CURSOR_SWITCH_X, CURSOR_SWITCH_Y + switchRequest->index };
     WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[36msw\033[0m %3d \033[33m%c\033[0m", switchRequest->number, switchRequest->direction);
+    WriteFormattedString(com2Device, "\033[36msw\033[0m %3d \033[33m%c\033[0m", switchRequest->number, switchRequest->direction == SwitchStraight ? 'S' : 'C');
 }
 
 static
@@ -185,8 +187,8 @@ DisplaypSensorRequest
         VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
         VERIFY(SUCCESSFUL(WriteFormattedString(com2Device,
                                                CURSOR_DELETE_LINE "\033[36m%c%02d \033[33m%d\033[0m",
-                                               displayData.module,
-                                               displayData.number,
+                                               displayData.sensor.module,
+                                               displayData.sensor.number,
                                                displayData.status)));
     }
 }

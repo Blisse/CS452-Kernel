@@ -40,10 +40,14 @@ SwitchSetDirection
  *           SENSOR API             *
  ************************************/
 
-typedef struct _SENSOR_DATA
-{
+typedef struct _SENSOR {
     CHAR module;
     UINT number;
+} SENSOR;
+
+typedef struct _SENSOR_DATA
+{
+    SENSOR sensor;
     UINT status;
 } SENSOR_DATA;
 
@@ -52,6 +56,12 @@ SensorDataRegister
     (
         VOID
     );
+
+/************************************
+ *            TRACK API             *
+ ************************************/
+
+
 
 /************************************
  *           INIT TASK              *

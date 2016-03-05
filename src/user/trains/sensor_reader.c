@@ -67,9 +67,11 @@ SensorReaderpUpdate
             {
                 CHAR module = 'A' + (i / 2);
                 UINT number = (8 - j) + ((i % 2) * 8);
+
+                SENSOR sensor = { module, number };
                 UINT status = currentValue;
 
-                SENSOR_DATA data = { module, number, status };
+                SENSOR_DATA data = { sensor, status };
                 ShowSensorStatus(data);
 
                 SENSOR_SERVER_REQUEST request = { DataRequest, data };
