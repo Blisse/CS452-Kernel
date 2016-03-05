@@ -301,6 +301,55 @@ RtStrPrintFormatted
     return status;
 }
 
+INT
+RtStrConsumeToken
+    (
+        IN CHAR** str,
+        OUT CHAR* buffer,
+        IN INT bufferLength
+    )
+{
+    CHAR* p = *str;
+    CHAR c;
+    // ignore leading space
+    while ((c = *p++) && isspace(c))
+    {
+    }
+
+    // read until space
+    UINT i = 0;
+    while (c != '\0' && !isspace(c) && (i < bufferLength))
+    {
+        buffer[i++] = c;
+        c = *p++;
+    }
+
+    // terminate buffer
+    buffer[i] = '\0';
+
+    // consume token
+    *str = p;
+
+    return i;
+}
+
+BOOLEAN
+RtStrIsWhitespace
+    (
+        IN STRING str
+    )
+{
+    CHAR c;
+    while ((c = *str++))
+    {
+        if (!isspace(c))
+        {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 static
 inline
 VOID
