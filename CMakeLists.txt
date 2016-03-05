@@ -22,12 +22,13 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # libraries
+set(LIB_TRACK "track")
 set(LIB_BWIO "bwio")
 set(LIB_RTOSC "rtosc")
 set(LIB_USER "user")
 set(LIB_OS "os")
 set(LIB_KERNEL "kernel")
-set(ALL_LIBS "-l${LIB_KERNEL} -l${LIB_OS} -l${LIB_USER} -l${LIB_RTOSC} -l${LIB_BWIO}")
+set(ALL_LIBS "-l${LIB_KERNEL} -l${LIB_OS} -l${LIB_USER} -l${LIB_RTOSC} -l${LIB_BWIO} -l${LIB_TRACK}")
 
 # includes
 include_directories(
