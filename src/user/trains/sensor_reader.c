@@ -24,7 +24,6 @@ typedef enum _SENSOR_SERVER_REQUEST_TYPE
 typedef struct _SENSOR_SERVER_REQUEST
 {
     SENSOR_SERVER_REQUEST_TYPE type;
-    INT senderId;
     SENSOR_DATA data;
 } SENSOR_SERVER_REQUEST;
 
@@ -54,8 +53,6 @@ SensorReaderpUpdate
         IN INT sensorsLength
     )
 {
-    INT taskId = MyTid();
-
     for (UINT i = 0; i < sensorsLength; i++)
     {
         UCHAR previousSensorValue = previousSensors[i];
@@ -75,7 +72,7 @@ SensorReaderpUpdate
                 SENSOR_DATA data = { module, number, status };
                 ShowSensorStatus(data);
 
-                SENSOR_SERVER_REQUEST request = { DataRequest, taskId, data };
+                SENSOR_SERVER_REQUEST request = { DataRequest, data };
                 SensorReaderpSendMessage(request);
             }
         }
@@ -132,7 +129,7 @@ SensorServerpTask
         {
             case RegisterRequest:
             {
-                INT subscriberId = request.senderId;
+                INT subscriberId = senderId;
                 VERIFY(RT_SUCCESS(RtCircularBufferPush(&subscriberBuffer, &subscriberId, sizeof(subscriberId))));
                 break;
             }
@@ -168,8 +165,6 @@ SensorDataRegister
         VOID
     )
 {
-    INT taskId = MyTid();
-    ASSERT(SUCCESSFUL(taskId));
-    SENSOR_SERVER_REQUEST request = { DataRequest, taskId };
+    SENSOR_SERVER_REQUEST request = { DataRequest };
     VERIFY(SUCCESSFUL(SensorReaderpSendMessage(request)));
 }
