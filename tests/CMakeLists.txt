@@ -1,4 +1,5 @@
 set(EXE_TEST_SCHEDULER "tscheduler")
+set(EXE_TEST_BITSET "tbitset")
 set(EXE_TEST_BUFFER "tbuffer")
 set(EXE_TEST_LINKED_LIST "tlinkedlist")
 set(EXE_TEST_STRING "tstring")
@@ -15,6 +16,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src/os
     )
 
+add_c_test("${EXE_TEST_BITSET}" "test_bitset_main.c" "${LIB_RTOSC}")
 add_c_test("${EXE_TEST_BUFFER}" "test_buffer_main.c" "${LIB_RTOSC}")
 add_c_test("${EXE_TEST_STRING}" "test_string_main.c" "${LIB_RTOSC}")
 add_c_test("${EXE_TEST_LINKED_LIST}" "test_linked_list_main.c" "${LIB_RTOSC}")

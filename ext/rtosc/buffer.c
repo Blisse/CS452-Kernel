@@ -130,3 +130,26 @@ RtCircularBufferPeekAndPop
 
     return status;
 }
+
+RT_STATUS
+RtCircularBufferElementAt
+    (
+        IN RT_CIRCULAR_BUFFER* buffer,
+        IN INT index,
+        IN PVOID targetBuffer,
+        IN UINT bytesToRemove
+    )
+{
+    if(likely(bytesToRemove <= buffer->size))
+    {
+        UINT indexPosition = (buffer->front + (bytesToRemove * index)) % buffer->capacity;
+
+        RtMemcpy(targetBuffer, ptr_add(buffer->underlyingBuffer, indexPosition), bytesToRemove);
+
+        return STATUS_SUCCESS;
+    }
+    else
+    {
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+}
