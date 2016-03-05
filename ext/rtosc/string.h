@@ -66,5 +66,6 @@ VOID
 RtMemset
     (
         PVOID dest,
-        UINT size
+        UINT size, 
+        CHAR value
     );

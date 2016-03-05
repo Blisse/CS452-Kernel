@@ -416,14 +416,14 @@ VOID
 RtMemset
     (
         PVOID dest,
-        UINT size
+        UINT size, 
+        CHAR value
     )
 {
     CHAR* p = dest;
 
-    UINT i;
-    for (i = 0; i < size; i++)
+    for (UINT i = 0; i < size; i++)
     {
-        p[i] = '\0';
+        p[i] = value;
     }
 }

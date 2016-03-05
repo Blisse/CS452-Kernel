@@ -24,62 +24,70 @@ typedef enum _SENSOR_SERVER_REQUEST_TYPE
 typedef struct _SENSOR_SERVER_REQUEST
 {
     SENSOR_SERVER_REQUEST_TYPE type;
-    SENSOR_DATA data;
+    CHANGED_SENSORS* changedSensors;
 } SENSOR_SERVER_REQUEST;
-
-static
-INT
-SensorReaderpSendMessage
-    (
-        SENSOR_SERVER_REQUEST request
-    )
-{
-    INT sensorServerId = WhoIs(SENSOR_SERVER_NAME);
-
-    if (SUCCESSFUL(sensorServerId))
-    {
-        VERIFY(SUCCESSFUL(Send(sensorServerId, &request, sizeof(request), NULL, 0)));
-    }
-
-    return sensorServerId;
-}
 
 static
 VOID
 SensorReaderpUpdate
     (
+        IN INT sensorServerId, 
         IN UCHAR* previousSensors,
         IN UCHAR* currentSensors,
         IN INT sensorsLength
     )
 {
+    // Keep track of which sensors have changed
+    CHANGED_SENSORS changedSensors;
+    changedSensors.size = 0;
+
+    // Go through each module
     for (UINT i = 0; i < sensorsLength; i++)
     {
         UCHAR previousSensorValue = previousSensors[i];
         UCHAR currentSensorValue = currentSensors[i];
 
+        // Go through each sensor in this module
         for (UINT j = 0; j < 8; j++)
         {
-            INT previousValue = BIT_CHECK(previousSensorValue, j);
-            INT currentValue = BIT_CHECK(currentSensorValue, j);
+            BOOLEAN previousValue = BIT_CHECK(previousSensorValue, j);
+            BOOLEAN currentValue = BIT_CHECK(currentSensorValue, j);
 
-            if (previousValue || previousValue != currentValue)
+            // Check to see if the sensor has changed
+            if (previousValue != currentValue)
             {
-                CHAR module = 'A' + (i / 2);
-                UINT number = (8 - j) + ((i % 2) * 8);
+                // Make sure there is still room for this sensor
+                if(changedSensors.size < MAX_CHANGED_SENSORS)
+                {
+                    // Add this sensor to the list of changed sensors
+                    SENSOR_DATA* data = &changedSensors.sensors[changedSensors.size];
 
-                SENSOR sensor = { module, number };
-                UINT status = currentValue;
+                    data->sensor.module = 'A' + (i / 2);
+                    data->sensor.number = (8 - j) + ((i % 2) * 8);
+                    data->isOn = currentValue;
 
-                SENSOR_DATA data = { sensor, status };
-                ShowSensorStatus(data);
+                    changedSensors.size++;
 
-                SENSOR_SERVER_REQUEST request = { DataRequest, data };
-                SensorReaderpSendMessage(request);
+                    // TODO: What if we had the display server register for sensor updates
+                    //       the same as everyone else?
+                    ShowSensorStatus(*data);
+                }
+                else
+                {
+                    ASSERT(FALSE);
+                }
             }
         }
 
+        // Remember the sensor's value
         previousSensors[i] = currentSensors[i];
+    }
+
+    // If some sensors have changed, then update the sensor server
+    if (changedSensors.size > 0)
+    {
+        SENSOR_SERVER_REQUEST request = { DataRequest, &changedSensors };
+        VERIFY(SUCCESSFUL(Send(sensorServerId, &request, sizeof(request), NULL, 0)));
     }
 }
 
@@ -90,21 +98,23 @@ SensorReaderpTask
         VOID
     )
 {
+    INT sensorServerId = MyParentTid();
+    ASSERT(SUCCESSFUL(sensorServerId));
+
     UCHAR previousSensors[NUM_SENSORS];
-    RtMemset(previousSensors, sizeof(previousSensors));
+    RtMemset(previousSensors, sizeof(previousSensors), 0);
 
     UCHAR currentSensors[NUM_SENSORS];
-    RtMemset(currentSensors, sizeof(currentSensors));
+    RtMemset(currentSensors, sizeof(currentSensors), 0);
 
     IO_DEVICE com1Device;
     VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1Device)));
 
     while (1)
     {
-        VERIFY(SUCCESSFUL(Delay(5)));
         VERIFY(SUCCESSFUL(WriteChar(&com1Device, SENSOR_COMMAND_QUERY)));
         VERIFY(SUCCESSFUL(Read(&com1Device, currentSensors, sizeof(currentSensors))));
-        SensorReaderpUpdate(previousSensors, currentSensors, sizeof(previousSensors));
+        SensorReaderpUpdate(sensorServerId, previousSensors, currentSensors, sizeof(previousSensors));
     }
 }
 
@@ -115,6 +125,7 @@ SensorServerpTask
         VOID
     )
 {
+    VERIFY(SUCCESSFUL(Create(Priority18, SensorReaderpTask)));
     VERIFY(SUCCESSFUL(RegisterAs(SENSOR_SERVER_NAME)));
 
     INT underlyingSubscriberBuffer[NUM_TASKS];
@@ -131,23 +142,24 @@ SensorServerpTask
         {
             case RegisterRequest:
             {
-                INT subscriberId = senderId;
-                VERIFY(RT_SUCCESS(RtCircularBufferPush(&subscriberBuffer, &subscriberId, sizeof(subscriberId))));
+                VERIFY(RT_SUCCESS(RtCircularBufferPush(&subscriberBuffer, &senderId, sizeof(senderId))));
                 break;
             }
+
             case DataRequest:
             {
                 INT subscriberId;
+
                 while (RT_SUCCESS(RtCircularBufferPeekAndPop(&subscriberBuffer, &subscriberId, sizeof(subscriberId))))
                 {
-                    SENSOR_DATA data = request.data;
-                    VERIFY(SUCCESSFUL(Send(subscriberId, &data, sizeof(data), NULL, 0)));
+                    VERIFY(SUCCESSFUL(Reply(subscriberId, request.changedSensors, sizeof(*request.changedSensors))));
                 }
+
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));             
+
                 break;
             }
         }
-
-        VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
     }
 }
 
@@ -158,15 +170,23 @@ SensorServerCreateTask
     )
 {
     VERIFY(SUCCESSFUL(Create(Priority17, SensorServerpTask)));
-    VERIFY(SUCCESSFUL(Create(Priority18, SensorReaderpTask)));
 }
 
-VOID
-SensorDataRegister
+INT
+SensorAwait
     (
-        VOID
+        OUT CHANGED_SENSORS* changedSensors
     )
 {
-    SENSOR_SERVER_REQUEST request = { DataRequest };
-    VERIFY(SUCCESSFUL(SensorReaderpSendMessage(request)));
+    INT result = WhoIs(SENSOR_SERVER_NAME);
+
+    if(SUCCESSFUL(result))
+    {
+        SENSOR_SERVER_REQUEST request = { RegisterRequest };
+        INT sensorServerId = result;
+
+        result = Send(sensorServerId, &request, sizeof(request), changedSensors, sizeof(*changedSensors));
+    }
+
+    return result;
 }

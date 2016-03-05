@@ -189,7 +189,7 @@ DisplaypSensorRequest
                                                CURSOR_DELETE_LINE "\033[36m%c%02d \033[33m%d\033[0m",
                                                displayData.sensor.module,
                                                displayData.sensor.number,
-                                               displayData.status)));
+                                               displayData.isOn)));
     }
 }
 
