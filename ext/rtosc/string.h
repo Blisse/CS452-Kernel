@@ -40,6 +40,20 @@ RtStrPrintFormatted
         ...
     );
 
+INT
+RtStrConsumeToken
+    (
+        IN CHAR** str,
+        OUT CHAR* buffer,
+        IN INT bufferLength
+    );
+
+BOOLEAN
+RtStrIsWhitespace
+    (
+        IN STRING str
+    );
+
 VOID
 RtMemcpy
     (

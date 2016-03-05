@@ -10,57 +10,6 @@
 #include "display.h"
 
 static
-INT
-InputParserpConsumeToken
-    (
-        IN STRING* str,
-        OUT STRING buffer,
-        IN INT bufferLength
-    )
-{
-    CHAR* p = *str;
-    CHAR c;
-    // ignore leading space
-    while ((c = *p++) && isspace(c))
-    {
-    }
-
-    // read until space
-    UINT i = 0;
-    while (c != '\0' && !isspace(c) && (i < bufferLength))
-    {
-        buffer[i++] = c;
-        c = *p++;
-    }
-
-    // terminate buffer
-    buffer[i] = '\0';
-
-    // consume token
-    *str = p;
-
-    return i;
-}
-
-static
-BOOLEAN
-InputParserpIsWhitespace
-    (
-        IN STRING str
-    )
-{
-    CHAR c;
-    while ((c = *str++))
-    {
-        if (!isspace(c))
-        {
-            return FALSE;
-        }
-    }
-    return TRUE;
-}
-
-static
 BOOLEAN
 InputParserpIsSwitchDirection
     (
@@ -96,7 +45,7 @@ InputParserpParseCommand
     INT arg2;
 
     CHAR token[12];
-    INT read = InputParserpConsumeToken(&buffer, token, sizeof(token));
+    INT read = RtStrConsumeToken(&buffer, token, sizeof(token));
 
     if (read == 0)
     {
@@ -105,29 +54,28 @@ InputParserpParseCommand
 
     if (RtStrEqual(token, "tr"))
     {
-        read = InputParserpConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
+        read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
         if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
-            read = InputParserpConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
+            read = RtStrConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
             if (read && RT_SUCCESS(RtAtoi(arg2Buffer, &arg2)))
             {
-                if (InputParserpIsWhitespace(buffer))
+                if (RtStrIsWhitespace(buffer))
                 {
                     TrainSetSpeed(arg1, arg2);
                 }
             }
         }
-
     }
     else if (RtStrEqual(token, "sw"))
     {
-        read = InputParserpConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
+        read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
         if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
-            read = InputParserpConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
+            read = RtStrConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
             if (read && InputParserpIsSwitchDirection(arg2Buffer[0]) && arg2Buffer[1] == '\0')
             {
-                if (InputParserpIsWhitespace(buffer))
+                if (RtStrIsWhitespace(buffer))
                 {
                     SWITCH_DIRECTION direction = SwitchCurved;
                     if (arg2Buffer[0] == 'S' || arg2Buffer[0] == 's')
@@ -141,10 +89,10 @@ InputParserpParseCommand
     }
     else if (RtStrEqual(token, "rv"))
     {
-        read = InputParserpConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
+        read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
         if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
-            if (InputParserpIsWhitespace(buffer))
+            if (RtStrIsWhitespace(buffer))
             {
                 TrainReverse(arg1);
             }
@@ -152,7 +100,7 @@ InputParserpParseCommand
     }
     else if (RtStrEqual(token, "q"))
     {
-        if (InputParserpIsWhitespace(buffer))
+        if (RtStrIsWhitespace(buffer))
         {
             Shutdown();
         }
