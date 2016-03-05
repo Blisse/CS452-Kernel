@@ -4,8 +4,12 @@
 #include <rtos.h>
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
+#include <rtosc/bitset.h>
+#include <rtosc/buffer.h>
 
 #include <bwio/bwio.h>
+
+#include <user/trains.h>
 
 #define CURSOR_MOVE "\033[%d;%dH"
 #define CURSOR_CLEAR "\033[2J"
@@ -13,8 +17,6 @@
 #define CURSOR_HIDE "\033[?25l"
 
 #define DISPLAY_NAME "display"
-
-#define BIT_SET(x, bit) (!!(x & (1 << bit)))
 
 typedef enum _DISPLAY_REQUEST_TYPE
 {
@@ -35,15 +37,14 @@ typedef struct _DISPLAY_REQUEST
 
 typedef struct _DISPLAY_SENSOR_REQUEST
 {
-    CHAR* sensors;
-    UINT size;
+    SENSOR_DATA data;
 } DISPLAY_SENSOR_REQUEST;
 
 typedef struct _DISPLAY_SWITCH_REQUEST
 {
     INT index;
     INT number;
-    CHAR direction;
+    SWITCH_DIRECTION direction;
 } DISPLAY_SWITCH_REQUEST;
 
 #define CURSOR_CMD_X 13
@@ -70,7 +71,7 @@ typedef struct _CURSOR_POSITION
 static
 inline
 INT
-DisplaypMoveToCursor
+WriteCursorPosition
     (
         IN IO_DEVICE* com2Device,
         IN CURSOR_POSITION* cursor
@@ -93,7 +94,7 @@ DisplaypCommandLine
         case '\r':
         {
             cursor->x = CURSOR_CMD_X;
-            DisplaypMoveToCursor(com2Device, cursor);
+            WriteCursorPosition(com2Device, cursor);
             WriteString(com2Device, CURSOR_DELETE_LINE);
             break;
         }
@@ -102,14 +103,14 @@ DisplaypCommandLine
             if (cursor->x > CURSOR_CMD_X)
             {
                 cursor->x--;
-                DisplaypMoveToCursor(com2Device, cursor);
+                WriteCursorPosition(com2Device, cursor);
                 WriteString(com2Device, CURSOR_DELETE_LINE);
             }
             break;
         }
         default:
         {
-            DisplaypMoveToCursor(com2Device, cursor);
+            WriteCursorPosition(com2Device, cursor);
             WriteChar(com2Device, c);
             cursor->x++;
             break;
@@ -130,7 +131,7 @@ DisplaypClock
     INT m = (s / 60);
 
     CURSOR_POSITION cursor = { CURSOR_CLOCK_X, CURSOR_CLOCK_Y };
-    DisplaypMoveToCursor(com2Device, &cursor);
+    WriteCursorPosition(com2Device, &cursor);
     WriteFormattedString(com2Device, "\033[36m" "%02d:%02d:%d>" "\033[0m", m % 60, s % 60, ts % 10);
 }
 
@@ -143,7 +144,7 @@ DisplaypIdlePercentage
     )
 {
     CURSOR_POSITION cursor = { CURSOR_IDLE_X, CURSOR_IDLE_Y };
-    DisplaypMoveToCursor(com2Device, &cursor);
+    WriteCursorPosition(com2Device, &cursor);
     WriteFormattedString(com2Device, "\033[32m%02d.%02d%%" "\033[0m", idlePercentage / 100, idlePercentage % 100);
 }
 
@@ -156,8 +157,8 @@ DisplaypSwitchRequest
     )
 {
     CURSOR_POSITION cursor = { CURSOR_SWITCH_X, CURSOR_SWITCH_Y + switchRequest->index };
-    DisplaypMoveToCursor(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[36msw\033[0m %3d \033[33m%c\033[0m", switchRequest->number, switchRequest->direction);
+    WriteCursorPosition(com2Device, &cursor);
+    WriteFormattedString(com2Device, "\033[36msw\033[0m %3d \033[33m%c\033[0m", switchRequest->number, switchRequest->direction == SwitchStraight ? 'S' : 'C');
 }
 
 static
@@ -165,35 +166,30 @@ VOID
 DisplaypSensorRequest
     (
         IN IO_DEVICE* com2Device,
-        IN DISPLAY_SENSOR_REQUEST* sensorRequest
+        IN DISPLAY_SENSOR_REQUEST* sensorRequest,
+        IN RT_CIRCULAR_BUFFER* sensorDataBuffer
     )
 {
-    UINT i;
-
-    for(i = 0; i < sensorRequest->size; i++)
+    SENSOR_DATA sensorData = sensorRequest->data;
+    if (RtCircularBufferIsFull(sensorDataBuffer))
     {
-        CHAR sensor = sensorRequest->sensors[i];
-        CHAR sensorModule = 'A' + (i / 2);
-        UINT sensorNumberLow = (i % 2) * 8 + 1;
-        UINT sensorNumberHigh = (i % 2 + 1) * 8;
+        RtCircularBufferPop(sensorDataBuffer, sizeof(sensorData));
+    }
+    RtCircularBufferPush(sensorDataBuffer, &sensorData, sizeof(sensorData));
+
+    UINT sensorDataBufferSize = RtCircularBufferSize(sensorDataBuffer) / sizeof(sensorData);
+    for (UINT i = 0; i < sensorDataBufferSize; i++)
+    {
+        SENSOR_DATA displayData;
+        VERIFY(RT_SUCCESS(RtCircularBufferElementAt(sensorDataBuffer, i, &displayData, sizeof(displayData))));
 
         CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + i };
-        VERIFY(SUCCESSFUL(DisplaypMoveToCursor(com2Device, &cursor)));
-        VERIFY(SUCCESSFUL(WriteFormattedString(com2Device, 
-                                               "\033[36m%c%02d-%c%02d\033[0m %d%d%d%d%d%d%d%d", 
-                                               sensorModule, 
-                                               sensorNumberLow, 
-                                               sensorModule, 
-                                               sensorNumberHigh, 
-                                               BIT_SET(sensor, 7), 
-                                               BIT_SET(sensor, 6), 
-                                               BIT_SET(sensor, 5), 
-                                               BIT_SET(sensor, 4), 
-                                               BIT_SET(sensor, 3), 
-                                               BIT_SET(sensor, 2), 
-                                               BIT_SET(sensor, 1), 
-                                               BIT_SET(sensor, 0))));
-
+        VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
+        VERIFY(SUCCESSFUL(WriteFormattedString(com2Device,
+                                               CURSOR_DELETE_LINE "\033[36m%c%02d \033[33m%d\033[0m",
+                                               displayData.sensor.module,
+                                               displayData.sensor.number,
+                                               displayData.status)));
     }
 }
 
@@ -208,12 +204,8 @@ DisplaypSendRequest
 {
     DISPLAY_REQUEST request = { type, buffer, bufferLength };
     INT displayServerId = WhoIs(DISPLAY_NAME);
-
-    return Send(displayServerId,
-                &request,
-                sizeof(request),
-                NULL,
-                0);
+    ASSERT(SUCCESSFUL(displayServerId));
+    return Send(displayServerId, &request, sizeof(request), NULL, 0);
 }
 
 static
@@ -241,6 +233,10 @@ DisplaypTask
 
     WriteString(&com2Device, CURSOR_HIDE);
     WriteString(&com2Device, CURSOR_CLEAR);
+
+    SENSOR_DATA underlyingSensorDataBuffer[8];
+    RT_CIRCULAR_BUFFER sensorDataBuffer;
+    RtCircularBufferInit(&sensorDataBuffer, underlyingSensorDataBuffer, sizeof(underlyingSensorDataBuffer));
 
     CURSOR_POSITION cursor = { CURSOR_CMD_X, CURSOR_CMD_Y };
 
@@ -280,16 +276,18 @@ DisplaypTask
             case DisplaySensorRequest:
             {
                 DISPLAY_SENSOR_REQUEST sensorRequest = *((DISPLAY_SENSOR_REQUEST*) request.buffer);
-                DisplaypSensorRequest(&com2Device, &sensorRequest);
+                DisplaypSensorRequest(&com2Device, &sensorRequest, &sensorDataBuffer);
                 break;
             }
             case DisplayShutdownRequest:
+            {
                 WriteString(&com2Device, CURSOR_CLEAR);
                 running = FALSE;
                 break;
+            }
         }
 
-        DisplaypMoveToCursor(&com2Device, &cursor);
+        WriteCursorPosition(&com2Device, &cursor);
 
         VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
     }
@@ -310,7 +308,7 @@ ShowKeyboardChar
         IN CHAR c
     )
 {
-    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayCharRequest, &c, sizeof(c))));
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayCharRequest, &c, sizeof(c))));
 }
 
 VOID
@@ -319,7 +317,7 @@ ShowClockTime
         IN INT clockTicks
     )
 {
-    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayClockRequest, &clockTicks, sizeof(clockTicks))));
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayClockRequest, &clockTicks, sizeof(clockTicks))));
 }
 
 VOID
@@ -328,7 +326,7 @@ ShowIdleTime
         IN INT idlePercentage
     )
 {
-    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayIdleRequest, &idlePercentage, sizeof(idlePercentage))));
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayIdleRequest, &idlePercentage, sizeof(idlePercentage))));
 }
 
 VOID
@@ -339,17 +337,16 @@ ShowSwitchDirection
         IN CHAR direction
     )
 {
-    //DISPLAY_SWITCH_REQUEST switchRequest = { idx, number, direction };
-    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySwitchRequest, &switchRequest, sizeof(switchRequest))));
+    DISPLAY_SWITCH_REQUEST switchRequest = { idx, number, direction };
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySwitchRequest, &switchRequest, sizeof(switchRequest))));
 }
 
 VOID
-ShowSensorState
+ShowSensorStatus
     (
-        IN CHAR* sensors, 
-        IN UINT size
+        IN SENSOR_DATA data
     )
 {
-    //DISPLAY_SENSOR_REQUEST sensorRequest = { sensors, size };
-    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySensorRequest, &sensorRequest, sizeof(sensorRequest))));
+    DISPLAY_SENSOR_REQUEST sensorRequest = { data };
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySensorRequest, &sensorRequest, sizeof(sensorRequest))));
 }

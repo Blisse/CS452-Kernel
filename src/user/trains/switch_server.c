@@ -130,16 +130,15 @@ SwitchpTask
         VOID
     )
 {
-    INT i;
     SWITCH_DIRECTION directions[NUM_SWITCHES];
-    IO_DEVICE com1;
 
-    // Setup the server
     VERIFY(SUCCESSFUL(RegisterAs(SWITCH_SERVER_NAME)));
+
+    IO_DEVICE com1;
     VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1)));
 
     // Set the switches to a known state
-    for(i = 0; i < NUM_SWITCHES; i++)
+    for (UINT i = 0; i < NUM_SWITCHES; i++)
     {
         UCHAR sw = SwitchpFromIndex(i);
 
@@ -147,13 +146,12 @@ SwitchpTask
 
         directions[i] = SwitchCurved;
 
-        ShowSwitchDirection(i, sw, 'C');
+        ShowSwitchDirection(i, sw, SwitchCurved);
     }
 
     // Remember to turn off the solenoid!
     VERIFY(SUCCESSFUL(SwitchpDisableSolenoid(&com1)));
 
-    // Run the server
     while(1)
     {
         INT sender;
@@ -164,23 +162,15 @@ SwitchpTask
         switch(request.type)
         {
             case SetDirectionRequest:
-                // Turn the switch direction
-                VERIFY(SUCCESSFUL(SwitchpDirection(&com1,
-                                                   request.sw,
-                                                   request.direction)));
-
-                // Turn off the solenoid
+                VERIFY(SUCCESSFUL(SwitchpDirection(&com1, request.sw, request.direction)));
                 VERIFY(SUCCESSFUL(SwitchpDisableSolenoid(&com1)));
 
-                // Update the switch direction
                 INT switchIndex = SwitchpToIndex(request.sw);
                 directions[switchIndex] = request.direction;
 
-                // Reply to the sender
                 VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
 
-                ShowSwitchDirection(switchIndex, request.sw, request.direction == SwitchCurved ? 'C' : 'S');
-
+                ShowSwitchDirection(switchIndex, request.sw, request.direction);
                 break;
 
             default:

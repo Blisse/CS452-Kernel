@@ -22,12 +22,13 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # libraries
+set(LIB_TRACK "track")
 set(LIB_BWIO "bwio")
 set(LIB_RTOSC "rtosc")
 set(LIB_USER "user")
 set(LIB_OS "os")
 set(LIB_KERNEL "kernel")
-set(ALL_LIBS "-l${LIB_KERNEL} -l${LIB_OS} -l${LIB_USER} -l${LIB_RTOSC} -l${LIB_BWIO}")
+set(ALL_LIBS "-l${LIB_KERNEL} -l${LIB_OS} -l${LIB_USER} -l${LIB_RTOSC} -l${LIB_BWIO} -l${LIB_TRACK}")
 
 # includes
 include_directories(
@@ -49,10 +50,10 @@ include_directories(
 
 if(LOCAL)
     set(CMAKE_C_COMPILER "/usr/bin/gcc")
-    set(CMAKE_C_FLAGS "-Wall -Werror")
+    set(CMAKE_C_FLAGS "-Wall -Werror -std=gnu99")
 else()
     set(CMAKE_C_COMPILER "/u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc")
-    set(CMAKE_C_FLAGS "-fPIC -Wall -Werror -mcpu=arm920t -mfloat-abi=soft")
+    set(CMAKE_C_FLAGS "-fPIC -Wall -Werror -mcpu=arm920t -mfloat-abi=soft -std=gnu99")
     set(CMAKE_C_FLAGS_DEBUG "-O0 -DNLOCAL")
     set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -DNLOCAL")
 
