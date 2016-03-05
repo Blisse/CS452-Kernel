@@ -1,6 +1,7 @@
 #pragma once
 
 #include <rt.h>
+#include <user/trains.h>
 
 VOID
 DisplayCreateTask
@@ -35,8 +36,7 @@ ShowSwitchDirection
     );
 
 VOID
-ShowSensorState
+ShowSensorStatus
     (
-        IN CHAR* sensors, 
-        IN UINT size
+        IN SENSOR_DATA data
     );
