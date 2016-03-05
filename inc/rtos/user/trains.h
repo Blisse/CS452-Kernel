@@ -40,7 +40,10 @@ SwitchSetDirection
  *           SENSOR API             *
  ************************************/
 
-typedef struct _SENSOR {
+#define MAX_CHANGED_SENSORS 6
+
+typedef struct _SENSOR
+{
     CHAR module;
     UINT number;
 } SENSOR;
@@ -48,13 +51,19 @@ typedef struct _SENSOR {
 typedef struct _SENSOR_DATA
 {
     SENSOR sensor;
-    UINT status;
+    BOOLEAN isOn;
 } SENSOR_DATA;
 
-VOID
-SensorDataRegister
+typedef struct _CHANGED_SENSORS
+{
+    SENSOR_DATA sensors[MAX_CHANGED_SENSORS];
+    UINT size;
+} CHANGED_SENSORS;
+
+INT
+SensorAwait
     (
-        VOID
+        OUT CHANGED_SENSORS* changedSensors
     );
 
 /************************************
