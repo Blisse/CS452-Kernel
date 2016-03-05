@@ -121,6 +121,25 @@ void test_buffer_is_empty_conditions() {
     T_ASSERT(RtCircularBufferSize(&queue) == 0);
 }
 
+void test_buffer_element_at() {
+    UINT buffer[TEST_BUFFER_SIZE];
+    RT_CIRCULAR_BUFFER queue;
+    RtCircularBufferInit(&queue, buffer, sizeof(buffer));
+
+    for (INT i = 0; i < TEST_BUFFER_SIZE; i++)
+    {
+        T_ASSERT(RT_SUCCESS(RtCircularBufferPush(&queue, &i, sizeof(i))));
+    }
+    T_ASSERT(RT_FAILURE(RtCircularBufferIsFull(&queue)));
+
+    for (INT i = 0; i < TEST_BUFFER_SIZE; i++)
+    {
+        INT j;
+        T_ASSERT(RT_SUCCESS(RtCircularBufferElementAt(&queue, i, &j, sizeof(j))));
+        T_ASSERT(i == j);
+    }
+}
+
 int main(int argc, char* argv[]) {
 
     test_buffer_init();
@@ -129,6 +148,7 @@ int main(int argc, char* argv[]) {
     test_buffer_add_get_remove();
     test_buffer_add_overflow();
     test_buffer_is_empty_conditions();
+    test_buffer_element_at();
 
     return 0;
 }

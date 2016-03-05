@@ -49,6 +49,15 @@ RtCircularBufferPeekAndPop
         IN UINT bytesToRemove
     );
 
+RT_STATUS
+RtCircularBufferElementAt
+    (
+        IN RT_CIRCULAR_BUFFER* buffer,
+        IN INT index,
+        IN PVOID targetBuffer,
+        IN UINT bytesToRemove
+    );
+
 static
 inline
 BOOLEAN
