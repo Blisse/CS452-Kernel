@@ -11,17 +11,22 @@
 
 static
 BOOLEAN
-InputParserpIsSwitchDirection
+InputParserpGetSwitchDirection
     (
-        CHAR c
+        IN CHAR c,
+        OUT SWITCH_DIRECTION* direction
     )
 {
     switch (c)
     {
         case 'S':
         case 's':
+            *direction = SwitchStraight;
+            return TRUE;
+            break;
         case 'C':
         case 'c':
+            *direction = SwitchCurved;
             return TRUE;
             break;
         default:
@@ -72,16 +77,12 @@ InputParserpParseCommand
         read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
         if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
+            SWITCH_DIRECTION direction;
             read = RtStrConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
-            if (read && InputParserpIsSwitchDirection(arg2Buffer[0]) && arg2Buffer[1] == '\0')
+            if (read == 1 && InputParserpGetSwitchDirection(arg2Buffer[0], &direction))
             {
                 if (RtStrIsWhitespace(buffer))
                 {
-                    SWITCH_DIRECTION direction = SwitchCurved;
-                    if (arg2Buffer[0] == 'S' || arg2Buffer[0] == 's')
-                    {
-                        direction = SwitchStraight;
-                    }
                     SwitchSetDirection(arg1, direction);
                 }
             }
