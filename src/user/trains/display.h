@@ -31,7 +31,7 @@ VOID
 Log
     (
         IN STRING message,
-        IN INT length
+        ...
     );
 
 VOID

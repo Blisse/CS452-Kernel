@@ -39,6 +39,8 @@ typedef struct _DISPLAY_REQUEST
 typedef struct _DISPLAY_LOG_REQUEST
 {
     CHAR message[128];
+    INT messageSize;
+    INT length;
 } DISPLAY_LOG_REQUEST;
 
 typedef struct _DISPLAY_SENSOR_REQUEST
@@ -168,16 +170,12 @@ DisplaypLogRequest
 {
     if (RtCircularBufferIsFull(logBuffer))
     {
-        RtCircularBufferPop(logBuffer, 128);
+        RtCircularBufferPop(logBuffer, logRequest->messageSize);
     }
 
-    RtCircularBufferPush(logBuffer, &logRequest->message, 128);
+    RtCircularBufferPush(logBuffer, &logRequest->message, logRequest->messageSize);
 
-    UINT logBufferSize = RtCircularBufferSize(logBuffer) / 128;
-
-    CURSOR_POSITION cursor = { CURSOR_LOG_X, CURSOR_LOG_Y - 1 };
-    VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
-    VERIFY(SUCCESSFUL(WriteFormattedString(com2Device, CURSOR_DELETE_LINE "%d", logBufferSize)));
+    UINT logBufferSize = RtCircularBufferSize(logBuffer) / logRequest->messageSize;
 
     for (UINT i = 0; i < logBufferSize; i++)
     {
@@ -385,14 +383,22 @@ VOID
 Log
     (
         IN STRING message,
-        IN INT length
+        ...
     )
 {
     DISPLAY_LOG_REQUEST logRequest;
-    ASSERT(length < sizeof(logRequest.message));
-
     RtMemset(logRequest.message, sizeof(logRequest.message), 0);
-    RtMemcpy(logRequest.message, message, length);
+    logRequest.messageSize = 128;
+
+    VA_LIST va;
+    VA_START(va, message);
+    INT written = RtStrPrintFormattedVa(logRequest.message, sizeof(logRequest.message), message, va);
+    VA_END(va);
+
+    ASSERT(written < sizeof(logRequest.message));
+    UNREFERENCED_PARAMETER(written);
+
+    logRequest.length = written;
 
     VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayLogRequest, &logRequest, sizeof(logRequest))));
 }
