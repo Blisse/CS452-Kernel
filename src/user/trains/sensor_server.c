@@ -110,6 +110,8 @@ SensorReaderpTask
     IO_DEVICE com1Device;
     VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1Device)));
 
+    VERIFY(SUCCESSFUL(FlushInput(&com1Device)));
+
     while (1)
     {
         VERIFY(SUCCESSFUL(WriteChar(&com1Device, SENSOR_COMMAND_QUERY)));

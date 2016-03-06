@@ -87,6 +87,13 @@ Write
         IN UINT bufferLength
     );
 
+INT
+FlushInput
+    (
+        IN IO_DEVICE* device
+    );
+
+
 /************************************
  *         I/O LIBRARY API          *
  ************************************/
