@@ -38,7 +38,7 @@ typedef struct _DISPLAY_REQUEST
 
 typedef struct _DISPLAY_LOG_REQUEST
 {
-    CHAR message[128];
+    CHAR message[32];
     INT messageSize;
     INT length;
 } DISPLAY_LOG_REQUEST;
@@ -137,13 +137,13 @@ DisplaypClock
         IN INT ticks
     )
 {
-    INT ts = (ticks / 10);
-    INT s = (ts / 10);
-    INT m = (s / 60);
+    // INT ts = (ticks / 10);
+    // INT s = (ts / 10);
+    // INT m = (s / 60);
 
-    CURSOR_POSITION cursor = { CURSOR_CLOCK_X, CURSOR_CLOCK_Y };
-    WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[36m" "%02d:%02d:%d>" "\033[0m", m % 60, s % 60, ts % 10);
+    // CURSOR_POSITION cursor = { CURSOR_CLOCK_X, CURSOR_CLOCK_Y };
+    // WriteCursorPosition(com2Device, &cursor);
+    // WriteFormattedString(com2Device, "\033[36m" "%02d:%02d:%d>" "\033[0m", m % 60, s % 60, ts % 10);
 }
 
 static
@@ -154,9 +154,9 @@ DisplaypIdlePercentage
         IN INT idlePercentage
     )
 {
-    CURSOR_POSITION cursor = { CURSOR_IDLE_X, CURSOR_IDLE_Y };
-    WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[32m%02d.%02d%%" "\033[0m", idlePercentage / 100, idlePercentage % 100);
+    // CURSOR_POSITION cursor = { CURSOR_IDLE_X, CURSOR_IDLE_Y };
+    // WriteCursorPosition(com2Device, &cursor);
+    // WriteFormattedString(com2Device, "\033[32m%02d.%02d%%" "\033[0m", idlePercentage / 100, idlePercentage % 100);
 }
 
 static
@@ -176,10 +176,9 @@ DisplaypLogRequest
     RtCircularBufferPush(logBuffer, &logRequest->message, logRequest->messageSize);
 
     UINT logBufferSize = RtCircularBufferSize(logBuffer) / logRequest->messageSize;
-
     for (UINT i = 0; i < logBufferSize; i++)
     {
-        CHAR buffer[128];
+        CHAR buffer[32];
         VERIFY(RT_SUCCESS(RtCircularBufferElementAt(logBuffer, i, buffer, sizeof(buffer))));
 
         CURSOR_POSITION cursor = { CURSOR_LOG_X, CURSOR_LOG_Y + i };
@@ -196,9 +195,9 @@ DisplaypSwitchRequest
         IN DISPLAY_SWITCH_REQUEST* switchRequest
     )
 {
-    CURSOR_POSITION cursor = { CURSOR_SWITCH_X, CURSOR_SWITCH_Y + switchRequest->index };
-    WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[36msw\033[0m %3d \033[33m%c\033[0m", switchRequest->number, switchRequest->direction == SwitchStraight ? 'S' : 'C');
+    // CURSOR_POSITION cursor = { CURSOR_SWITCH_X, CURSOR_SWITCH_Y + switchRequest->index };
+    // WriteCursorPosition(com2Device, &cursor);
+    // WriteFormattedString(com2Device, "\033[36msw\033[0m %3d \033[33m%c\033[0m", switchRequest->number, switchRequest->direction == SwitchStraight ? 'S' : 'C');
 }
 
 static
@@ -210,27 +209,30 @@ DisplaypSensorRequest
         IN RT_CIRCULAR_BUFFER* sensorDataBuffer
     )
 {
-    SENSOR_DATA sensorData = sensorRequest->data;
-    if (RtCircularBufferIsFull(sensorDataBuffer))
-    {
-        RtCircularBufferPop(sensorDataBuffer, sizeof(sensorData));
-    }
-    RtCircularBufferPush(sensorDataBuffer, &sensorData, sizeof(sensorData));
+    // SENSOR_DATA sensorData = sensorRequest->data;
+    // if (RtCircularBufferIsFull(sensorDataBuffer))
+    // {
+    //     RtCircularBufferPop(sensorDataBuffer, sizeof(sensorData));
+    // }
+    // RtCircularBufferPush(sensorDataBuffer, &sensorData, sizeof(sensorData));
 
-    UINT sensorDataBufferSize = RtCircularBufferSize(sensorDataBuffer) / sizeof(sensorData);
-    for (UINT i = 0; i < sensorDataBufferSize; i++)
-    {
-        SENSOR_DATA displayData;
-        VERIFY(RT_SUCCESS(RtCircularBufferElementAt(sensorDataBuffer, i, &displayData, sizeof(displayData))));
+    // UINT sensorDataBufferSize = RtCircularBufferSize(sensorDataBuffer) / sizeof(sensorData);
+    // for (UINT i = 0; i < sensorDataBufferSize; i++)
+    // {
+    //     SENSOR_DATA displayData;
+    //     VERIFY(RT_SUCCESS(RtCircularBufferElementAt(sensorDataBuffer, i, &displayData, sizeof(displayData))));
 
-        CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + i };
-        VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
-        VERIFY(SUCCESSFUL(WriteFormattedString(com2Device,
-                                               CURSOR_DELETE_LINE "\033[36m%c%02d \033[33m%d\033[0m",
-                                               displayData.sensor.module,
-                                               displayData.sensor.number,
-                                               displayData.isOn)));
-    }
+    //     CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + i };
+    //     VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
+    //     VERIFY(SUCCESSFUL(WriteFormattedString(com2Device, "     ")));
+
+    //     VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
+    //     VERIFY(SUCCESSFUL(WriteFormattedString(com2Device,
+    //                                            "\033[36m%c%02d \033[33m%d\033[0m",
+    //                                            displayData.sensor.module,
+    //                                            displayData.sensor.number,
+    //                                            displayData.isOn)));
+    // }
 }
 
 static
@@ -388,7 +390,7 @@ Log
 {
     DISPLAY_LOG_REQUEST logRequest;
     RtMemset(logRequest.message, sizeof(logRequest.message), 0);
-    logRequest.messageSize = 128;
+    logRequest.messageSize = 32;
 
     VA_LIST va;
     VA_START(va, message);

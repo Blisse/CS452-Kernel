@@ -7,6 +7,7 @@
 #include "sensor_server.h"
 #include "switch_server.h"
 #include "train_server.h"
+#include "calibration.h"
 
 VOID
 InitTrainTasks
@@ -21,4 +22,5 @@ InitTrainTasks
     InputParserCreateTask();
     ClockCreateTask();
     PerformanceCreateTask();
+    CalibrationCreateTask();
 }
