@@ -69,8 +69,36 @@ SensorAwait
 /************************************
  *            TRACK API             *
  ************************************/
+typedef enum _TRACK
+{
+    TrackA = 0, 
+    TrackB
+} TRACK;
 
+typedef enum _DIRECTION
+{
+    DirectionForward = 0, 
+    DirectionReverse
+} DIRECTION;
 
+VOID
+TrackInit
+    (
+        IN TRACK track
+    );
+
+TRACK_NODE*
+TrackFindSensor
+    (
+        IN SENSOR* sensor
+    );
+
+TRACK_NODE*
+TrackFindNextSensor
+    (
+        IN TRACK_NODE* node, 
+        IN DIRECTION direction
+    );
 
 /************************************
  *           INIT TASK              *
