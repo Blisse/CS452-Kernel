@@ -226,7 +226,7 @@ DisplaypSensorRequest
         CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + i };
         VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
         VERIFY(SUCCESSFUL(WriteFormattedString(com2Device,
-                                               CURSOR_DELETE_LINE "\033[36m%c%02d \033[33m%d\033[0m",
+                                               "\033[36m%c%02d \033[33m%d\033[0m",
                                                displayData.sensor.module,
                                                displayData.sensor.number,
                                                displayData.isOn)));
@@ -358,7 +358,7 @@ ShowKeyboardChar
         IN CHAR c
     )
 {
-    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayCharRequest, &c, sizeof(c))));
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayCharRequest, &c, sizeof(c))));
 }
 
 VOID
@@ -367,7 +367,7 @@ ShowClockTime
         IN INT clockTicks
     )
 {
-    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayClockRequest, &clockTicks, sizeof(clockTicks))));
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayClockRequest, &clockTicks, sizeof(clockTicks))));
 }
 
 VOID
@@ -376,7 +376,7 @@ ShowIdleTime
         IN INT idlePercentage
     )
 {
-    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayIdleRequest, &idlePercentage, sizeof(idlePercentage))));
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayIdleRequest, &idlePercentage, sizeof(idlePercentage))));
 }
 
 VOID
@@ -411,8 +411,8 @@ ShowSwitchDirection
         IN CHAR direction
     )
 {
-    //DISPLAY_SWITCH_REQUEST switchRequest = { idx, number, direction };
-    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySwitchRequest, &switchRequest, sizeof(switchRequest))));
+    DISPLAY_SWITCH_REQUEST switchRequest = { idx, number, direction };
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySwitchRequest, &switchRequest, sizeof(switchRequest))));
 }
 
 VOID
@@ -421,6 +421,6 @@ ShowSensorStatus
         IN SENSOR_DATA data
     )
 {
-    //DISPLAY_SENSOR_REQUEST sensorRequest = { data };
-    //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySensorRequest, &sensorRequest, sizeof(sensorRequest))));
+    DISPLAY_SENSOR_REQUEST sensorRequest = { data };
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySensorRequest, &sensorRequest, sizeof(sensorRequest))));
 }

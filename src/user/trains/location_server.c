@@ -1,5 +1,6 @@
 #include "location_server.h"
 
+#include "display.h"
 #include <rtosc/assert.h>
 #include <rtosc/buffer.h>
 #include <rtkernel.h>
@@ -46,7 +47,7 @@ typedef struct _TRAIN_DATA
     DIRECTION direction;
     UINT velocity; // in micrometers / tick
 } TRAIN_DATA;
-/*
+
 static
 VOID
 LocationServerpVelocityNotifierTask
@@ -65,7 +66,6 @@ LocationServerpVelocityNotifierTask
         VERIFY(SUCCESSFUL(Send(locationServerId, &request, sizeof(request), NULL, 0)));
     }
 }
-*/
 
 static
 VOID
@@ -141,7 +141,7 @@ LocationServerpFindTrainByNextSensor
 
     return NULL;
 }
-#include <bwio/bwio.h>
+
 static
 VOID
 LocationServerpTask
@@ -150,7 +150,7 @@ LocationServerpTask
     )
 {
     VERIFY(SUCCESSFUL(RegisterAs(LOCATION_SERVER_NAME)));
-    //VERIFY(SUCCESSFUL(Create(Priority22, LocationServerpVelocityNotifierTask)));
+    VERIFY(SUCCESSFUL(Create(Priority22, LocationServerpVelocityNotifierTask)));
     VERIFY(SUCCESSFUL(Create(Priority23, LocationServerpSensorNotifierTask)));
 
     TRAIN_DATA underlyingLostTrainsBuffer[MAX_TRACKABLE_TRAINS];
@@ -189,7 +189,7 @@ LocationServerpTask
 
                     VERIFY(RT_SUCCESS(RtCircularBufferPeekAndPop(&lostTrains, trainData, sizeof(*trainData))));
 
-                    bwprintf(BWCOM2, "F %d %s\r\n", trainData->train, node->name);
+                    Log("F %d %s", trainData->train, node->name);
                 }
 
                 // Make sure we matched the sensor to a train.  If not, just ignore the sensor
@@ -199,7 +199,8 @@ LocationServerpTask
                     trainData->distancePastCurrentNode = 0;
                     VERIFY(SUCCESSFUL(TrackFindNextSensor(node, &trainData->nextNode)));
 
-                    bwprintf(BWCOM2, "%s -> %s\r\n", trainData->currentNode->name, trainData->nextNode->name);
+                    Log("%s -> %s", trainData->currentNode->name, trainData->nextNode->name);
+
                     // Did we just find this train?
                     if(0 == trainData->velocity)
                     {
@@ -214,7 +215,7 @@ LocationServerpTask
                 }
                 else
                 {
-                    bwprintf(BWCOM2, "!%s\r\n", node->name);
+                    Log("Unexpected sensor %s", node->name);
                 }
 
                 break;
@@ -243,7 +244,7 @@ LocationServerpTask
                     // We don't know where this train is yet
                     VERIFY(RT_SUCCESS(RtCircularBufferPush(&lostTrains, &newTrain, sizeof(newTrain))));
 
-                    bwprintf(BWCOM2, "S %d\r\n", newTrain.train);
+                    Log("S %d", newTrain.train);
                 }
 
                 break;
@@ -273,7 +274,11 @@ LocationServerpTask
                     trainData->distancePastCurrentNode = distance - trainData->distancePastCurrentNode;
                     trainData->nextNode = temp->reverse;
 
-                    bwprintf(BWCOM2, "%s -> %s\r\n", trainData->currentNode->name, trainData->nextNode->name);
+                    Log("%s -> %s", trainData->currentNode->name, trainData->nextNode->name);
+                }
+                else
+                {
+                    Log("Unexpected reverse %d", request.train);
                 }
 
                 break;
