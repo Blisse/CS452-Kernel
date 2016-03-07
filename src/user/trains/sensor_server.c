@@ -57,7 +57,7 @@ SensorReaderpUpdate
             if (previousValue != currentValue)
             {
                 // Make sure there is still room for this sensor
-                if(changedSensors.size < MAX_CHANGED_SENSORS)
+                if(changedSensors.size < MAX_TRACKABLE_TRAINS)
                 {
                     // Add this sensor to the list of changed sensors
                     SENSOR_DATA* data = &changedSensors.sensors[changedSensors.size];

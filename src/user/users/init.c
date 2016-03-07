@@ -11,5 +11,5 @@ InitUserTasks
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(HighestUserPriority, InitTrainTasks)));
+    VERIFY(SUCCESSFUL(Create(LowestUserPriority, InitTrainTasks)));
 }

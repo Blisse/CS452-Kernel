@@ -1,6 +1,9 @@
 #pragma once
 
 #include <rt.h>
+#include <track/track_node.h>
+
+#define MAX_TRACKABLE_TRAINS 6
 
 /************************************
  *          TRAIN API               *
@@ -36,11 +39,16 @@ SwitchSetDirection
         IN SWITCH_DIRECTION direction
     );
 
+INT
+SwitchGetDirection
+    (
+        IN INT sw, 
+        OUT SWITCH_DIRECTION* direction
+    );
+
 /************************************
  *           SENSOR API             *
  ************************************/
-
-#define MAX_CHANGED_SENSORS 6
 
 typedef struct _SENSOR
 {
@@ -56,7 +64,7 @@ typedef struct _SENSOR_DATA
 
 typedef struct _CHANGED_SENSORS
 {
-    SENSOR_DATA sensors[MAX_CHANGED_SENSORS];
+    SENSOR_DATA sensors[MAX_TRACKABLE_TRAINS];
     UINT size;
 } CHANGED_SENSORS;
 
@@ -93,11 +101,19 @@ TrackFindSensor
         IN SENSOR* sensor
     );
 
-TRACK_NODE*
+INT
 TrackFindNextSensor
     (
         IN TRACK_NODE* node, 
-        IN DIRECTION direction
+        OUT TRACK_NODE** nextSensor
+    );
+
+INT
+TrackDistanceBetween
+    (
+        IN TRACK_NODE* n1, 
+        IN TRACK_NODE* n2, 
+        OUT UINT* distance
     );
 
 /************************************

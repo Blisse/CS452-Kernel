@@ -27,5 +27,5 @@ InitOsTasks
     IoCreateTask();
     UartCreateTasks();
 
-    VERIFY(SUCCESSFUL(Create(HighestUserPriority, InitUserTasks)));
+    VERIFY(SUCCESSFUL(Create(LowestUserPriority, InitUserTasks)));
 }
