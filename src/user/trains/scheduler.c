@@ -8,6 +8,7 @@
 #include <user/trains.h>
 
 #define SCHEDULER_NAME "scheduler"
+#define SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD 8 // 80 ms
 
 typedef enum _SCHEDULER_REQUEST_TYPE
 {
@@ -32,7 +33,7 @@ typedef struct _SCHEDULER_REQUEST
 typedef struct _TRAIN_SCHEDULE
 {
     TRACK_NODE* nextNode;
-    UINT nextNodeExpectedArrivalTime;
+    INT nextNodeExpectedArrivalTime;
 } TRAIN_SCHEDULE;
 
 static
@@ -43,7 +44,7 @@ SchedulerpCalculateTimeToNode
         IN UINT distancePastCurrentNode, 
         IN TRACK_NODE* targetNode, 
         IN UINT velocity, 
-        OUT UINT* time
+        OUT INT* time
     )
 {
     UINT distanceBetweenNodes;
@@ -85,22 +86,36 @@ SchedulerpTask
             {
                 SCHEDULER_UPDATE_LOCATION_REQUEST* updateLocationRequest = &request.updateLocationRequest;
                 TRAIN_SCHEDULE* trainSchedule = &trainSchedules[updateLocationRequest->train];
-                UINT currentTime = Time();
+
+                INT currentTime = Time();
+                ASSERT(SUCCESSFUL(currentTime));
+
+                INT diff = abs(currentTime - trainSchedule->nextNodeExpectedArrivalTime);
 
                 // Check when we expected to arrive here
-                if(trainSchedule->nextNode == updateLocationRequest->currentNode)
+                if(trainSchedule->nextNode == updateLocationRequest->currentNode &&
+                   diff >= SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD)
                 {
-                    // TODO - Check if arrival time is outside margin of error
-                    Log("T %d %d", trainSchedule->nextNodeExpectedArrivalTime, currentTime);
+                    if(currentTime > trainSchedule->nextNodeExpectedArrivalTime)
+                    {
+                        Log("Late to %s by %d", trainSchedule->nextNode->name, diff);
+                    }
+                    else
+                    {
+                        Log("Early to %s by %d", trainSchedule->nextNode->name, diff);
+                    }
                 }
 
+                // TODO - What if the train is going in reverse? Longer distance between pickup and sensor
+
                 // Calculate when we will get to the next node
-                UINT timeTillNextNode = 0;
+                INT timeTillNextNode = 0;
                 VERIFY(SUCCESSFUL(SchedulerpCalculateTimeToNode(updateLocationRequest->currentNode, 
                                                                 updateLocationRequest->distancePastCurrentNode, 
                                                                 updateLocationRequest->nextNode, 
                                                                 updateLocationRequest->velocity, 
                                                                 &timeTillNextNode)));
+                ASSERT(timeTillNextNode > 0);
 
                 // Record the next scheduled event
                 trainSchedule->nextNode = updateLocationRequest->nextNode;

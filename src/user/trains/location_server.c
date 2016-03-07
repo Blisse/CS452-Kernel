@@ -11,8 +11,9 @@
 #include <user/trains.h>
 
 #define LOCATION_SERVER_NAME "location"
-#define LOCATION_SERVER_NOTIFIER_UPDATE_INTERVAL 5 // 50ms
+#define LOCATION_SERVER_NOTIFIER_UPDATE_INTERVAL 5 // 50 ms
 #define LOCATION_SERVER_ALPHA 2
+#define LOCATION_SERVER_AVERAGE_SENSOR_LATENCY 6 // 60 ms
 
 typedef enum _LOCATION_SERVER_REQUEST_TYPE
 {
@@ -210,13 +211,13 @@ LocationServerpTask
 
                     VERIFY(RT_SUCCESS(RtCircularBufferPeekAndPop(&lostTrains, trainData, sizeof(*trainData))));
 
-                    Log("F %d %s", trainData->train, node->name);
+                    Log("Found %d", trainData->train);
                 }
 
                 // Make sure we matched the sensor to a train.  If not, just ignore the sensor
                 if(NULL != trainData)
                 {
-                    UINT currentTick = Time();                    
+                    UINT currentTick = Time();
 
                     // Update the velocity if we have a point of reference
                     if(NULL != trainData->currentNode)
@@ -227,19 +228,14 @@ LocationServerpTask
                         UINT v = dx / dt;
                         UINT newVelocityFactor = LOCATION_SERVER_ALPHA * v;
                         UINT oldVelocityFactor = (10 - LOCATION_SERVER_ALPHA) * trainData->velocity;
-                        UINT oldVelocity = trainData->velocity;
                         trainData->velocity = (newVelocityFactor + oldVelocityFactor) / 10;
-
-                        Log("V %d -> %d", oldVelocity, trainData->velocity);
                     }
 
-                    // TODO - distance past current node is wrong due to sensor read latency
+                    // Update the location
                     trainData->currentNode = node;
                     trainData->currentNodeArrivalTick = currentTick;
-                    trainData->distancePastCurrentNode = 0;
+                    trainData->distancePastCurrentNode = LOCATION_SERVER_AVERAGE_SENSOR_LATENCY * trainData->velocity;
                     VERIFY(SUCCESSFUL(TrackFindNextSensor(node, &trainData->nextNode)));
-
-                    Log("%s -> %s", trainData->currentNode->name, trainData->nextNode->name);
 
                     // Send updated location and velocity to coordinator
                     VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->currentNode, 
@@ -280,7 +276,7 @@ LocationServerpTask
                     // We don't know where this train is yet
                     VERIFY(RT_SUCCESS(RtCircularBufferPush(&lostTrains, &newTrain, sizeof(newTrain))));
 
-                    Log("S %d", newTrain.train);
+                    Log("Looking for %d", newTrain.train);
                 }
 
                 break;
@@ -294,8 +290,6 @@ LocationServerpTask
                     TRAIN_DATA* trainData = &trackedTrains[i];
 
                     VERIFY(SUCCESSFUL(TrackFindNextSensor(trainData->currentNode, &trainData->nextNode)));
-
-                    Log("%s -> %s", trainData->currentNode->name, trainData->nextNode->name);
                 }
 
                 break;
@@ -323,8 +317,6 @@ LocationServerpTask
                     trainData->currentNode = trainData->nextNode->reverse;
                     trainData->distancePastCurrentNode = distance - trainData->distancePastCurrentNode;
                     trainData->nextNode = temp->reverse;
-
-                    Log("%s -> %s", trainData->currentNode->name, trainData->nextNode->name);
                 }
 
                 break;
