@@ -116,7 +116,7 @@ TrackDistanceBetween
 
     if(nextNode == n2)
     {
-        *distance = d;
+        *distance = d * 1000; // d is in millimeters, need to convert to micrometers
         return 0;
     }
     else
