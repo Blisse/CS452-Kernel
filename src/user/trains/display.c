@@ -23,6 +23,7 @@ typedef enum _DISPLAY_REQUEST_TYPE
     DisplayCharRequest = 0,
     DisplayClockRequest,
     DisplayIdleRequest,
+    DisplayLogRequest,
     DisplaySensorRequest,
     DisplayShutdownRequest,
     DisplaySwitchRequest,
@@ -34,6 +35,13 @@ typedef struct _DISPLAY_REQUEST
     PVOID buffer;
     UINT bufferLength;
 } DISPLAY_REQUEST;
+
+typedef struct _DISPLAY_LOG_REQUEST
+{
+    CHAR message[128];
+    INT messageSize;
+    INT length;
+} DISPLAY_LOG_REQUEST;
 
 typedef struct _DISPLAY_SENSOR_REQUEST
 {
@@ -55,6 +63,9 @@ typedef struct _DISPLAY_SWITCH_REQUEST
 
 #define CURSOR_IDLE_X 4
 #define CURSOR_IDLE_Y 4
+
+#define CURSOR_LOG_X 25
+#define CURSOR_LOG_Y 6
 
 #define CURSOR_SWITCH_X 4
 #define CURSOR_SWITCH_Y 6
@@ -150,6 +161,35 @@ DisplaypIdlePercentage
 
 static
 VOID
+DisplaypLogRequest
+    (
+        IN IO_DEVICE* com2Device,
+        IN RT_CIRCULAR_BUFFER* logBuffer,
+        IN DISPLAY_LOG_REQUEST* logRequest
+    )
+{
+    if (RtCircularBufferIsFull(logBuffer))
+    {
+        RtCircularBufferPop(logBuffer, logRequest->messageSize);
+    }
+
+    RtCircularBufferPush(logBuffer, &logRequest->message, logRequest->messageSize);
+
+    UINT logBufferSize = RtCircularBufferSize(logBuffer) / logRequest->messageSize;
+
+    for (UINT i = 0; i < logBufferSize; i++)
+    {
+        CHAR buffer[128];
+        VERIFY(RT_SUCCESS(RtCircularBufferElementAt(logBuffer, i, buffer, sizeof(buffer))));
+
+        CURSOR_POSITION cursor = { CURSOR_LOG_X, CURSOR_LOG_Y + i };
+        VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
+        VERIFY(SUCCESSFUL(WriteFormattedString(com2Device, CURSOR_DELETE_LINE "%s", buffer)));
+    }
+}
+
+static
+VOID
 DisplaypSwitchRequest
     (
         IN IO_DEVICE* com2Device,
@@ -238,6 +278,10 @@ DisplaypTask
     RT_CIRCULAR_BUFFER sensorDataBuffer;
     RtCircularBufferInit(&sensorDataBuffer, underlyingSensorDataBuffer, sizeof(underlyingSensorDataBuffer));
 
+    CHAR underlyingLogBuffer[1024];
+    RT_CIRCULAR_BUFFER logBuffer;
+    RtCircularBufferInit(&logBuffer, underlyingLogBuffer, sizeof(underlyingLogBuffer));
+
     CURSOR_POSITION cursor = { CURSOR_CMD_X, CURSOR_CMD_Y };
 
     BOOLEAN running = TRUE;
@@ -265,6 +309,12 @@ DisplaypTask
             {
                 INT idle = *((INT*) request.buffer);
                 DisplaypIdlePercentage(&com2Device, idle);
+                break;
+            }
+            case DisplayLogRequest:
+            {
+                DISPLAY_LOG_REQUEST* logRequest = (DISPLAY_LOG_REQUEST*) request.buffer;
+                DisplaypLogRequest(&com2Device, &logBuffer, logRequest);
                 break;
             }
             case DisplaySwitchRequest:
@@ -327,6 +377,30 @@ ShowIdleTime
     )
 {
     //VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayIdleRequest, &idlePercentage, sizeof(idlePercentage))));
+}
+
+VOID
+Log
+    (
+        IN STRING message,
+        ...
+    )
+{
+    DISPLAY_LOG_REQUEST logRequest;
+    RtMemset(logRequest.message, sizeof(logRequest.message), 0);
+    logRequest.messageSize = 128;
+
+    VA_LIST va;
+    VA_START(va, message);
+    INT written = RtStrPrintFormattedVa(logRequest.message, sizeof(logRequest.message), message, va);
+    VA_END(va);
+
+    ASSERT(written < sizeof(logRequest.message));
+    UNREFERENCED_PARAMETER(written);
+
+    logRequest.length = written;
+
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayLogRequest, &logRequest, sizeof(logRequest))));
 }
 
 VOID

@@ -21,8 +21,9 @@ typedef struct _IO_READ_TASK_PARAMS
 
 typedef enum _IO_READ_REQUEST_TYPE
 {
-    NotifierRequest = 0, 
-    ReadRequest
+    NotifierRequest = 0,
+    ReadRequest,
+    FlushRequest,
 } IO_READ_REQUEST_TYPE;
 
 typedef struct _IO_READ_REQUEST
@@ -195,6 +196,17 @@ IopReadTask
 
                 break;
 
+            case FlushRequest:
+            {
+                INT receiveBufferSize = RtCircularBufferSize(&receiveBuffer);
+
+                VERIFY(RT_SUCCESS(RtCircularBufferPop(&receiveBuffer, receiveBufferSize)));
+
+                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
+
+                break;
+            }
+
             default:
                 ASSERT(FALSE);
                 break;
@@ -251,4 +263,17 @@ Read
                 sizeof(request),
                 NULL,
                 0);
+}
+
+INT
+FlushInput
+    (
+        IN IO_DEVICE* device
+    )
+{
+    IO_READ_REQUEST request;
+
+    request.type = FlushRequest;
+
+    return Send(device->readTaskId, &request, sizeof(request), NULL, 0);
 }

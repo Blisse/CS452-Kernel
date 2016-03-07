@@ -28,6 +28,13 @@ ShowIdleTime
     );
 
 VOID
+Log
+    (
+        IN STRING message,
+        ...
+    );
+
+VOID
 ShowSwitchDirection
     (
         IN INT idx,
