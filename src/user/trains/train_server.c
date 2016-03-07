@@ -115,14 +115,7 @@ TrainpSetSpeed
 {
     // Bytes must be sent in a weird order.
     // Speed first, then train.
-    INT result = TrainpSendTwoByteCommand(device, speed, train);
-
-    if(SUCCESSFUL(result))
-    {
-        result = LocationServerUpdateTrainSpeed(train, speed);
-    }
-
-    return result;
+    return TrainpSendTwoByteCommand(device, speed, train);
 }
 
 static
@@ -133,14 +126,7 @@ TrainpReverse
         IN UCHAR train
     )
 {
-    INT result = TrainpSendTwoByteCommand(device, TRAIN_COMMAND_REVERSE, train);
-
-    if(SUCCESSFUL(result))
-    {
-        result = LocationServerFlipTrainDirection(train);
-    }
-
-    return result;
+    return TrainpSendTwoByteCommand(device, TRAIN_COMMAND_REVERSE, train);
 }
 
 static
@@ -168,6 +154,13 @@ TrainpTask
     // Turn the train controller on
     VERIFY(SUCCESSFUL(TrainpGo(&com1)));
 
+    // Stop all known trains, in case any group forgot to turn them off
+    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 58, 0)));
+    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 62, 0)));
+    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 63, 0)));
+    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 64, 0)));
+    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 68, 0)));
+
     while(running)
     {
         INT sender;
@@ -183,6 +176,7 @@ TrainpTask
 
             case SetSpeedRequest:
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, request.speed)));
+                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, request.speed)));
 
                 speeds[request.train - 1] = request.speed;
                 break;
@@ -193,6 +187,7 @@ TrainpTask
 
                 // Stop the train
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, 0)));
+                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, 0)));
 
                 // Wait for the train to come to a stop
                 // TODO - Better implementation
@@ -200,12 +195,14 @@ TrainpTask
 
                 // Reverse the train
                 VERIFY(SUCCESSFUL(TrainpReverse(&com1, request.train)));
+                VERIFY(SUCCESSFUL(LocationServerFlipTrainDirection(request.train)));
 
                 // TODO - Why do we need this, and only on track B?
-                Delay(100);
+                Delay(10);
 
                 // Speed the train back up to its original speed
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, oldSpeed)));
+                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, oldSpeed)));
                 break;
             }
 
