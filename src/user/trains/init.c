@@ -15,7 +15,7 @@ InitTrainTasks
         VOID
     )
 {
-    TrackInit(TrackA);
+    TrackInit(TrackB);
     DisplayCreateTask();
     TrainServerCreate();
     SwitchServerCreate();

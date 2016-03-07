@@ -130,11 +130,25 @@ LocationServerpFindTrainByNextSensor
         IN TRACK_NODE* node
     )
 {
+    // Check to see if we can find the node
     for(UINT i = 0; i < numTrains; i++)
     {
         TRAIN_DATA* trainData = &trains[i];
 
         if(node == trainData->nextNode)
+        {
+            return trainData;
+        }
+    }
+
+    // There are unreliable sensors on the track - check for off by one sensors
+    for(UINT i = 0; i < numTrains; i++)
+    {
+        TRAIN_DATA* trainData = &trains[i];
+        TRACK_NODE* offByOneNode;
+        VERIFY(SUCCESSFUL(TrackFindNextSensor(trainData->nextNode, &offByOneNode)));
+
+        if(node == offByOneNode)
         {
             return trainData;
         }
