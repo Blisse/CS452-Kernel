@@ -3,11 +3,14 @@
 #include <rt.h>
 #include <track/track_node.h>
 
+#define MAX_TRAINS 80
 #define MAX_TRACKABLE_TRAINS 6
 
 /************************************
  *          TRAIN API               *
  ************************************/
+
+#define MAX_SPEED 14
 
 INT
 TrainSetSpeed

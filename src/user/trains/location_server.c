@@ -1,6 +1,7 @@
 #include "location_server.h"
 
 #include "display.h"
+#include "physics.h"
 #include <rtosc/assert.h>
 #include <rtosc/buffer.h>
 #include <rtkernel.h>
@@ -9,8 +10,8 @@
 #include <user/trains.h>
 
 #define LOCATION_SERVER_NAME "location"
-
 #define LOCATION_SERVER_NOTIFIER_UPDATE_INTERVAL 5 // 50ms
+#define LOCATION_SERVER_ALPHA 2
 
 typedef enum _LOCATION_SERVER_REQUEST_TYPE
 {
@@ -43,6 +44,7 @@ typedef struct _TRAIN_DATA
 {
     UCHAR train;
     TRACK_NODE* currentNode;
+    UINT currentNodeArrivalTick;
     UINT distancePastCurrentNode; // in micrometers
     TRACK_NODE* nextNode;
     DIRECTION direction;
@@ -213,21 +215,29 @@ LocationServerpTask
                 // Make sure we matched the sensor to a train.  If not, just ignore the sensor
                 if(NULL != trainData)
                 {
+                    UINT currentTick = Time();                    
+
+                    // Update the velocity if we have a point of reference
+                    if(NULL != trainData->currentNode)
+                    {
+                        UINT dx;
+                        VERIFY(SUCCESSFUL(TrackDistanceBetween(trainData->currentNode, node, &dx)));
+                        UINT dt = currentTick - trainData->currentNodeArrivalTick;
+                        UINT v = dx / dt;
+                        UINT newVelocityFactor = LOCATION_SERVER_ALPHA * v;
+                        UINT oldVelocityFactor = (10 - LOCATION_SERVER_ALPHA) * trainData->velocity;
+                        UINT oldVelocity = trainData->velocity;
+                        trainData->velocity = (newVelocityFactor + oldVelocityFactor) / 10;
+
+                        Log("V %d -> %d", oldVelocity, trainData->velocity);
+                    }
+
                     trainData->currentNode = node;
+                    trainData->currentNodeArrivalTick = currentTick;
                     trainData->distancePastCurrentNode = 0;
                     VERIFY(SUCCESSFUL(TrackFindNextSensor(node, &trainData->nextNode)));
 
                     Log("%s -> %s", trainData->currentNode->name, trainData->nextNode->name);
-
-                    // Did we just find this train?
-                    if(0 == trainData->velocity)
-                    {
-                        // TODO - Assume a velocity (the train should be moving slowly)
-                    }
-                    else
-                    {
-                        // TODO - Update velocity
-                    }
 
                     // TODO - Send updated location and velocity to coordinator
                 }
@@ -250,14 +260,16 @@ LocationServerpTask
                 }
                 else
                 {
-                    // TODO - Use speed to determine target velocity
                     TRAIN_DATA newTrain;
                     newTrain.train = speedUpdate.train;
                     newTrain.currentNode = NULL;
+                    newTrain.currentNodeArrivalTick = 0;
                     newTrain.distancePastCurrentNode = 0;
                     newTrain.nextNode = NULL;
                     newTrain.direction = DirectionForward;
-                    newTrain.velocity = 0;
+
+                    // TODO - This is a bad approximation
+                    newTrain.velocity = PhysicsSteadyStateVelocity(speedUpdate.train, speedUpdate.speed);
 
                     // We don't know where this train is yet
                     VERIFY(RT_SUCCESS(RtCircularBufferPush(&lostTrains, &newTrain, sizeof(newTrain))));
@@ -298,10 +310,9 @@ LocationServerpTask
                         trainData->direction = DirectionForward;
                     }
 
+                    TRACK_NODE* temp = trainData->currentNode;
                     UINT distance;
                     VERIFY(SUCCESSFUL(TrackDistanceBetween(trainData->currentNode, trainData->nextNode, &distance)));
-
-                    TRACK_NODE* temp = trainData->currentNode;
 
                     trainData->currentNode = trainData->nextNode->reverse;
                     trainData->distancePastCurrentNode = distance - trainData->distancePastCurrentNode;
