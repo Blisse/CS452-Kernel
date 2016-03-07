@@ -6,6 +6,7 @@
 #include <rtosc/buffer.h>
 #include <rtkernel.h>
 #include <rtos.h>
+#include "scheduler.h"
 #include <track/track_node.h>
 #include <user/trains.h>
 
@@ -232,6 +233,7 @@ LocationServerpTask
                         Log("V %d -> %d", oldVelocity, trainData->velocity);
                     }
 
+                    // TODO - distance past current node is wrong due to sensor read latency
                     trainData->currentNode = node;
                     trainData->currentNodeArrivalTick = currentTick;
                     trainData->distancePastCurrentNode = 0;
@@ -239,7 +241,11 @@ LocationServerpTask
 
                     Log("%s -> %s", trainData->currentNode->name, trainData->nextNode->name);
 
-                    // TODO - Send updated location and velocity to coordinator
+                    // Send updated location and velocity to coordinator
+                    VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->currentNode, 
+                                                              trainData->distancePastCurrentNode, 
+                                                              trainData->nextNode, 
+                                                              trainData->velocity)));
                 }
                 else
                 {
@@ -319,10 +325,6 @@ LocationServerpTask
                     trainData->nextNode = temp->reverse;
 
                     Log("%s -> %s", trainData->currentNode->name, trainData->nextNode->name);
-                }
-                else
-                {
-                    Log("Unexpected reverse %d", request.train);
                 }
 
                 break;

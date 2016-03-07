@@ -6,6 +6,7 @@
 #include "location_server.h"
 #include "performance.h"
 #include "physics.h"
+#include "scheduler.h"
 #include "sensor_server.h"
 #include "switch_server.h"
 #include "train_server.h"
@@ -22,10 +23,11 @@ InitTrainTasks
 
     // Initialize tasks
     DisplayCreateTask();
-    TrainServerCreate();
-    SwitchServerCreate();
+    SchedulerCreateTask();
     SensorServerCreateTask();
     LocationServerCreateTask();
+    TrainServerCreate();
+    SwitchServerCreate();
     InputParserCreateTask();
     ClockCreateTask();
     PerformanceCreateTask();
