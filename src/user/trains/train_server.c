@@ -201,6 +201,9 @@ TrainpTask
                 // Reverse the train
                 VERIFY(SUCCESSFUL(TrainpReverse(&com1, request.train)));
 
+                // TODO - Why do we need this, and only on track B?
+                Delay(100);
+
                 // Speed the train back up to its original speed
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, oldSpeed)));
                 break;
