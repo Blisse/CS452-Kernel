@@ -16,6 +16,12 @@ LocationServerUpdateTrainSpeed
     );
 
 INT
+LocationServerSwitchUpdated
+    (
+        VOID
+    );
+
+INT
 LocationServerFlipTrainDirection
     (
         IN UCHAR train

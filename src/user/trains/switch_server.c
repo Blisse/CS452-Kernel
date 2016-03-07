@@ -1,12 +1,11 @@
 #include "switch_server.h"
 
+#include "display.h"
+#include "location_server.h"
 #include <rtosc/assert.h>
 #include <rtkernel.h>
 #include <rtos.h>
-
 #include <user/trains.h>
-
-#include "display.h"
 
 #define SWITCH_SERVER_NAME "switch"
 
@@ -171,7 +170,7 @@ SwitchpTask
                 directions[switchIndex] = request.direction;
 
                 VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
-
+                VERIFY(SUCCESSFUL(LocationServerSwitchUpdated()));
                 ShowSwitchDirection(switchIndex, request.sw, request.direction);
                 break;
             }

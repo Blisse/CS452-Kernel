@@ -16,6 +16,7 @@ typedef enum _LOCATION_SERVER_REQUEST_TYPE
 {
     VelocityUpdateRequest = 0, 
     SensorUpdateRequest, 
+    SwitchUpdatedRequest, 
     SpeedUpdateRequest, 
     FlipDirectionRequest
 } LOCATION_SERVER_REQUEST_TYPE;
@@ -167,6 +168,9 @@ LocationServerpTask
 
         VERIFY(SUCCESSFUL(Receive(&senderId, &request, sizeof(request))));
 
+        // Reply right away to unblock potentially important tasks (e.g. switch and train server)
+        VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+
         switch(request.type)
         {
             case VelocityUpdateRequest:
@@ -250,6 +254,21 @@ LocationServerpTask
                 break;
             }
 
+            case SwitchUpdatedRequest:
+            {
+                // Recalculate next expected sensors
+                for(UINT i = 0; i < numTrackedTrains; i++)
+                {
+                    TRAIN_DATA* trainData = &trackedTrains[i];
+
+                    VERIFY(SUCCESSFUL(TrackFindNextSensor(trainData->currentNode, &trainData->nextNode)));
+
+                    Log("%s -> %s", trainData->currentNode->name, trainData->nextNode->name);
+                }
+
+                break;
+            }
+
             case FlipDirectionRequest:
             {
                 TRAIN_DATA* trainData = LocationServerpFindTrainById(trackedTrains, numTrackedTrains, request.train);
@@ -290,8 +309,6 @@ LocationServerpTask
                 break;
             }
         }
-
-        VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
     }
 }
 
@@ -335,6 +352,17 @@ LocationServerUpdateTrainSpeed
     request.type = SpeedUpdateRequest;
     request.speedUpdate.train = train;
     request.speedUpdate.speed = speed;
+
+    return LocationServerpSendRequest(&request);
+}
+
+INT
+LocationServerSwitchUpdated
+    (
+        VOID
+    )
+{
+    LOCATION_SERVER_REQUEST request = { SwitchUpdatedRequest };
 
     return LocationServerpSendRequest(&request);
 }
