@@ -119,6 +119,20 @@ TrackDistanceBetween
         OUT UINT* distance
     );
 
+INT
+TrackNumBranchesBetween
+    (
+        IN TRACK_NODE* n1, 
+        IN TRACK_NODE* n2, 
+        OUT UINT* numBranches
+    );
+
+UINT
+TrackGetCorrectiveTime
+    (
+        IN TRACK_NODE* node
+    );
+
 /************************************
  *          SCHEDULER API           *
  ************************************/

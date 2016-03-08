@@ -2,7 +2,8 @@
 #include <track/track_data.h>
 #include <user/trains.h>
 
-static TRACK_NODE g_track[TRACK_MAX];
+static TRACK_NODE g_trackNodes[TRACK_MAX];
+static TRACK g_track;
 
 VOID
 TrackInit
@@ -10,13 +11,15 @@ TrackInit
         IN TRACK track
     )
 {
-    if(TrackA == track)
+    g_track = track;
+
+    if(TrackA == g_track)
     {
-        init_tracka(g_track);
+        init_tracka(g_trackNodes);
     }
     else
     {
-        init_trackb(g_track);
+        init_trackb(g_trackNodes);
     }
 }
 
@@ -28,7 +31,7 @@ TrackFindSensor
 {
     UINT index = ((sensor->module - 'A') * 16) + (sensor->number - 1);
 
-    return &g_track[index];
+    return &g_trackNodes[index];
 }
 
 static
@@ -122,5 +125,77 @@ TrackDistanceBetween
     else
     {
         return -1;
+    }
+}
+
+INT
+TrackNumBranchesBetween
+    (
+        IN TRACK_NODE* n1, 
+        IN TRACK_NODE* n2, 
+        OUT UINT* numBranches
+    )
+{
+    TRACK_NODE* iterator = TrackpNextNode(n1);
+    UINT count = 0;
+
+    while(iterator != n1 && iterator != n2 && NODE_EXIT != iterator->type)
+    {
+        if(NODE_BRANCH == iterator->type || NODE_MERGE == iterator->type)
+        {
+            count++;
+        }
+
+        iterator = TrackpNextNode(iterator);
+    }
+
+    if(iterator == n2)
+    {
+        *numBranches = count;
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+UINT
+TrackGetCorrectiveTime
+    (
+        IN TRACK_NODE* node
+    )
+{
+    // Some sensors are sticky and take a little bit longer to trip
+    if(NODE_SENSOR == node->type)
+    {
+        if(TrackB == g_track)
+        {
+            switch(node->num)
+            {
+                // C5
+                case 36:
+                    return 2;
+
+                // C10
+                case 41:
+                    return 4;
+
+                // C11
+                case 42:
+                    return 6;
+
+                default:
+                    return 0;
+            }
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    else
+    {
+        return 0;
     }
 }

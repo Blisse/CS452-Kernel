@@ -9,6 +9,7 @@
 
 #define SCHEDULER_NAME "scheduler"
 #define SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD 5 // 50 ms
+#define SCHEDULER_TICK_PENALTY_PER_BRANCH 2 // 20 ms
 
 typedef enum _SCHEDULER_REQUEST_TYPE
 {
@@ -117,9 +118,18 @@ SchedulerpTask
                                                                 &timeTillNextNode)));
                 ASSERT(timeTillNextNode > 0);
 
+                // Calculate how many branches are inbetween the current location and the next location
+                // Branches are bumpy, and cause the train to slow down by a bit
+                UINT numBranches;
+                VERIFY(SUCCESSFUL(TrackNumBranchesBetween(updateLocationRequest->currentNode, updateLocationRequest->nextNode, &numBranches)));
+                INT branchSlowdown = SCHEDULER_TICK_PENALTY_PER_BRANCH * numBranches;
+
+                // Some sensors are sticky and take longer than others to activate
+                UINT correctiveTime = TrackGetCorrectiveTime(updateLocationRequest->nextNode);
+
                 // Record the next scheduled event
                 trainSchedule->nextNode = updateLocationRequest->nextNode;
-                trainSchedule->nextNodeExpectedArrivalTime = currentTime + timeTillNextNode;
+                trainSchedule->nextNodeExpectedArrivalTime = currentTime + timeTillNextNode + branchSlowdown + correctiveTime;
 
                 break;
             }
