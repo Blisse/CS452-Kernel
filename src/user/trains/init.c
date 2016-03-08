@@ -1,3 +1,5 @@
+#include <rtosc/assert.h>
+#include <rtos.h>
 #include <user/trains.h>
 
 #include "clock.h"
@@ -21,14 +23,32 @@ InitTrainTasks
     PhysicsInit();
     TrackInit(TrackB);
 
-    // Initialize tasks
+    // Setup the display
     DisplayCreateTask();
-    SchedulerCreateTask();
-    SensorServerCreateTask();
-    LocationServerCreateTask();
-    TrainServerCreate();
-    SwitchServerCreate();
-    InputParserCreateTask();
     ClockCreateTask();
     PerformanceCreateTask();
+    InputParserCreateTask();
+
+    Log("Initializing, please wait (10s)");
+
+    // Setup the track
+    TrainServerCreate();
+    SwitchServerCreate();
+
+    Log("Waiting for junk sensor data");
+
+    // Wait 10 seconds for junk sensor data to arrive, then flush the junk data
+    IO_DEVICE com1Device;
+    VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1Device)));
+    VERIFY(SUCCESSFUL(Delay(900)));
+    VERIFY(SUCCESSFUL(FlushInput(&com1Device)));
+
+    Log("Flushed junk sensor data");
+
+    // Initialize remaining tasks
+    SchedulerCreateTask();
+    SensorServerCreateTask();
+    LocationServerCreateTask();    
+
+    Log("Initialization complete");
 }
