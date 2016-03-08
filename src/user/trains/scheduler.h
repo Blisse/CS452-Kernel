@@ -10,10 +10,24 @@ SchedulerCreateTask
     );
 
 INT
+SchedulerTrainChangedNextNode
+    (
+        IN UCHAR train,
+        IN TRACK_NODE* currentNode,
+        IN TRACK_NODE* nextNode
+    );
+
+INT
+SchedulerTrainArrivedAtNextNode
+    (
+        IN UCHAR train,
+        IN INT arrivalTime
+    );
+
+INT
 SchedulerUpdateLocation
     (
-        IN TRACK_NODE* currentNode, 
-        IN UINT distancePastCurrentNode, 
-        IN TRACK_NODE* nextNode, 
+        IN UCHAR train,
+        IN UINT distancePastCurrentNode,
         IN UINT velocity
     );

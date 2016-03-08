@@ -46,7 +46,7 @@ typedef struct _TRAIN_DATA
 {
     UCHAR train;
     TRACK_NODE* currentNode;
-    UINT currentNodeArrivalTick;
+    INT currentNodeArrivalTick;
     UINT distancePastCurrentNode; // in micrometers
     TRACK_NODE* nextNode;
     DIRECTION direction;
@@ -162,17 +162,6 @@ LocationServerpFindTrainByNextSensor
 }
 
 static
-inline
-INT
-LocationServerpUpdateScheduler
-    (
-        IN TRAIN_DATA* trainData
-    )
-{
-    return SchedulerUpdateLocation(trainData->currentNode, trainData->distancePastCurrentNode, trainData->nextNode, trainData->velocity);
-}
-
-static
 VOID
 LocationServerpTask
     (
@@ -228,28 +217,39 @@ LocationServerpTask
                 // Make sure we matched the sensor to a train.  If not, just ignore the sensor
                 if(NULL != trainData)
                 {
-                    UINT currentTick = Time();
+                    INT currentTick = Time();
+                    ASSERT(SUCCESSFUL(currentTick));
+
+                    INT sensorArrivalTick = currentTick - LOCATION_SERVER_AVERAGE_SENSOR_LATENCY;
+
+                    // Let the scheduler know we reached a sensor
+                    VERIFY(SUCCESSFUL(SchedulerTrainArrivedAtNextNode(trainData->train, sensorArrivalTick)));
+
+                    // Store old values before we overwrite them
+                    TRACK_NODE* previousNode = trainData->currentNode;
+                    INT previousNodeArrivalTick = trainData->currentNodeArrivalTick;
+
+                    // Calculate the next sensor we should reach
+                    trainData->currentNode = node;
+                    trainData->currentNodeArrivalTick = sensorArrivalTick;
+                    VERIFY(SUCCESSFUL(TrackFindNextSensor(node, &trainData->nextNode)));
+                    VERIFY(SUCCESSFUL(SchedulerTrainChangedNextNode(trainData->train, trainData->currentNode, trainData->nextNode)));
 
                     // Update the velocity if we have a point of reference
-                    if(NULL != trainData->currentNode)
+                    if(NULL != previousNode)
                     {
                         UINT dx;
-                        VERIFY(SUCCESSFUL(TrackDistanceBetween(trainData->currentNode, node, &dx)));
-                        UINT dt = currentTick - trainData->currentNodeArrivalTick;
+                        VERIFY(SUCCESSFUL(TrackDistanceBetween(previousNode, trainData->currentNode, &dx)));
+                        UINT dt = sensorArrivalTick - previousNodeArrivalTick;
                         UINT v = dx / dt;
                         UINT newVelocityFactor = LOCATION_SERVER_ALPHA * v;
                         UINT oldVelocityFactor = (10 - LOCATION_SERVER_ALPHA) * trainData->velocity;
                         trainData->velocity = (newVelocityFactor + oldVelocityFactor) / 10;
                     }
 
-                    // Update the location
-                    trainData->currentNode = node;
-                    trainData->currentNodeArrivalTick = currentTick;
+                    // Update the location   
                     trainData->distancePastCurrentNode = LOCATION_SERVER_AVERAGE_SENSOR_LATENCY * trainData->velocity;
-                    VERIFY(SUCCESSFUL(TrackFindNextSensor(node, &trainData->nextNode)));
-
-                    // Send updated location and velocity to coordinator
-                    VERIFY(SUCCESSFUL(LocationServerpUpdateScheduler(trainData)));
+                    VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->train, trainData->distancePastCurrentNode, trainData->velocity)));
                 }
                 else
                 {
@@ -298,6 +298,8 @@ LocationServerpTask
                     TRAIN_DATA* trainData = &trackedTrains[i];
 
                     VERIFY(SUCCESSFUL(TrackFindNextSensor(trainData->currentNode, &trainData->nextNode)));
+                    VERIFY(SUCCESSFUL(SchedulerTrainChangedNextNode(trainData->train, trainData->currentNode, trainData->nextNode)));
+                    VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->train, trainData->distancePastCurrentNode, trainData->velocity)));
                 }
 
                 break;
@@ -309,6 +311,7 @@ LocationServerpTask
 
                 if(NULL != trainData)
                 {
+                    // Figure out which direction we are now travelling
                     if(DirectionForward == trainData->direction)
                     {
                         trainData->direction = DirectionReverse;
@@ -318,13 +321,19 @@ LocationServerpTask
                         trainData->direction = DirectionForward;
                     }
 
+                    // Find the distance between our current node and the next node
                     TRACK_NODE* temp = trainData->currentNode;
                     UINT distance;
                     VERIFY(SUCCESSFUL(TrackDistanceBetween(trainData->currentNode, trainData->nextNode, &distance)));
 
+                    // Flip the direction we are travelling
                     trainData->currentNode = trainData->nextNode->reverse;
                     trainData->distancePastCurrentNode = distance - trainData->distancePastCurrentNode;
                     trainData->nextNode = temp->reverse;
+
+                    // Let the scheduler know to expect the new direction
+                    VERIFY(SUCCESSFUL(SchedulerTrainChangedNextNode(trainData->train, trainData->currentNode, trainData->nextNode)));
+                    VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->train, trainData->distancePastCurrentNode, trainData->velocity)));
                 }
 
                 break;
