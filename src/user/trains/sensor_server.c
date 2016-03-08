@@ -24,7 +24,7 @@ typedef enum _SENSOR_SERVER_REQUEST_TYPE
 typedef struct _SENSOR_SERVER_REQUEST
 {
     SENSOR_SERVER_REQUEST_TYPE type;
-    CHANGED_SENSORS* changedSensors;
+    CHANGED_SENSORS changedSensors;
 } SENSOR_SERVER_REQUEST;
 
 static
@@ -38,14 +38,18 @@ SensorReaderpUpdate
     )
 {
     // Keep track of which sensors have changed
-    CHANGED_SENSORS changedSensors;
-    changedSensors.size = 0;
+    SENSOR_SERVER_REQUEST request;
+    request.type = DataRequest;
+    request.changedSensors.size = 0;
 
     // Go through each module
     for (UINT i = 0; i < sensorsLength; i++)
     {
         UCHAR previousSensorValue = previousSensors[i];
         UCHAR currentSensorValue = currentSensors[i];
+
+        // Remember the sensor's value
+        previousSensors[i] = currentSensors[i];
 
         // Go through each sensor in this module
         for (UINT j = 0; j < 8; j++)
@@ -57,16 +61,16 @@ SensorReaderpUpdate
             if (previousValue != currentValue)
             {
                 // Make sure there is still room for this sensor
-                if(changedSensors.size < MAX_TRACKABLE_TRAINS)
+                if(request.changedSensors.size < MAX_TRACKABLE_TRAINS)
                 {
                     // Add this sensor to the list of changed sensors
-                    SENSOR_DATA* data = &changedSensors.sensors[changedSensors.size];
+                    SENSOR_DATA* data = &request.changedSensors.sensors[request.changedSensors.size];
 
                     data->sensor.module = 'A' + (i / 2);
                     data->sensor.number = (8 - j) + ((i % 2) * 8);
                     data->isOn = currentValue;
 
-                    changedSensors.size++;
+                    request.changedSensors.size++;
 
                     // TODO: What if we had the display server register for sensor updates
                     //       the same as everyone else?
@@ -75,18 +79,15 @@ SensorReaderpUpdate
                 else
                 {
                     ASSERT(FALSE);
+                    break;
                 }
             }
         }
-
-        // Remember the sensor's value
-        previousSensors[i] = currentSensors[i];
     }
 
     // If some sensors have changed, then update the sensor server
-    if (changedSensors.size > 0)
+    if (request.changedSensors.size > 0)
     {
-        SENSOR_SERVER_REQUEST request = { DataRequest, &changedSensors };
         VERIFY(SUCCESSFUL(Send(sensorServerId, &request, sizeof(request), NULL, 0)));
     }
 }
@@ -150,12 +151,14 @@ SensorServerpTask
             {
                 INT subscriberId;
 
+                // Unblock the sensor reader immediately
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+
+                // Now tell any registrants which sensors were tripped
                 while (RT_SUCCESS(RtCircularBufferPeekAndPop(&subscriberBuffer, &subscriberId, sizeof(subscriberId))))
                 {
-                    VERIFY(SUCCESSFUL(Reply(subscriberId, request.changedSensors, sizeof(*request.changedSensors))));
+                    VERIFY(SUCCESSFUL(Reply(subscriberId, &request.changedSensors, sizeof(request.changedSensors))));
                 }
-
-                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));             
 
                 break;
             }
@@ -169,7 +172,7 @@ SensorServerCreateTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority25, SensorServerpTask)));
+    VERIFY(SUCCESSFUL(Create(Priority18, SensorServerpTask)));
 }
 
 INT
@@ -182,8 +185,9 @@ SensorAwait
 
     if(SUCCESSFUL(result))
     {
-        SENSOR_SERVER_REQUEST request = { RegisterRequest };
         INT sensorServerId = result;
+        SENSOR_SERVER_REQUEST request;
+        request.type = RegisterRequest;
 
         result = Send(sensorServerId, &request, sizeof(request), changedSensors, sizeof(*changedSensors));
     }

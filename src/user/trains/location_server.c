@@ -12,8 +12,8 @@
 
 #define LOCATION_SERVER_NAME "location"
 #define LOCATION_SERVER_NOTIFIER_UPDATE_INTERVAL 5 // 50 ms
-#define LOCATION_SERVER_ALPHA 2
-#define LOCATION_SERVER_AVERAGE_SENSOR_LATENCY 4 // 60 ms
+#define LOCATION_SERVER_ALPHA 5
+#define LOCATION_SERVER_AVERAGE_SENSOR_LATENCY 6 // 60 ms
 
 typedef enum _LOCATION_SERVER_REQUEST_TYPE
 {
@@ -243,8 +243,8 @@ LocationServerpTask
                         UINT dt = sensorArrivalTick - previousNodeArrivalTick;
                         UINT v = dx / dt;
                         UINT newVelocityFactor = LOCATION_SERVER_ALPHA * v;
-                        UINT oldVelocityFactor = (10 - LOCATION_SERVER_ALPHA) * trainData->velocity;
-                        trainData->velocity = (newVelocityFactor + oldVelocityFactor) / 10;
+                        UINT oldVelocityFactor = (100 - LOCATION_SERVER_ALPHA) * trainData->velocity;
+                        trainData->velocity = (newVelocityFactor + oldVelocityFactor) / 100;
                     }
 
                     // Update the location   
@@ -354,7 +354,7 @@ LocationServerCreateTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority21, LocationServerpTask)));
+    VERIFY(SUCCESSFUL(Create(Priority24, LocationServerpTask)));
 }
 
 static
