@@ -1,10 +1,16 @@
 #pragma once
 
 #include <rt.h>
+#include <track/track_node.h>
+
+#define MAX_TRAINS 80
+#define MAX_TRACKABLE_TRAINS 6
 
 /************************************
  *          TRAIN API               *
  ************************************/
+
+#define MAX_SPEED 14
 
 INT
 TrainSetSpeed
@@ -36,11 +42,16 @@ SwitchSetDirection
         IN SWITCH_DIRECTION direction
     );
 
+INT
+SwitchGetDirection
+    (
+        IN INT sw, 
+        OUT SWITCH_DIRECTION* direction
+    );
+
 /************************************
  *           SENSOR API             *
  ************************************/
-
-#define MAX_CHANGED_SENSORS 6
 
 typedef struct _SENSOR
 {
@@ -56,7 +67,7 @@ typedef struct _SENSOR_DATA
 
 typedef struct _CHANGED_SENSORS
 {
-    SENSOR_DATA sensors[MAX_CHANGED_SENSORS];
+    SENSOR_DATA sensors[MAX_TRACKABLE_TRAINS];
     UINT size;
 } CHANGED_SENSORS;
 
@@ -69,8 +80,64 @@ SensorAwait
 /************************************
  *            TRACK API             *
  ************************************/
+typedef enum _TRACK
+{
+    TrackA = 0, 
+    TrackB
+} TRACK;
 
+typedef enum _DIRECTION
+{
+    DirectionForward = 0, 
+    DirectionReverse
+} DIRECTION;
 
+VOID
+TrackInit
+    (
+        IN TRACK track
+    );
+
+TRACK_NODE*
+TrackFindSensor
+    (
+        IN SENSOR* sensor
+    );
+
+INT
+TrackFindNextSensor
+    (
+        IN TRACK_NODE* node, 
+        OUT TRACK_NODE** nextSensor
+    );
+
+INT
+TrackDistanceBetween
+    (
+        IN TRACK_NODE* n1, 
+        IN TRACK_NODE* n2, 
+        OUT UINT* distance
+    );
+
+INT
+TrackNumBranchesBetween
+    (
+        IN TRACK_NODE* n1, 
+        IN TRACK_NODE* n2, 
+        OUT UINT* numBranches
+    );
+
+UINT
+TrackGetCorrectiveTime
+    (
+        IN TRACK_NODE* node
+    );
+
+/************************************
+ *          SCHEDULER API           *
+ ************************************/
+
+ 
 
 /************************************
  *           INIT TASK              *

@@ -1,12 +1,11 @@
 #include "switch_server.h"
 
+#include "display.h"
+#include "location_server.h"
 #include <rtosc/assert.h>
 #include <rtkernel.h>
 #include <rtos.h>
-
 #include <user/trains.h>
-
-#include "display.h"
 
 #define SWITCH_SERVER_NAME "switch"
 
@@ -17,7 +16,8 @@
 
 typedef enum _SWITCH_REQUEST_TYPE
 {
-    SetDirectionRequest = 0
+    SetDirectionRequest = 0, 
+    GetDirectionRequest
 } SWITCH_REQUEST_TYPE;
 
 typedef struct _SWITCH_REQUEST
@@ -162,62 +162,34 @@ SwitchpTask
         switch(request.type)
         {
             case SetDirectionRequest:
+            {
                 VERIFY(SUCCESSFUL(SwitchpDirection(&com1, request.sw, request.direction)));
                 VERIFY(SUCCESSFUL(SwitchpDisableSolenoid(&com1)));
 
-                INT switchIndex = SwitchpToIndex(request.sw);
+                UINT switchIndex = SwitchpToIndex(request.sw);
                 directions[switchIndex] = request.direction;
 
                 VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
-
+                VERIFY(SUCCESSFUL(LocationServerSwitchUpdated()));
                 ShowSwitchDirection(switchIndex, request.sw, request.direction);
                 break;
+            }
+
+            case GetDirectionRequest:
+            {
+                UINT switchIndex = SwitchpToIndex(request.sw);
+                SWITCH_DIRECTION direction = directions[switchIndex];
+                VERIFY(SUCCESSFUL(Reply(sender, &direction, sizeof(direction))));
+                break;
+            }
 
             default:
+            {
                 ASSERT(FALSE);
                 break;
+            }
         }
     }
-}
-
-static
-INT
-SwitchpSendRequest
-    (
-        IN SWITCH_REQUEST* request
-    )
-{
-    INT result = WhoIs(SWITCH_SERVER_NAME);
-
-    if(SUCCESSFUL(result))
-    {
-        INT switchServerId = result;
-
-        result = Send(switchServerId,
-                      request,
-                      sizeof(*request),
-                      NULL,
-                      0);
-    }
-
-    return result;
-}
-
-INT
-SwitchSetDirection
-    (
-        IN INT sw,
-        IN SWITCH_DIRECTION direction
-    )
-{
-    INT index = SwitchpToIndex(sw);
-    if (!(0 <= index && index < NUM_SWITCHES))
-    {
-        return -1;
-    }
-
-    SWITCH_REQUEST request = { SetDirectionRequest, (UCHAR) sw, direction };
-    return SwitchpSendRequest(&request);
 }
 
 VOID
@@ -227,4 +199,64 @@ SwitchServerCreate
     )
 {
     VERIFY(SUCCESSFUL(Create(Priority19, SwitchpTask)));
+}
+
+INT
+SwitchSetDirection
+    (
+        IN INT sw,
+        IN SWITCH_DIRECTION direction
+    )
+{
+    INT result;
+    UINT index = SwitchpToIndex(sw);
+
+    if (index < NUM_SWITCHES)
+    {
+        result = WhoIs(SWITCH_SERVER_NAME);
+
+        if(SUCCESSFUL(result))
+        {
+            INT switchServerId = result;
+            SWITCH_REQUEST request = { SetDirectionRequest, (UCHAR) sw, direction };
+
+            result = Send(switchServerId, &request, sizeof(request), NULL, 0);
+        }
+    }
+    else
+    {
+        result = -1;
+    }
+
+    return result;
+}
+
+INT
+SwitchGetDirection
+    (
+        IN INT sw, 
+        OUT SWITCH_DIRECTION* direction
+    )
+{
+    INT result;
+    UINT index = SwitchpToIndex(sw);
+
+    if (index < NUM_SWITCHES)
+    {
+        result = WhoIs(SWITCH_SERVER_NAME);
+
+        if(SUCCESSFUL(result))
+        {
+            INT switchServerId = result;
+            SWITCH_REQUEST request = { GetDirectionRequest, (UCHAR) sw };
+
+            result = Send(switchServerId, &request, sizeof(request), direction, sizeof(*direction));
+        }
+    }
+    else
+    {
+        result = -1;
+    }
+
+    return result;
 }

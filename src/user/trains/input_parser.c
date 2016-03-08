@@ -23,16 +23,15 @@ InputParserpGetSwitchDirection
         case 's':
             *direction = SwitchStraight;
             return TRUE;
-            break;
+            
         case 'C':
         case 'c':
             *direction = SwitchCurved;
             return TRUE;
-            break;
+            
         default:
-            break;
+            return FALSE;
     }
-    return FALSE;
 }
 
 static
@@ -77,7 +76,7 @@ InputParserpParseCommand
         read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
         if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
-            SWITCH_DIRECTION direction;
+            SWITCH_DIRECTION direction = SwitchCurved;
             read = RtStrConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
             if (read == 1 && InputParserpGetSwitchDirection(arg2Buffer[0], &direction))
             {

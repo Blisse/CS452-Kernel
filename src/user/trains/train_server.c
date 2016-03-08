@@ -3,8 +3,9 @@
 #include <rtosc/assert.h>
 #include <rtkernel.h>
 #include <rtos.h>
-
 #include <user/trains.h>
+
+#include "location_server.h"
 
 #define TRAIN_SERVER_NAME "train"
 #define NUM_TRAINS 80
@@ -40,13 +41,7 @@ TrainpSendRequest
     {
         INT trainServerId = result;
 
-        // TODO - Probably going to want to change this
-        // in the future so that we can get a response
-        result = Send(trainServerId,
-                      request,
-                      sizeof(*request),
-                      NULL,
-                      0);
+        result = Send(trainServerId, request, sizeof(*request), NULL, 0);
     }
 
     return result;
@@ -159,6 +154,13 @@ TrainpTask
     // Turn the train controller on
     VERIFY(SUCCESSFUL(TrainpGo(&com1)));
 
+    // Stop all known trains, in case any group forgot to turn them off
+    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 58, 0)));
+    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 62, 0)));
+    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 63, 0)));
+    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 64, 0)));
+    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 68, 0)));
+
     while(running)
     {
         INT sender;
@@ -170,17 +172,13 @@ TrainpTask
         {
             case ShutdownRequest:
                 running = FALSE;
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 break;
 
             case SetSpeedRequest:
-                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1,
-                                                 request.train,
-                                                 request.speed)));
+                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, request.speed)));
+                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, request.speed)));
 
                 speeds[request.train - 1] = request.speed;
-
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 break;
 
             case ReverseRequest:
@@ -188,9 +186,8 @@ TrainpTask
                 UCHAR oldSpeed = speeds[request.train - 1];
 
                 // Stop the train
-                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1,
-                                                 request.train,
-                                                 0)));
+                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, 0)));
+                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, 0)));
 
                 // Wait for the train to come to a stop
                 // TODO - Better implementation
@@ -198,13 +195,14 @@ TrainpTask
 
                 // Reverse the train
                 VERIFY(SUCCESSFUL(TrainpReverse(&com1, request.train)));
+                VERIFY(SUCCESSFUL(LocationServerFlipTrainDirection(request.train)));
+
+                // TODO - Why do we need this, and only on track B?
+                Delay(10);
 
                 // Speed the train back up to its original speed
-                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1,
-                                                 request.train,
-                                                 oldSpeed)));
-
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
+                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, oldSpeed)));
+                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, oldSpeed)));
                 break;
             }
 
@@ -212,6 +210,8 @@ TrainpTask
                 ASSERT(FALSE);
                 break;
         }
+
+        VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
     }
 
     // Stop any trains that are moving

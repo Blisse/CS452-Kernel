@@ -226,7 +226,7 @@ DisplaypSensorRequest
         CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + i };
         VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
         VERIFY(SUCCESSFUL(WriteFormattedString(com2Device,
-                                               CURSOR_DELETE_LINE "\033[36m%c%02d \033[33m%d\033[0m",
+                                               "\033[36m%c%02d \033[33m%d\033[0m",
                                                displayData.sensor.module,
                                                displayData.sensor.number,
                                                displayData.isOn)));

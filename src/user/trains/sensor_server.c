@@ -57,7 +57,7 @@ SensorReaderpUpdate
             if (previousValue != currentValue)
             {
                 // Make sure there is still room for this sensor
-                if(changedSensors.size < MAX_CHANGED_SENSORS)
+                if(changedSensors.size < MAX_TRACKABLE_TRAINS)
                 {
                     // Add this sensor to the list of changed sensors
                     SENSOR_DATA* data = &changedSensors.sensors[changedSensors.size];
@@ -70,7 +70,7 @@ SensorReaderpUpdate
 
                     // TODO: What if we had the display server register for sensor updates
                     //       the same as everyone else?
-                    ShowSensorStatus(*data);
+                    //ShowSensorStatus(*data);
                 }
                 else
                 {
@@ -110,8 +110,6 @@ SensorReaderpTask
     IO_DEVICE com1Device;
     VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1Device)));
 
-    VERIFY(SUCCESSFUL(FlushInput(&com1Device)));
-
     while (1)
     {
         VERIFY(SUCCESSFUL(WriteChar(&com1Device, SENSOR_COMMAND_QUERY)));
@@ -127,7 +125,7 @@ SensorServerpTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority18, SensorReaderpTask)));
+    VERIFY(SUCCESSFUL(Create(HighestUserPriority, SensorReaderpTask)));
     VERIFY(SUCCESSFUL(RegisterAs(SENSOR_SERVER_NAME)));
 
     INT underlyingSubscriberBuffer[NUM_TASKS];
@@ -171,7 +169,7 @@ SensorServerCreateTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority17, SensorServerpTask)));
+    VERIFY(SUCCESSFUL(Create(Priority25, SensorServerpTask)));
 }
 
 INT

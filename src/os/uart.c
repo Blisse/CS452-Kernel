@@ -105,11 +105,11 @@ UartCreateTasks
                                         UartCom1TransmitEvent, 
                                         UartpCom1Write, 
                                         UART_COM1_WRITE_NAME)));
-    VERIFY(SUCCESSFUL(IoCreateReadTask(Priority29, 
+    VERIFY(SUCCESSFUL(IoCreateReadTask(Priority28, 
                                        UartCom2ReceiveEvent, 
                                        UartpCom2Read, 
                                        UART_COM2_READ_NAME)));
-    VERIFY(SUCCESSFUL(IoCreateWriteTask(Priority29, 
+    VERIFY(SUCCESSFUL(IoCreateWriteTask(Priority28, 
                                         UartCom2TransmitEvent, 
                                         UartpCom2Write, 
                                         UART_COM2_WRITE_NAME)));

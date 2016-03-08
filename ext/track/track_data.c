@@ -8,8 +8,8 @@ static void *memset(void *s, int c, unsigned int n) {
   return s;
 }
 
-void init_tracka(track_node *track) {
-  memset(track, 0, TRACK_MAX*sizeof(track_node));
+void init_tracka(TRACK_NODE* track) {
+  memset(track, 0, TRACK_MAX*sizeof(TRACK_NODE));
   track[0].name = "A1";
   track[0].type = NODE_SENSOR;
   track[0].num = 0;
@@ -1192,8 +1192,8 @@ void init_tracka(track_node *track) {
   track[143].reverse = &track[142];
 }
 
-void init_trackb(track_node *track) {
-  memset(track, 0, TRACK_MAX*sizeof(track_node));
+void init_trackb(TRACK_NODE* track) {
+  memset(track, 0, TRACK_MAX*sizeof(TRACK_NODE));
   track[0].name = "A1";
   track[0].type = NODE_SENSOR;
   track[0].num = 0;
