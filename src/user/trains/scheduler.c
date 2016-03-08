@@ -8,7 +8,7 @@
 #include <user/trains.h>
 
 #define SCHEDULER_NAME "scheduler"
-#define SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD 8 // 80 ms
+#define SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD 5 // 50 ms
 
 typedef enum _SCHEDULER_REQUEST_TYPE
 {

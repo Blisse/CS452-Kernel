@@ -70,7 +70,7 @@ SensorReaderpUpdate
 
                     // TODO: What if we had the display server register for sensor updates
                     //       the same as everyone else?
-                    ShowSensorStatus(*data);
+                    //ShowSensorStatus(*data);
                 }
                 else
                 {
@@ -129,7 +129,7 @@ SensorServerpTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority18, SensorReaderpTask)));
+    VERIFY(SUCCESSFUL(Create(HighestUserPriority, SensorReaderpTask)));
     VERIFY(SUCCESSFUL(RegisterAs(SENSOR_SERVER_NAME)));
 
     INT underlyingSubscriberBuffer[NUM_TASKS];
@@ -173,7 +173,7 @@ SensorServerCreateTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority17, SensorServerpTask)));
+    VERIFY(SUCCESSFUL(Create(Priority25, SensorServerpTask)));
 }
 
 INT

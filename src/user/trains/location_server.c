@@ -162,6 +162,17 @@ LocationServerpFindTrainByNextSensor
 }
 
 static
+inline
+INT
+LocationServerpUpdateScheduler
+    (
+        IN TRAIN_DATA* trainData
+    )
+{
+    return SchedulerUpdateLocation(trainData->currentNode, trainData->distancePastCurrentNode, trainData->nextNode, trainData->velocity);
+}
+
+static
 VOID
 LocationServerpTask
     (
@@ -238,10 +249,7 @@ LocationServerpTask
                     VERIFY(SUCCESSFUL(TrackFindNextSensor(node, &trainData->nextNode)));
 
                     // Send updated location and velocity to coordinator
-                    VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->currentNode, 
-                                                              trainData->distancePastCurrentNode, 
-                                                              trainData->nextNode, 
-                                                              trainData->velocity)));
+                    VERIFY(SUCCESSFUL(LocationServerpUpdateScheduler(trainData)));
                 }
                 else
                 {
