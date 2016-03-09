@@ -110,7 +110,7 @@ SchedulerpTask
                 {
                     INT diff = abs(arrivedAtNextNodeRequest->arrivalTime - trainSchedule->nextNodeExpectedArrivalTime);
 
-                    if(diff >= SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD)
+                    if(diff > SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD)
                     {
                         if(arrivedAtNextNodeRequest->arrivalTime > trainSchedule->nextNodeExpectedArrivalTime)
                         {
@@ -131,7 +131,7 @@ SchedulerpTask
                 SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST* updateLocationRequest = &request.updateLocationRequest;
                 TRAIN_SCHEDULE* trainSchedule = &trainSchedules[updateLocationRequest->train];
 
-                if(updateLocationRequest->velocity >= SCHEDULER_TRAIN_NOT_MOVING_THRESHOLD)
+                if(updateLocationRequest->velocity > SCHEDULER_TRAIN_NOT_MOVING_THRESHOLD)
                 {
                     UINT remainingDistance = trainSchedule->nextNodeDistance - updateLocationRequest->distancePastCurrentNode;
                     UINT timeTillNextNode = remainingDistance / updateLocationRequest->velocity;
