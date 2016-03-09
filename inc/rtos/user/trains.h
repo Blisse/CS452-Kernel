@@ -13,6 +13,13 @@
 #define MAX_SPEED 14
 
 INT
+TrainGetSpeed
+    (
+        IN INT train,
+        OUT UCHAR* speed
+    );
+
+INT
 TrainSetSpeed
     (
         IN INT train,

@@ -173,20 +173,24 @@ SchedulerpTask
                     UINT distanceToNode;
                     if (SUCCESSFUL(TrackDistanceBetween(trainSchedule->nextNode, trainSchedule->stopNode, &distanceToNode)))
                     {
-                        INT actualDistanceToNode = (distanceToNode - trainSchedule->nextNodeDistance);
+                        INT actualDistanceToNode = distanceToNode - trainSchedule->nextNodeDistance + updateLocationRequest->distancePastCurrentNode;
 
-                        float decelerationFactor = 2.1;
-                        INT deceleration = PhysicsSteadyStateDeceleration(updateLocationRequest->train, 14) * decelerationFactor;
-
-                        // d = (vf^2 - vi^2) / (2a)
-                        INT stoppingDistance = (updateLocationRequest->velocity * updateLocationRequest->velocity) / (2 * deceleration);
-                        Log("Looking to stop %d, %d", actualDistanceToNode, stoppingDistance);
-
-                        if (actualDistanceToNode + 5000 < stoppingDistance)
+                        UCHAR trainSpeed;
+                        if (SUCCESSFUL(TrainGetSpeed(updateLocationRequest->train, &trainSpeed)))
                         {
-                            Log("Stopping %d...", updateLocationRequest->train);
-                            TrainSetSpeed(updateLocationRequest->train, 0);
-                            trainSchedule->stopNode = NULL;
+                            float decelerationFactor = 1.2;
+                            INT deceleration = PhysicsSteadyStateDeceleration(updateLocationRequest->train, 14) * decelerationFactor;
+
+                            // d = (vf^2 - vi^2) / (2a)
+                            INT stoppingDistance = (updateLocationRequest->velocity * updateLocationRequest->velocity) / (2 * deceleration);
+                            Log("Looking to stop %d, %d", actualDistanceToNode, stoppingDistance);
+
+                            if (actualDistanceToNode + 5000 < stoppingDistance)
+                            {
+                                Log("Stopping %d...", updateLocationRequest->train);
+                                TrainSetSpeed(updateLocationRequest->train, 0);
+                                trainSchedule->stopNode = NULL;
+                            }
                         }
                     }
                 }
