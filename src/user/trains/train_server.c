@@ -18,6 +18,7 @@ typedef enum _TRAIN_REQUEST_TYPE
 {
     ShutdownRequest = 0,
     SetSpeedRequest,
+    GetSpeedRequest,
     ReverseRequest
 } TRAIN_REQUEST_TYPE;
 
@@ -26,6 +27,7 @@ typedef struct _TRAIN_REQUEST
     TRAIN_REQUEST_TYPE type;
     UCHAR train;
     UCHAR speed;
+    UCHAR* trainSpeed;
 } TRAIN_REQUEST;
 
 static
@@ -174,6 +176,10 @@ TrainpTask
                 running = FALSE;
                 break;
 
+            case GetSpeedRequest:
+                *request.trainSpeed = speeds[request.train - 1];
+                break;
+
             case SetSpeedRequest:
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, request.speed)));
                 VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, request.speed)));
@@ -225,6 +231,22 @@ TrainpTask
 
     // Turn the train controller off
     VERIFY(SUCCESSFUL(TrainpStop(&com1)));
+}
+
+INT
+TrainGetSpeed
+    (
+        IN INT train,
+        OUT UCHAR* speed
+    )
+{
+    if (!(0 <= train && train < NUM_TRAINS))
+    {
+        return -1;
+    }
+
+    TRAIN_REQUEST request = { GetSpeedRequest, train, 0, speed };
+    return TrainpSendRequest(&request);
 }
 
 INT
