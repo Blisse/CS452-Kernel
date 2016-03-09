@@ -133,24 +133,21 @@ SchedulerpTask
 
                 if(updateLocationRequest->velocity > SCHEDULER_TRAIN_NOT_MOVING_THRESHOLD)
                 {
-                    UINT remainingDistance = trainSchedule->nextNodeDistance - updateLocationRequest->distancePastCurrentNode;
-                    UINT timeTillNextNode = remainingDistance / updateLocationRequest->velocity;
+                    // Due to sensor latency, we may believe we've gone past the sensor
+                    // If we think we've gone past the sensor, then just use our last arrival time guess
+                    if(trainSchedule->nextNodeDistance > updateLocationRequest->distancePastCurrentNode)
+                    {
+                        UINT remainingDistance = trainSchedule->nextNodeDistance - updateLocationRequest->distancePastCurrentNode;
+                        UINT timeTillNextNode = remainingDistance / updateLocationRequest->velocity;
 
-                    INT currentTime = Time();
-                    ASSERT(SUCCESSFUL(currentTime));
+                        INT currentTime = Time();
+                        ASSERT(SUCCESSFUL(currentTime));
 
-                    // TODO: Do we still need this?
+                        // Some sensors are sticky and take longer than others to activate
+                        UINT correctiveTime = TrackGetCorrectiveTime(trainSchedule->nextNode);
 
-                    // Calculate how many branches are inbetween the current location and the next location
-                    // Branches are bumpy, and cause the train to slow down by a bit
-                    //UINT numBranches;
-                    //VERIFY(SUCCESSFUL(TrackNumBranchesBetween(updateLocationRequest->currentNode, updateLocationRequest->nextNode, &numBranches)));
-                    //INT branchSlowdown = SCHEDULER_TICK_PENALTY_PER_BRANCH * numBranches;
-
-                    // Some sensors are sticky and take longer than others to activate
-                    UINT correctiveTime = TrackGetCorrectiveTime(trainSchedule->nextNode);
-
-                    trainSchedule->nextNodeExpectedArrivalTime = currentTime + timeTillNextNode + correctiveTime; //+ branchSlowdown;
+                        trainSchedule->nextNodeExpectedArrivalTime = currentTime + timeTillNextNode + correctiveTime;
+                    }
                 }
                 else
                 {

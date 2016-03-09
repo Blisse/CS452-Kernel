@@ -51,6 +51,7 @@ typedef struct _TRAIN_DATA
     TRACK_NODE* nextNode;
     DIRECTION direction;
     UINT velocity; // in micrometers / tick
+    INT lastTimeLocationUpdated;
 } TRAIN_DATA;
 
 static
@@ -193,7 +194,24 @@ LocationServerpTask
         {
             case VelocityUpdateRequest:
             {
-                // TODO - Update velocity and location
+                INT currentTime = Time();
+                ASSERT(SUCCESSFUL(currentTime));
+
+                // Update location
+                // TODO - Acceleration is not taken in to account
+                for(UINT i = 0; i < numTrackedTrains; i++)
+                {
+                    TRAIN_DATA* trainData = &trackedTrains[i];
+                    INT diff = currentTime - trainData->lastTimeLocationUpdated;
+
+                    if(diff >= LOCATION_SERVER_NOTIFIER_UPDATE_INTERVAL)
+                    {
+                        trainData->distancePastCurrentNode += diff * trainData->velocity;
+                        trainData->lastTimeLocationUpdated = currentTime;
+                        VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->train, trainData->distancePastCurrentNode, trainData->velocity)));
+                    }
+                }
+
                 break;
             }
 
@@ -249,6 +267,7 @@ LocationServerpTask
 
                     // Update the location   
                     trainData->distancePastCurrentNode = LOCATION_SERVER_AVERAGE_SENSOR_LATENCY * trainData->velocity;
+                    trainData->lastTimeLocationUpdated = currentTick;
                     VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->train, trainData->distancePastCurrentNode, trainData->velocity)));
                 }
                 else
@@ -266,7 +285,9 @@ LocationServerpTask
 
                 if(NULL != trainData)
                 {
-                    // TODO - Update velocity
+                    // TODO - This is a bad approximation
+                    trainData->velocity = PhysicsSteadyStateVelocity(speedUpdate.train, speedUpdate.speed);
+                    VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->train, trainData->distancePastCurrentNode, trainData->velocity)));
                 }
                 else
                 {
@@ -277,6 +298,7 @@ LocationServerpTask
                     newTrain.distancePastCurrentNode = 0;
                     newTrain.nextNode = NULL;
                     newTrain.direction = DirectionForward;
+                    newTrain.lastTimeLocationUpdated = 0;
 
                     // TODO - This is a bad approximation
                     newTrain.velocity = PhysicsSteadyStateVelocity(speedUpdate.train, speedUpdate.speed);
