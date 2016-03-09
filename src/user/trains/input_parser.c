@@ -44,9 +44,11 @@ InputParserpParseCommand
 {
     CHAR arg1Buffer[12];
     CHAR arg2Buffer[12];
+    CHAR arg3Buffer[12];
 
     INT arg1;
     INT arg2;
+    INT arg3;
 
     CHAR token[12];
     INT read = RtStrConsumeToken(&buffer, token, sizeof(token));
@@ -95,6 +97,26 @@ InputParserpParseCommand
             if (RtStrIsWhitespace(buffer))
             {
                 TrainReverse(arg1);
+            }
+        }
+    }
+    else if (RtStrEqual(token, "stop"))
+    {
+        read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
+        if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
+        {
+            read = RtStrConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
+            if (read == 1)
+            {
+                read = RtStrConsumeToken(&buffer, arg3Buffer, sizeof(arg3Buffer));
+                if (read && RT_SUCCESS(RtAtoi(arg3Buffer, &arg3)))
+                {
+                    if (RtStrIsWhitespace(buffer))
+                    {
+                        SENSOR sensor = {arg2Buffer[0], arg3 };
+                        SchedulerStopTrainAtSensor(arg1, sensor);
+                    }
+                }
             }
         }
     }

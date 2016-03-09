@@ -137,7 +137,12 @@ TrackGetCorrectiveTime
  *          SCHEDULER API           *
  ************************************/
 
- 
+INT
+SchedulerStopTrainAtSensor
+    (
+        IN UCHAR train,
+        IN SENSOR sensor
+    );
 
 /************************************
  *           INIT TASK              *
