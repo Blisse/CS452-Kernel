@@ -41,7 +41,7 @@ typedef enum _DISPLAY_REQUEST_TYPE
 
 typedef struct _DISPLAY_LOG_REQUEST
 {
-    CHAR message[128];
+    CHAR message[64];
     INT length;
 } DISPLAY_LOG_REQUEST;
 
@@ -208,7 +208,7 @@ DisplaypLogRequest
 
     for (UINT i = 0; i < logBufferSize; i++)
     {
-        CHAR buffer[128];
+        CHAR buffer[64];
         VERIFY(RT_SUCCESS(RtCircularBufferElementAt(logBuffer, i, buffer, sizeof(buffer))));
 
         CURSOR_POSITION cursor = { CURSOR_LOG_X, CURSOR_LOG_Y + i };
