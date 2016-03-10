@@ -105,6 +105,7 @@ SchedulerpTask
                 TRAIN_SCHEDULE* trainSchedule = &trainSchedules[changedNextNodeRequest->train];
 
                 trainSchedule->nextNode = changedNextNodeRequest->nextNode;
+                trainSchedule->nextNodeExpectedArrivalTime = 0;
                 VERIFY(SUCCESSFUL(TrackDistanceBetween(changedNextNodeRequest->currentNode,
                                                        changedNextNodeRequest->nextNode,
                                                        &trainSchedule->nextNodeDistance)));

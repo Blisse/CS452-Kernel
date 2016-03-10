@@ -11,7 +11,7 @@
 #include <user/trains.h>
 
 #define LOCATION_SERVER_NAME "location"
-#define LOCATION_SERVER_NOTIFIER_UPDATE_INTERVAL 5 // 50 ms
+#define LOCATION_SERVER_NOTIFIER_UPDATE_INTERVAL 3 // 30 ms
 #define LOCATION_SERVER_ALPHA 5
 #define LOCATION_SERVER_AVERAGE_SENSOR_LATENCY 65 // 65 ms
 
@@ -239,6 +239,12 @@ LocationServerpTask
                     ASSERT(SUCCESSFUL(currentTick));
 
                     INT sensorArrivalTick = (10 * currentTick - LOCATION_SERVER_AVERAGE_SENSOR_LATENCY) / 10;
+
+                    // Check to see if we went over a dead sensor
+                    if(NULL != trainData->currentNode && node != trainData->nextNode)
+                    {
+                        VERIFY(SUCCESSFUL(SchedulerTrainChangedNextNode(trainData->train, trainData->currentNode, node)));
+                    }
 
                     // Let the scheduler know we reached a sensor
                     VERIFY(SUCCESSFUL(SchedulerTrainArrivedAtNextNode(trainData->train, sensorArrivalTick)));
