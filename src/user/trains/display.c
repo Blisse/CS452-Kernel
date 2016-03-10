@@ -11,10 +11,19 @@
 
 #include <user/trains.h>
 
-#define CURSOR_MOVE "\033[%d;%dH"
-#define CURSOR_CLEAR "\033[2J"
-#define CURSOR_DELETE_LINE "\033[K"
-#define CURSOR_HIDE "\033[?25l"
+#define CURSOR_MOVE         "\033[%d;%dH"
+#define CURSOR_CLEAR        "\033[2J"
+#define CURSOR_DELETE_LINE  "\033[K"
+#define CURSOR_HIDE         "\033[?25l"
+
+#define CURSOR_RESET    "\033[0m"
+#define CURSOR_RED      "\033[31m"
+#define CURSOR_GREEN    "\033[32m"
+#define CURSOR_YELLOW   "\033[33m"
+#define CURSOR_BLUE     "\033[34m"
+#define CURSOR_MAGENTA  "\033[35m"
+#define CURSOR_CYAN     "\033[36m"
+#define CURSOR_WHITE    "\033[37m"
 
 #define DISPLAY_NAME "display"
 
