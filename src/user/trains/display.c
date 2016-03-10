@@ -172,7 +172,7 @@ DisplaypClock
 
     CURSOR_POSITION cursor = { CURSOR_CLOCK_X, CURSOR_CLOCK_Y };
     WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[36m" "%02d:%02d:%d>" "\033[0m", m % 60, s % 60, ts % 10);
+    WriteFormattedString(com2Device, CURSOR_CYAN "%02d:%02d:%d>" CURSOR_RESET, m % 60, s % 60, ts % 10);
 }
 
 static
@@ -185,7 +185,7 @@ DisplaypIdlePercentage
 {
     CURSOR_POSITION cursor = { CURSOR_IDLE_X, CURSOR_IDLE_Y };
     WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[32m%02d.%02d%%" "\033[0m", idlePercentage / 100, idlePercentage % 100);
+    WriteFormattedString(com2Device, CURSOR_GREEN "%02d.%02d%%" CURSOR_RESET, idlePercentage / 100, idlePercentage % 100);
 }
 
 static
@@ -227,7 +227,7 @@ DisplaypSwitchRequest
 {
     CURSOR_POSITION cursor = { CURSOR_SWITCH_X, CURSOR_SWITCH_Y + switchRequest->index };
     WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[36msw\033[0m %3d \033[33m%c\033[0m", switchRequest->number, switchRequest->direction == SwitchStraight ? 'S' : 'C');
+    WriteFormattedString(com2Device, CURSOR_CYAN "sw" CURSOR_RESET " %3d " CURSOR_YELLOW "%c" CURSOR_RESET, switchRequest->number, switchRequest->direction == SwitchStraight ? 'S' : 'C');
 }
 
 static
@@ -255,7 +255,7 @@ DisplaypSensorRequest
         CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + i };
         VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
         VERIFY(SUCCESSFUL(WriteFormattedString(com2Device,
-                                               "\033[36m%c%02d \033[33m%d\033[0m",
+                                               CURSOR_CYAN "%c%02d " CURSOR_YELLOW "%d" CURSOR_RESET,
                                                displayData.sensor.module,
                                                displayData.sensor.number,
                                                displayData.isOn)));
