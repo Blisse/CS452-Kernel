@@ -47,3 +47,11 @@ ShowSensorStatus
     (
         IN SENSOR_DATA data
     );
+
+VOID
+ShowTrainArrival
+    (
+        IN UCHAR train,
+        IN STRING node,
+        IN INT diff
+    );

@@ -27,6 +27,7 @@ typedef enum _DISPLAY_REQUEST_TYPE
     DisplaySensorRequest,
     DisplayShutdownRequest,
     DisplaySwitchRequest,
+    DisplayTrainArrivalRequest,
 } DISPLAY_REQUEST_TYPE;
 
 typedef struct _DISPLAY_REQUEST
@@ -54,6 +55,13 @@ typedef struct _DISPLAY_SWITCH_REQUEST
     SWITCH_DIRECTION direction;
 } DISPLAY_SWITCH_REQUEST;
 
+typedef struct _DISPLAY_TRAIN_ARRIVAL_REQUEST
+{
+    UCHAR train;
+    STRING node;
+    INT diff;
+} DISPLAY_TRAIN_ARRIVAL_REQUEST;
+
 #define CURSOR_CMD_X 13
 #define CURSOR_CMD_Y 2
 
@@ -64,13 +72,16 @@ typedef struct _DISPLAY_SWITCH_REQUEST
 #define CURSOR_IDLE_Y 4
 
 #define CURSOR_LOG_X 25
-#define CURSOR_LOG_Y 6
+#define CURSOR_LOG_Y 10
 
 #define CURSOR_SWITCH_X 4
 #define CURSOR_SWITCH_Y 6
 
 #define CURSOR_SENSOR_X 16
 #define CURSOR_SENSOR_Y 6
+
+#define CURSOR_TRAIN_ARRIVAL_X 25
+#define CURSOR_TRAIN_ARRIVAL_Y 6
 
 typedef struct _CURSOR_POSITION
 {
@@ -421,4 +432,16 @@ ShowSensorStatus
 {
     DISPLAY_SENSOR_REQUEST sensorRequest = { data };
     VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySensorRequest, &sensorRequest, sizeof(sensorRequest))));
+}
+
+VOID
+ShowTrainArrival
+    (
+        IN UCHAR train,
+        IN STRING node,
+        IN INT diff
+    )
+{
+    DISPLAY_TRAIN_ARRIVAL_REQUEST request = { train; node; diff };
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayTrainArrivalRequest, &request, sizeof(request))));
 }

@@ -120,19 +120,8 @@ SchedulerpTask
                 // This might be the first time we've seen this train
                 if(trainSchedule->nextNodeExpectedArrivalTime > 0)
                 {
-                    INT diff = abs(arrivedAtNextNodeRequest->arrivalTime - trainSchedule->nextNodeExpectedArrivalTime);
-
-                    if(diff > SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD)
-                    {
-                        if(arrivedAtNextNodeRequest->arrivalTime > trainSchedule->nextNodeExpectedArrivalTime)
-                        {
-                            Log("%d late to %s by %d", arrivedAtNextNodeRequest->train, trainSchedule->nextNode->name, diff);
-                        }
-                        else
-                        {
-                            Log("%d early to %s by %d", arrivedAtNextNodeRequest->train, trainSchedule->nextNode->name, diff);
-                        }
-                    }
+                    INT diff = arrivedAtNextNodeRequest->arrivalTime - trainSchedule->nextNodeExpectedArrivalTime;
+                    ShowTrainArrival(arrivedAtNextNodeRequest->train, trainSchedule->nextNode->name, diff);
                 }
 
                 break;
