@@ -156,9 +156,9 @@ SchedulerpTask
                         UINT timeTillNextNode = remainingDistance / updateLocationRequest->velocity;
 
                         // Some sensors are sticky and take longer than others to activate
-                        UINT correctiveTime = TrackGetCorrectiveTime(trainSchedule->nextNode);
+                        //UINT correctiveTime = TrackGetCorrectiveTime(trainSchedule->nextNode);
 
-                        trainSchedule->nextNodeExpectedArrivalTime = currentTime + timeTillNextNode + correctiveTime;
+                        trainSchedule->nextNodeExpectedArrivalTime = currentTime + timeTillNextNode;// + correctiveTime;
                     }
                 }
                 else
