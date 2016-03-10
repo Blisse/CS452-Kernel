@@ -121,7 +121,7 @@ SchedulerpTask
                 if(trainSchedule->nextNodeExpectedArrivalTime > 0)
                 {
                     INT diff = arrivedAtNextNodeRequest->arrivalTime - trainSchedule->nextNodeExpectedArrivalTime;
-                    ShowTrainArrival(arrivedAtNextNodeRequest->train, trainSchedule->nextNode->name, diff);
+                    ShowTrainArrival(arrivedAtNextNodeRequest->train, (const STRING)trainSchedule->nextNode->name, diff);
                 }
 
                 break;

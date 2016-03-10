@@ -30,13 +30,6 @@ typedef enum _DISPLAY_REQUEST_TYPE
     DisplayTrainArrivalRequest,
 } DISPLAY_REQUEST_TYPE;
 
-typedef struct _DISPLAY_REQUEST
-{
-    DISPLAY_REQUEST_TYPE type;
-    PVOID buffer;
-    UINT bufferLength;
-} DISPLAY_REQUEST;
-
 typedef struct _DISPLAY_LOG_REQUEST
 {
     CHAR message[128];
@@ -61,6 +54,23 @@ typedef struct _DISPLAY_TRAIN_ARRIVAL_REQUEST
     STRING node;
     INT diff;
 } DISPLAY_TRAIN_ARRIVAL_REQUEST;
+
+typedef struct _DISPLAY_REQUEST
+{
+    DISPLAY_REQUEST_TYPE type;
+
+    union
+    {
+        CHAR commandLineChar;
+        INT clockTicks;
+        INT idlePercentage;
+        DISPLAY_LOG_REQUEST* logRequest;
+        DISPLAY_SENSOR_REQUEST sensorRequest;
+        DISPLAY_SWITCH_REQUEST switchRequest;
+        DISPLAY_TRAIN_ARRIVAL_REQUEST arrivalRequest;
+    };
+
+} DISPLAY_REQUEST;
 
 #define CURSOR_CMD_X 13
 #define CURSOR_CMD_Y 2
@@ -244,18 +254,25 @@ DisplaypSensorRequest
 }
 
 static
+VOID
+DisplaypTrainArrivalRequest
+    (
+        IN IO_DEVICE* com2Device,
+        IN DISPLAY_TRAIN_ARRIVAL_REQUEST* arrivalRequest
+    )
+{
+}
+
+static
 INT
 DisplaypSendRequest
     (
-        IN DISPLAY_REQUEST_TYPE type,
-        IN PVOID buffer,
-        IN INT bufferLength
+        IN DISPLAY_REQUEST* request
     )
 {
-    DISPLAY_REQUEST request = { type, buffer, bufferLength };
     INT displayServerId = WhoIs(DISPLAY_NAME);
     ASSERT(SUCCESSFUL(displayServerId));
-    return Send(displayServerId, &request, sizeof(request), NULL, 0);
+    return Send(displayServerId, request, sizeof(*request), NULL, 0);
 }
 
 static
@@ -265,7 +282,9 @@ DisplaypShutdownHook
         VOID
     )
 {
-    DisplaypSendRequest(DisplayShutdownRequest, NULL, 0);
+    DISPLAY_REQUEST request;
+    request.type = DisplayShutdownRequest;
+    DisplaypSendRequest(&request);
 }
 
 static
@@ -305,38 +324,37 @@ DisplaypTask
         {
             case DisplayCharRequest:
             {
-                CHAR c = *((CHAR*) request.buffer);
-                DisplaypCommandLine(&com2Device, &cursor, c);
+                DisplaypCommandLine(&com2Device, &cursor, request.commandLineChar);
                 break;
             }
             case DisplayClockRequest:
             {
-                INT tick = *((INT*) request.buffer);
-                DisplaypClock(&com2Device, tick);
+                DisplaypClock(&com2Device, request.clockTicks);
                 break;
             }
             case DisplayIdleRequest:
             {
-                INT idle = *((INT*) request.buffer);
-                DisplaypIdlePercentage(&com2Device, idle);
+                DisplaypIdlePercentage(&com2Device, request.idlePercentage);
                 break;
             }
             case DisplayLogRequest:
             {
-                DISPLAY_LOG_REQUEST* logRequest = (DISPLAY_LOG_REQUEST*) request.buffer;
-                DisplaypLogRequest(&com2Device, &logBuffer, logRequest);
+                DisplaypLogRequest(&com2Device, &logBuffer, request.logRequest);
                 break;
             }
             case DisplaySwitchRequest:
             {
-                DISPLAY_SWITCH_REQUEST switchRequest = *((DISPLAY_SWITCH_REQUEST*) request.buffer);
-                DisplaypSwitchRequest(&com2Device, &switchRequest);
+                DisplaypSwitchRequest(&com2Device, &request.switchRequest);
                 break;
             }
             case DisplaySensorRequest:
             {
-                DISPLAY_SENSOR_REQUEST sensorRequest = *((DISPLAY_SENSOR_REQUEST*) request.buffer);
-                DisplaypSensorRequest(&com2Device, &sensorRequest, &sensorDataBuffer);
+                DisplaypSensorRequest(&com2Device, &request.sensorRequest, &sensorDataBuffer);
+                break;
+            }
+            case DisplayTrainArrivalRequest:
+            {
+                DisplaypTrainArrivalRequest(&com2Device, &request.arrivalRequest);
                 break;
             }
             case DisplayShutdownRequest:
@@ -368,7 +386,10 @@ ShowKeyboardChar
         IN CHAR c
     )
 {
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayCharRequest, &c, sizeof(c))));
+    DISPLAY_REQUEST request;
+    request.type = DisplayCharRequest;
+    request.commandLineChar = c;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
@@ -377,7 +398,10 @@ ShowClockTime
         IN INT clockTicks
     )
 {
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayClockRequest, &clockTicks, sizeof(clockTicks))));
+    DISPLAY_REQUEST request;
+    request.type = DisplayClockRequest;
+    request.clockTicks = clockTicks;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
@@ -386,7 +410,10 @@ ShowIdleTime
         IN INT idlePercentage
     )
 {
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayIdleRequest, &idlePercentage, sizeof(idlePercentage))));
+    DISPLAY_REQUEST request;
+    request.type = DisplayIdleRequest;
+    request.idlePercentage = idlePercentage;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
@@ -409,7 +436,10 @@ Log
 
     logRequest.length = written;
 
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayLogRequest, &logRequest, sizeof(logRequest))));
+    DISPLAY_REQUEST request;
+    request.type = DisplayLogRequest;
+    request.logRequest = &logRequest;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
@@ -421,7 +451,10 @@ ShowSwitchDirection
     )
 {
     DISPLAY_SWITCH_REQUEST switchRequest = { idx, number, direction };
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySwitchRequest, &switchRequest, sizeof(switchRequest))));
+    DISPLAY_REQUEST request;
+    request.type = DisplaySwitchRequest;
+    request.switchRequest = switchRequest;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
@@ -431,7 +464,10 @@ ShowSensorStatus
     )
 {
     DISPLAY_SENSOR_REQUEST sensorRequest = { data };
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySensorRequest, &sensorRequest, sizeof(sensorRequest))));
+    DISPLAY_REQUEST request;
+    request.type = DisplaySensorRequest;
+    request.sensorRequest = sensorRequest;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
@@ -442,6 +478,9 @@ ShowTrainArrival
         IN INT diff
     )
 {
-    DISPLAY_TRAIN_ARRIVAL_REQUEST request = { train; node; diff };
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayTrainArrivalRequest, &request, sizeof(request))));
+    DISPLAY_TRAIN_ARRIVAL_REQUEST arrivalRequest = { train, node, diff };
+    DISPLAY_REQUEST request;
+    request.type = DisplayTrainArrivalRequest;
+    request.arrivalRequest = arrivalRequest;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
