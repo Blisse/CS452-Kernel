@@ -91,7 +91,7 @@ typedef struct _DISPLAY_REQUEST
 #define CURSOR_IDLE_Y 4
 
 #define CURSOR_LOG_X 25
-#define CURSOR_LOG_Y 10
+#define CURSOR_LOG_Y 8
 
 #define CURSOR_SWITCH_X 4
 #define CURSOR_SWITCH_Y 6
@@ -270,6 +270,19 @@ DisplaypTrainArrivalRequest
         IN DISPLAY_TRAIN_ARRIVAL_REQUEST* arrivalRequest
     )
 {
+    CURSOR_POSITION cursor = { CURSOR_TRAIN_ARRIVAL_X, CURSOR_TRAIN_ARRIVAL_Y };
+
+    if (arrivalRequest->diff > 0)
+    {
+        WriteCursorPosition(com2Device, &cursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE CURSOR_RED "Train %d late to %s by %d" CURSOR_RESET, arrivalRequest->train, arrivalRequest->node, arrivalRequest->diff);
+    }
+    else
+    {
+        WriteCursorPosition(com2Device, &cursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE CURSOR_GREEN "Train %d early to %s by %d" CURSOR_RESET, arrivalRequest->train, arrivalRequest->node, abs(arrivalRequest->diff));
+    }
+
 }
 
 static
