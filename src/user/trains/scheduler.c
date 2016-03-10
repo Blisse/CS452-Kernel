@@ -175,7 +175,7 @@ SchedulerpTask
                             INT stoppingDistance = (updateLocationRequest->velocity * updateLocationRequest->velocity) / (2 * deceleration);
                             Log("Looking to stop %d, %d", actualDistanceToNode, stoppingDistance);
 
-                            if (actualDistanceToNode + 5000 < stoppingDistance)
+                            if (actualDistanceToNode < stoppingDistance)
                             {
                                 Log("Stopping %d...", updateLocationRequest->train);
                                 TrainSetSpeed(updateLocationRequest->train, 0);
