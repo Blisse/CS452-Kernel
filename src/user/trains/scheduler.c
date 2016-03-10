@@ -176,8 +176,7 @@ SchedulerpTask
                         UCHAR trainSpeed;
                         if (SUCCESSFUL(TrainGetSpeed(updateLocationRequest->train, &trainSpeed)))
                         {
-                            float decelerationFactor = 1.2;
-                            INT deceleration = PhysicsSteadyStateDeceleration(updateLocationRequest->train, 14) * decelerationFactor;
+                            INT deceleration = PhysicsSteadyStateDeceleration(updateLocationRequest->train, trainSpeed);
 
                             // d = (vf^2 - vi^2) / (2a)
                             INT stoppingDistance = (updateLocationRequest->velocity * updateLocationRequest->velocity) / (2 * deceleration);
