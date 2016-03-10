@@ -39,7 +39,6 @@ typedef struct _DISPLAY_REQUEST
 typedef struct _DISPLAY_LOG_REQUEST
 {
     CHAR message[128];
-    INT messageSize;
     INT length;
 } DISPLAY_LOG_REQUEST;
 
@@ -170,12 +169,12 @@ DisplaypLogRequest
 {
     if (RtCircularBufferIsFull(logBuffer))
     {
-        RtCircularBufferPop(logBuffer, logRequest->messageSize);
+        RtCircularBufferPop(logBuffer, sizeof(logRequest->message));
     }
 
-    RtCircularBufferPush(logBuffer, &logRequest->message, logRequest->messageSize);
+    RtCircularBufferPush(logBuffer, &logRequest->message, sizeof(logRequest->message));
 
-    UINT logBufferSize = RtCircularBufferSize(logBuffer) / logRequest->messageSize;
+    UINT logBufferSize = RtCircularBufferSize(logBuffer) / sizeof(logRequest->message);
 
     for (UINT i = 0; i < logBufferSize; i++)
     {
@@ -388,7 +387,6 @@ Log
 {
     DISPLAY_LOG_REQUEST logRequest;
     RtMemset(logRequest.message, sizeof(logRequest.message), 0);
-    logRequest.messageSize = 128;
 
     VA_LIST va;
     VA_START(va, message);
