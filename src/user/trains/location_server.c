@@ -11,9 +11,9 @@
 #include <user/trains.h>
 
 #define LOCATION_SERVER_NAME "location"
-#define LOCATION_SERVER_NOTIFIER_UPDATE_INTERVAL 5 // 50 ms
+#define LOCATION_SERVER_NOTIFIER_UPDATE_INTERVAL 3 // 30 ms
 #define LOCATION_SERVER_ALPHA 5
-#define LOCATION_SERVER_AVERAGE_SENSOR_LATENCY 6 // 60 ms
+#define LOCATION_SERVER_AVERAGE_SENSOR_LATENCY 70 // 70 ms
 
 typedef enum _LOCATION_SERVER_REQUEST_TYPE
 {
@@ -238,7 +238,13 @@ LocationServerpTask
                     INT currentTick = Time();
                     ASSERT(SUCCESSFUL(currentTick));
 
-                    INT sensorArrivalTick = currentTick - LOCATION_SERVER_AVERAGE_SENSOR_LATENCY;
+                    INT sensorArrivalTick = (10 * currentTick - LOCATION_SERVER_AVERAGE_SENSOR_LATENCY) / 10;
+
+                    // Check to see if we went over a dead sensor
+                    if(NULL != trainData->currentNode && node != trainData->nextNode)
+                    {
+                        VERIFY(SUCCESSFUL(SchedulerTrainChangedNextNode(trainData->train, trainData->currentNode, node)));
+                    }
 
                     // Let the scheduler know we reached a sensor
                     VERIFY(SUCCESSFUL(SchedulerTrainArrivedAtNextNode(trainData->train, sensorArrivalTick)));
@@ -266,7 +272,7 @@ LocationServerpTask
                     }
 
                     // Update the location   
-                    trainData->distancePastCurrentNode = LOCATION_SERVER_AVERAGE_SENSOR_LATENCY * trainData->velocity;
+                    trainData->distancePastCurrentNode = LOCATION_SERVER_AVERAGE_SENSOR_LATENCY * trainData->velocity / 10;
                     trainData->lastTimeLocationUpdated = currentTick;
                     VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->train, trainData->distancePastCurrentNode, trainData->velocity)));
                 }

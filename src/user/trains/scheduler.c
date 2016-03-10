@@ -105,6 +105,7 @@ SchedulerpTask
                 TRAIN_SCHEDULE* trainSchedule = &trainSchedules[changedNextNodeRequest->train];
 
                 trainSchedule->nextNode = changedNextNodeRequest->nextNode;
+                trainSchedule->nextNodeExpectedArrivalTime = 0;
                 VERIFY(SUCCESSFUL(TrackDistanceBetween(changedNextNodeRequest->currentNode,
                                                        changedNextNodeRequest->nextNode,
                                                        &trainSchedule->nextNodeDistance)));
@@ -155,9 +156,9 @@ SchedulerpTask
                         UINT timeTillNextNode = remainingDistance / updateLocationRequest->velocity;
 
                         // Some sensors are sticky and take longer than others to activate
-                        UINT correctiveTime = TrackGetCorrectiveTime(trainSchedule->nextNode);
+                        //UINT correctiveTime = TrackGetCorrectiveTime(trainSchedule->nextNode);
 
-                        trainSchedule->nextNodeExpectedArrivalTime = currentTime + timeTillNextNode + correctiveTime;
+                        trainSchedule->nextNodeExpectedArrivalTime = currentTime + timeTillNextNode;// + correctiveTime;
                     }
                 }
                 else
