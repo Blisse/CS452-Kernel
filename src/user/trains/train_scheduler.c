@@ -80,6 +80,8 @@ typedef struct _TRAIN_SCHEDULE
     UINT nextNodeDistance;
     INT nextNodeExpectedArrivalTime;
     TRACK_NODE* stopNode;
+    BOOLEAN stopping;
+    UCHAR stopSpeed;
 } TRAIN_SCHEDULE;
 
 static
@@ -94,7 +96,7 @@ SchedulerpTask
     TRAIN_SCHEDULE trainSchedules[MAX_TRAINS];
     RtMemset(trainSchedules, sizeof(trainSchedules), 0);
 
-    while(1) 
+    while(1)
     {
         INT senderId;
         SCHEDULER_REQUEST request;
@@ -191,6 +193,39 @@ SchedulerpTask
                     }
                 }
 
+                if (trainSchedule->stopping)
+                {
+                    INT deceleration = PhysicsSteadyStateDeceleration(updateLocationRequest->train, trainSchedule->stopSpeed);
+
+                    // d = (vf^2 - vi^2) / (2a)
+                    UINT stoppingDistance = ((updateLocationRequest->velocity * updateLocationRequest->velocity) / (2 * deceleration));
+
+                    UINT distanceToNextNode = trainSchedule->nextNodeDistance;
+
+                    if (distanceToNextNode > stoppingDistance)
+                    {
+                        Log("Expected to stop %d from %s", (distanceToNextNode - stoppingDistance), trainSchedule->nextNode->name);
+                    }
+                    else
+                    {
+                        TRACK_EDGE* nextEdge = TrackNextEdge(trainSchedule->nextNode);
+                        TRACK_NODE* nextNode = nextEdge->dest;
+                        distanceToNextNode += (nextEdge->dist * 1000);
+
+                        while (distanceToNextNode < stoppingDistance ||
+                            (distanceToNextNode >= stoppingDistance && nextNode->type != NODE_SENSOR))
+                        {
+                            nextEdge = TrackNextEdge(nextNode);
+                            nextNode = nextEdge->dest;
+                            distanceToNextNode += (nextEdge->dist * 1000);
+                        }
+
+                        Log("Expecting to stop %d %d %d from %s", distanceToNextNode, stoppingDistance, (distanceToNextNode - stoppingDistance), nextNode->name);
+                    }
+
+                    trainSchedule->stopping = FALSE;
+                }
+
                 // TODO: What if the train is going in reverse? Longer distance between pickup and sensor
                 //       This doesn't really matter for a location update, but will matter for stopping distance
                 break;
@@ -198,8 +233,11 @@ SchedulerpTask
 
             case TrainStopRequest:
             {
-                // SCHEDULER_TRAIN_STOP_REQUEST* stopRequest = &request.stopRequest;
-                // TRAIN_SCHEDULE* trainSchedule = &trainSchedules[stopRequest->train];
+                SCHEDULER_TRAIN_STOP_REQUEST* stopRequest = &request.stopRequest;
+                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[stopRequest->train];
+                trainSchedule->stopping = TRUE;
+                VERIFY(SUCCESSFUL(TrainGetSpeed(stopRequest->train, &trainSchedule->stopSpeed)));
+                TrainSetSpeed(stopRequest->train, 0);
 
                 break;
             }

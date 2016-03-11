@@ -294,9 +294,12 @@ LocationServerpTask
 
                 if(NULL != trainLocation)
                 {
-                    // TODO - This is a bad approximation
-                    trainLocation->velocity = PhysicsSteadyStateVelocity(speedUpdate.train, speedUpdate.speed);
-                    VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainLocation->train, trainLocation->distancePastCurrentNode, trainLocation->velocity)));
+                    if (speedUpdate.speed != 0)
+                    {
+                        // TODO - This is a bad approximation
+                        trainLocation->velocity = PhysicsSteadyStateVelocity(speedUpdate.train, speedUpdate.speed);
+                        VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainLocation->train, trainLocation->distancePastCurrentNode, trainLocation->velocity)));
+                    }
                 }
                 else
                 {

@@ -105,6 +105,18 @@ TrackInit
         IN TRACK track
     );
 
+TRACK_EDGE*
+TrackNextEdge
+    (
+        IN TRACK_NODE* node
+    );
+
+TRACK_NODE*
+TrackNextNode
+    (
+        IN TRACK_NODE* node
+    );
+
 TRACK_NODE*
 TrackFindSensor
     (
@@ -114,23 +126,23 @@ TrackFindSensor
 INT
 TrackFindNextSensor
     (
-        IN TRACK_NODE* node, 
+        IN TRACK_NODE* node,
         OUT TRACK_NODE** nextSensor
     );
 
 INT
 TrackDistanceBetween
     (
-        IN TRACK_NODE* n1, 
-        IN TRACK_NODE* n2, 
+        IN TRACK_NODE* n1,
+        IN TRACK_NODE* n2,
         OUT UINT* distance
     );
 
 INT
 TrackNumBranchesBetween
     (
-        IN TRACK_NODE* n1, 
-        IN TRACK_NODE* n2, 
+        IN TRACK_NODE* n1,
+        IN TRACK_NODE* n2,
         OUT UINT* numBranches
     );
 
