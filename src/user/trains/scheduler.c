@@ -162,26 +162,26 @@ SchedulerpTask
                 if (trainSchedule->stopNode)
                 {
                     UINT distanceToNode;
-                    if (SUCCESSFUL(TrackDistanceBetween(trainSchedule->nextNode, trainSchedule->stopNode, &distanceToNode)))
+                    VERIFY(SUCCESSFUL(TrackDistanceBetween(trainSchedule->nextNode, trainSchedule->stopNode, &distanceToNode)));
+
+                    UCHAR trainSpeed;
+                    VERIFY(SUCCESSFUL(TrainGetSpeed(updateLocationRequest->train, &trainSpeed)));
+
+                    // d = (vf^2 - vi^2) / (2a)
+                    INT deceleration = PhysicsSteadyStateDeceleration(updateLocationRequest->train, trainSpeed);
+                    INT stoppingDistance = (updateLocationRequest->velocity * updateLocationRequest->velocity) / (2 * deceleration);
+
+                    INT actualDistanceToNode = distanceToNode - trainSchedule->nextNodeDistance + updateLocationRequest->distancePastCurrentNode;
+                    Log("Looking to stop %d, %d", actualDistanceToNode, stoppingDistance);
+
+                    INT sensorDelay = 5;
+                    INT sensorDelayDistance = updateLocationRequest->velocity * sensorDelay;
+
+                    if (actualDistanceToNode < stoppingDistance + sensorDelayDistance)
                     {
-                        INT actualDistanceToNode = distanceToNode - trainSchedule->nextNodeDistance + updateLocationRequest->distancePastCurrentNode;
-
-                        UCHAR trainSpeed;
-                        if (SUCCESSFUL(TrainGetSpeed(updateLocationRequest->train, &trainSpeed)))
-                        {
-                            INT deceleration = PhysicsSteadyStateDeceleration(updateLocationRequest->train, trainSpeed);
-
-                            // d = (vf^2 - vi^2) / (2a)
-                            INT stoppingDistance = (updateLocationRequest->velocity * updateLocationRequest->velocity) / (2 * deceleration);
-                            Log("Looking to stop %d, %d", actualDistanceToNode, stoppingDistance);
-
-                            if (actualDistanceToNode + 5000 < stoppingDistance)
-                            {
-                                Log("Stopping %d...", updateLocationRequest->train);
-                                TrainSetSpeed(updateLocationRequest->train, 0);
-                                trainSchedule->stopNode = NULL;
-                            }
-                        }
+                        Log("Stopping %d...", updateLocationRequest->train);
+                        TrainSetSpeed(updateLocationRequest->train, 0);
+                        trainSchedule->stopNode = NULL;
                     }
                 }
 
