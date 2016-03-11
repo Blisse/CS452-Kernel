@@ -17,10 +17,10 @@
 
 typedef enum _LOCATION_SERVER_REQUEST_TYPE
 {
-    VelocityUpdateRequest = 0, 
-    SensorUpdateRequest, 
-    SwitchUpdatedRequest, 
-    SpeedUpdateRequest, 
+    VelocityUpdateRequest = 0,
+    SensorUpdateRequest,
+    SwitchUpdatedRequest,
+    SpeedUpdateRequest,
     FlipDirectionRequest
 } LOCATION_SERVER_REQUEST_TYPE;
 
@@ -94,12 +94,12 @@ LocationServerpSensorNotifierTask
         for(UINT i = 0; i < changedSensors.size; i++)
         {
             SENSOR_DATA* changedSensor = &changedSensors.sensors[i];
-            
+
             if(changedSensor->isOn)
             {
                 request.sensor = changedSensor->sensor;
                 VERIFY(SUCCESSFUL(Send(locationServerId, &request, sizeof(request), NULL, 0)));
-            }            
+            }
         }
     }
 }
@@ -108,8 +108,8 @@ static
 TRAIN_DATA*
 LocationServerpFindTrainById
     (
-        IN TRAIN_DATA* trains, 
-        IN UINT numTrains, 
+        IN TRAIN_DATA* trains,
+        IN UINT numTrains,
         IN UCHAR train
     )
 {
@@ -130,7 +130,7 @@ static
 TRAIN_DATA*
 LocationServerpFindTrainByNextSensor
     (
-        IN TRAIN_DATA* trains, 
+        IN TRAIN_DATA* trains,
         IN UINT numTrains,
         IN TRACK_NODE* node
     )
@@ -220,7 +220,7 @@ LocationServerpTask
                 TRACK_NODE* node = TrackFindSensor(&request.sensor);
                 TRAIN_DATA* trainData = LocationServerpFindTrainByNextSensor(trackedTrains, numTrackedTrains, node);
 
-                // If we couldn't find a train we expected to arrive at this sensor, 
+                // If we couldn't find a train we expected to arrive at this sensor,
                 // then maybe a train we're looking for tripped the sensor
                 if(NULL == trainData && !RtCircularBufferIsEmpty(&lostTrains))
                 {
@@ -271,7 +271,7 @@ LocationServerpTask
                         trainData->velocity = (newVelocityFactor + oldVelocityFactor) / 100;
                     }
 
-                    // Update the location   
+                    // Update the location
                     trainData->distancePastCurrentNode = LOCATION_SERVER_AVERAGE_SENSOR_LATENCY * trainData->velocity / 10;
                     trainData->lastTimeLocationUpdated = currentTick;
                     VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->train, trainData->distancePastCurrentNode, trainData->velocity)));
@@ -291,9 +291,12 @@ LocationServerpTask
 
                 if(NULL != trainData)
                 {
-                    // TODO - This is a bad approximation
-                    trainData->velocity = PhysicsSteadyStateVelocity(speedUpdate.train, speedUpdate.speed);
-                    VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->train, trainData->distancePastCurrentNode, trainData->velocity)));
+                    if (speedUpdate.speed != 0)
+                    {
+                        // TODO - This is a bad approximation
+                        trainData->velocity = PhysicsSteadyStateVelocity(speedUpdate.train, speedUpdate.speed);
+                        VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->train, trainData->distancePastCurrentNode, trainData->velocity)));
+                    }
                 }
                 else
                 {
@@ -408,7 +411,7 @@ LocationServerpSendRequest
 INT
 LocationServerUpdateTrainSpeed
     (
-        IN UCHAR train, 
+        IN UCHAR train,
         IN UCHAR speed
     )
 {
