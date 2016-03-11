@@ -170,8 +170,8 @@ LocationServerpTask
     )
 {
     VERIFY(SUCCESSFUL(RegisterAs(LOCATION_SERVER_NAME)));
-    VERIFY(SUCCESSFUL(Create(Priority22, LocationServerpVelocityNotifierTask)));
-    VERIFY(SUCCESSFUL(Create(Priority23, LocationServerpSensorNotifierTask)));
+    VERIFY(SUCCESSFUL(Create(Priority21, LocationServerpVelocityNotifierTask)));
+    VERIFY(SUCCESSFUL(Create(Priority22, LocationServerpSensorNotifierTask)));
 
     TRAIN_LOCATION underlyingLostTrainsBuffer[MAX_TRACKABLE_TRAINS];
     RT_CIRCULAR_BUFFER lostTrains;
@@ -382,7 +382,7 @@ LocationServerCreateTask
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority24, LocationServerpTask)));
+    VERIFY(SUCCESSFUL(Create(Priority23, LocationServerpTask)));
 }
 
 static

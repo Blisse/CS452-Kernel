@@ -291,5 +291,5 @@ TrainServerCreate
         VOID
     )
 {
-    VERIFY(SUCCESSFUL(Create(Priority20, TrainpTask)));
+    VERIFY(SUCCESSFUL(Create(Priority24, TrainpTask)));
 }
