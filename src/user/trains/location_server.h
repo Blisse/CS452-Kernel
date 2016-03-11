@@ -26,3 +26,9 @@ LocationServerFlipTrainDirection
     (
         IN UCHAR train
     );
+
+INT
+LocationServerUpdateTrainLocations
+    (
+        VOID
+    );

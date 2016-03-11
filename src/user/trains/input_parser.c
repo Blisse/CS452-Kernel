@@ -100,7 +100,7 @@ InputParserpParseCommand
             }
         }
     }
-    else if (RtStrEqual(token, "stop"))
+    else if (RtStrEqual(token, "sp"))
     {
         read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
         if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))

@@ -17,7 +17,7 @@
 
 typedef enum _LOCATION_SERVER_REQUEST_TYPE
 {
-    VelocityUpdateRequest = 0,
+    UpdateTrainLocationsRequest = 0,
     SensorUpdateRequest,
     SwitchUpdatedRequest,
     SpeedUpdateRequest,
@@ -46,32 +46,14 @@ typedef struct _TRAIN_LOCATION
 {
     UCHAR train;
     TRACK_NODE* currentNode;
-    INT currentNodeArrivalTick;
     UINT distancePastCurrentNode; // in micrometers
+    INT currentNodeArrivalTick;
     TRACK_NODE* nextNode;
+    UINT distanceToNextNodoe;
     DIRECTION direction;
     UINT velocity; // in micrometers / tick
     INT lastTimeLocationUpdated;
 } TRAIN_LOCATION;
-
-static
-VOID
-LocationServerpVelocityNotifierTask
-    (
-        VOID
-    )
-{
-    INT locationServerId = MyParentTid();
-    ASSERT(SUCCESSFUL(locationServerId));
-
-    LOCATION_SERVER_REQUEST request = { VelocityUpdateRequest };
-
-    while(1)
-    {
-        VERIFY(SUCCESSFUL(Delay(LOCATION_SERVER_NOTIFIER_UPDATE_INTERVAL)));
-        VERIFY(SUCCESSFUL(Send(locationServerId, &request, sizeof(request), NULL, 0)));
-    }
-}
 
 static
 VOID
@@ -170,7 +152,6 @@ LocationServerpTask
     )
 {
     VERIFY(SUCCESSFUL(RegisterAs(LOCATION_SERVER_NAME)));
-    VERIFY(SUCCESSFUL(Create(Priority22, LocationServerpVelocityNotifierTask)));
     VERIFY(SUCCESSFUL(Create(Priority23, LocationServerpSensorNotifierTask)));
 
     TRAIN_LOCATION underlyingLostTrainsBuffer[MAX_TRACKABLE_TRAINS];
@@ -192,7 +173,7 @@ LocationServerpTask
 
         switch(request.type)
         {
-            case VelocityUpdateRequest:
+            case UpdateTrainLocationsRequest:
             {
                 INT currentTime = Time();
                 ASSERT(SUCCESSFUL(currentTime));
@@ -350,13 +331,12 @@ LocationServerpTask
                     }
 
                     // Find the distance between our current node and the next node
-                    TRACK_NODE* temp = trainLocation->currentNode;
-                    UINT distance;
-                    VERIFY(SUCCESSFUL(TrackDistanceBetween(trainLocation->currentNode, trainLocation->nextNode, &distance)));
+                    VERIFY(SUCCESSFUL(TrackDistanceBetween(trainLocation->currentNode, trainLocation->nextNode, &trainLocation->distanceToNextNodoe)));
 
                     // Flip the direction we are travelling
+                    TRACK_NODE* temp = trainLocation->currentNode;
                     trainLocation->currentNode = trainLocation->nextNode->reverse;
-                    trainLocation->distancePastCurrentNode = distance - trainLocation->distancePastCurrentNode;
+                    trainLocation->distancePastCurrentNode = trainLocation->distanceToNextNodoe - trainLocation->distancePastCurrentNode;
                     trainLocation->nextNode = temp->reverse;
 
                     // Let the scheduler know to expect the new direction
@@ -440,6 +420,18 @@ LocationServerFlipTrainDirection
     LOCATION_SERVER_REQUEST request;
     request.type = FlipDirectionRequest;
     request.train = train;
+
+    return LocationServerpSendRequest(&request);
+}
+
+INT
+LocationServerUpdateTrainLocations
+    (
+        VOID
+    )
+{
+    LOCATION_SERVER_REQUEST request;
+    request.type = UpdateTrainLocationsRequest;
 
     return LocationServerpSendRequest(&request);
 }

@@ -169,6 +169,7 @@ TrainpTask
         TRAIN_REQUEST request;
 
         VERIFY(SUCCESSFUL(Receive(&sender, &request, sizeof(request))));
+        VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
 
         switch(request.type)
         {
@@ -217,7 +218,6 @@ TrainpTask
                 break;
         }
 
-        VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
     }
 
     // Stop any trains that are moving

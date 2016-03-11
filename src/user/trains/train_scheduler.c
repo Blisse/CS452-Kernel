@@ -1,12 +1,14 @@
 #include "scheduler.h"
 
-#include "display.h"
-#include "physics.h"
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
 #include <rtkernel.h>
 #include <rtos.h>
 #include <user/trains.h>
+
+#include "display.h"
+#include "physics.h"
+#include "location_server.h"
 
 #define SCHEDULER_NAME "scheduler"
 #define SCHEDULER_TICK_PENALTY_PER_BRANCH 2 // 20 ms
@@ -25,6 +27,7 @@ typedef enum _SCHEDULER_REQUEST_TYPE
     TrainArrivedAtNextNodeRequest,
     TrainUpdateLocationRequest,
     TrainStopAtSensorRequest,
+    TrainTickRequest,
 } SCHEDULER_REQUEST_TYPE;
 
 typedef struct _SCHEDULER_TRAIN_CHANGED_NEXT_NODE_REQUEST
@@ -77,12 +80,33 @@ typedef struct _TRAIN_SCHEDULE
 
 static
 VOID
+SchedulerpTickTask
+    (
+        VOID
+    )
+{
+    INT schedulerTask = MyParentTid();
+    ASSERT(SUCCESSFUL(schedulerTask));
+
+    SCHEDULER_REQUEST request = { TrainTickRequest };
+
+    while(1)
+    {
+        VERIFY(SUCCESSFUL(Delay(10)));
+        VERIFY(SUCCESSFUL(Send(schedulerTask, &request, sizeof(request), NULL, 0)));
+    }
+}
+
+static
+VOID
 SchedulerpTask
     (
         VOID
     )
 {
     VERIFY(SUCCESSFUL(RegisterAs(SCHEDULER_NAME)));
+
+    VERIFY(SUCCESSFUL(Create(Priority21, SchedulerpTickTask)));
 
     TRAIN_SCHEDULE trainSchedules[MAX_TRAINS];
     RtMemset(trainSchedules, sizeof(trainSchedules), 0);
@@ -99,6 +123,13 @@ SchedulerpTask
 
         switch(request.type)
         {
+            case TrainTickRequest:
+            {
+                LocationServerUpdateTrainLocations();
+
+                break;
+            }
+
             case TrainChangedNextNodeRequest:
             {
                 SCHEDULER_TRAIN_CHANGED_NEXT_NODE_REQUEST* changedNextNodeRequest = &request.changedNextNodeRequest;
@@ -115,7 +146,7 @@ SchedulerpTask
             case TrainArrivedAtNextNodeRequest:
             {
                 SCHEDULER_TRAIN_ARRIVED_AT_NEXT_NODE_REQUEST* arrivedAtNextNodeRequest = &request.arrivedAtNextNodeRequest;
-                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[arrivedAtNextNodeRequest->train];       
+                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[arrivedAtNextNodeRequest->train];
 
                 // This might be the first time we've seen this train
                 if(trainSchedule->nextNodeExpectedArrivalTime > 0)
