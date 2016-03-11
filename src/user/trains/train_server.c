@@ -169,20 +169,22 @@ TrainpTask
         TRAIN_REQUEST request;
 
         VERIFY(SUCCESSFUL(Receive(&sender, &request, sizeof(request))));
-        VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
 
         switch(request.type)
         {
             case ShutdownRequest:
                 running = FALSE;
+                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 break;
 
             case GetSpeedRequest:
                 *request.trainSpeed = speeds[request.train - 1];
+                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 break;
 
             case SetSpeedRequest:
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, request.speed)));
+                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, request.speed)));
 
                 speeds[request.train - 1] = request.speed;
@@ -194,6 +196,7 @@ TrainpTask
 
                 // Stop the train
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, 0)));
+                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, 0)));
 
                 // Wait for the train to come to a stop

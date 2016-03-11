@@ -23,12 +23,12 @@ InputParserpGetSwitchDirection
         case 's':
             *direction = SwitchStraight;
             return TRUE;
-            
+
         case 'C':
         case 'c':
             *direction = SwitchCurved;
             return TRUE;
-            
+
         default:
             return FALSE;
     }

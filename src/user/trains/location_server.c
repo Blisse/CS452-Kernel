@@ -211,7 +211,6 @@ LocationServerpTask
                         VERIFY(SUCCESSFUL(SchedulerUpdateLocation(trainData->train, trainData->distancePastCurrentNode, trainData->velocity)));
                     }
                 }
-
                 break;
             }
 
