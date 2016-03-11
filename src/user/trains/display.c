@@ -37,6 +37,7 @@ typedef enum _DISPLAY_REQUEST_TYPE
     DisplayShutdownRequest,
     DisplaySwitchRequest,
     DisplayTrainArrivalRequest,
+    DisplayTrainLocationRequest,
 } DISPLAY_REQUEST_TYPE;
 
 typedef struct _DISPLAY_LOG_REQUEST
@@ -64,6 +65,13 @@ typedef struct _DISPLAY_TRAIN_ARRIVAL_REQUEST
     INT diff;
 } DISPLAY_TRAIN_ARRIVAL_REQUEST;
 
+typedef struct _DISPLAY_TRAIN_LOCATION_REQUEST
+{
+    UCHAR train;
+    STRING node;
+    INT distanceToNode;
+} DISPLAY_TRAIN_LOCATION_REQUEST;
+
 typedef struct _DISPLAY_REQUEST
 {
     DISPLAY_REQUEST_TYPE type;
@@ -77,6 +85,7 @@ typedef struct _DISPLAY_REQUEST
         DISPLAY_SENSOR_REQUEST sensorRequest;
         DISPLAY_SWITCH_REQUEST switchRequest;
         DISPLAY_TRAIN_ARRIVAL_REQUEST arrivalRequest;
+        DISPLAY_TRAIN_LOCATION_REQUEST locationRequest;
     };
 
 } DISPLAY_REQUEST;
@@ -91,7 +100,7 @@ typedef struct _DISPLAY_REQUEST
 #define CURSOR_IDLE_Y 4
 
 #define CURSOR_LOG_X 25
-#define CURSOR_LOG_Y 8
+#define CURSOR_LOG_Y 11
 
 #define CURSOR_SWITCH_X 4
 #define CURSOR_SWITCH_Y 6
@@ -100,7 +109,10 @@ typedef struct _DISPLAY_REQUEST
 #define CURSOR_SENSOR_Y 6
 
 #define CURSOR_TRAIN_ARRIVAL_X 25
-#define CURSOR_TRAIN_ARRIVAL_Y 6
+#define CURSOR_TRAIN_ARRIVAL_Y 8
+
+#define CURSOR_TRAIN_LOCATION_X 25
+#define CURSOR_TRAIN_LOCATION_Y 6
 
 typedef struct _CURSOR_POSITION
 {
@@ -270,19 +282,44 @@ DisplaypTrainArrivalRequest
         IN DISPLAY_TRAIN_ARRIVAL_REQUEST* arrivalRequest
     )
 {
-    CURSOR_POSITION cursor = { CURSOR_TRAIN_ARRIVAL_X, CURSOR_TRAIN_ARRIVAL_Y };
+    CURSOR_POSITION earlyCursor = { CURSOR_TRAIN_ARRIVAL_X, CURSOR_TRAIN_ARRIVAL_Y };
+    CURSOR_POSITION lateCursor = { CURSOR_TRAIN_ARRIVAL_X, CURSOR_TRAIN_ARRIVAL_Y + 1 };
 
     if (arrivalRequest->diff > 0)
     {
-        WriteCursorPosition(com2Device, &cursor);
-        WriteFormattedString(com2Device, CURSOR_DELETE_LINE CURSOR_RED "Train %d late to %s by %d" CURSOR_RESET, arrivalRequest->train, arrivalRequest->node, arrivalRequest->diff);
+        WriteCursorPosition(com2Device, &earlyCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE);
+        WriteCursorPosition(com2Device, &lateCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE "Train %d is " CURSOR_RED "LATE" CURSOR_RESET " to %s by %d ticks", arrivalRequest->train, arrivalRequest->node, arrivalRequest->diff);
+    }
+    else if (arrivalRequest->diff < 0)
+    {
+        WriteCursorPosition(com2Device, &earlyCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE "Train %d is " CURSOR_GREEN "EARLY" CURSOR_RESET " to %s by %d ticks", arrivalRequest->train, arrivalRequest->node, abs(arrivalRequest->diff));
+        WriteCursorPosition(com2Device, &lateCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE);
     }
     else
     {
-        WriteCursorPosition(com2Device, &cursor);
-        WriteFormattedString(com2Device, CURSOR_DELETE_LINE CURSOR_GREEN "Train %d early to %s by %d" CURSOR_RESET, arrivalRequest->train, arrivalRequest->node, abs(arrivalRequest->diff));
+        WriteCursorPosition(com2Device, &earlyCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE "Train %d is " CURSOR_GREEN "ON TIME" CURSOR_RESET " to %s", arrivalRequest->train, arrivalRequest->node, arrivalRequest->diff);
+        WriteCursorPosition(com2Device, &lateCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE);
     }
+}
 
+static
+VOID
+DisplaypTrainLocationRequest
+    (
+        IN IO_DEVICE* ioDevice,
+        IN DISPLAY_TRAIN_LOCATION_REQUEST* locationRequest
+    )
+{
+    CURSOR_POSITION cursor = { CURSOR_TRAIN_LOCATION_X, CURSOR_TRAIN_LOCATION_Y };
+
+    WriteCursorPosition(ioDevice, &cursor);
+    WriteFormattedString(ioDevice, CURSOR_DELETE_LINE "Train %d is " CURSOR_CYAN "%2d cm" CURSOR_RESET " from %s", locationRequest->train, locationRequest->distanceToNode / 100000, locationRequest->node);
 }
 
 static
@@ -377,6 +414,11 @@ DisplaypTask
             case DisplayTrainArrivalRequest:
             {
                 DisplaypTrainArrivalRequest(&com2Device, &request.arrivalRequest);
+                break;
+            }
+            case DisplayTrainLocationRequest:
+            {
+                DisplaypTrainLocationRequest(&com2Device, &request.locationRequest);
                 break;
             }
             case DisplayShutdownRequest:
@@ -504,5 +546,20 @@ ShowTrainArrival
     DISPLAY_REQUEST request;
     request.type = DisplayTrainArrivalRequest;
     request.arrivalRequest = arrivalRequest;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
+}
+
+VOID
+ShowTrainLocation
+    (
+        IN UCHAR train,
+        IN STRING node,
+        IN INT distanceToNode
+    )
+{
+    DISPLAY_TRAIN_LOCATION_REQUEST locationRequest = { train, node, distanceToNode };
+    DISPLAY_REQUEST request;
+    request.type = DisplayTrainLocationRequest;
+    request.locationRequest = locationRequest;
     VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }

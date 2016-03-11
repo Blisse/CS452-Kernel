@@ -55,3 +55,11 @@ ShowTrainArrival
         IN STRING node,
         IN INT diff
     );
+
+VOID
+ShowTrainLocation
+    (
+        IN UCHAR train,
+        IN STRING node,
+        IN INT distanceToNode
+    );

@@ -123,15 +123,18 @@ SchedulerpTask
 
             case TrainArrivedAtNextNodeRequest:
             {
+                INT currentTime = Time();
+                ASSERT(SUCCESSFUL(currentTime));
+
                 SCHEDULER_TRAIN_ARRIVED_AT_NEXT_NODE_REQUEST* arrivedAtNextNodeRequest = &request.arrivedAtNextNodeRequest;
-                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[arrivedAtNextNodeRequest->train];       
+                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[arrivedAtNextNodeRequest->train];
 
                 // This might be the first time we've seen this train
                 if(trainSchedule->nextNodeExpectedArrivalTime > 0)
                 {
                     INT diff = arrivedAtNextNodeRequest->arrivalTime - trainSchedule->nextNodeExpectedArrivalTime;
 
-                    if (abs(diff) > SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD)
+                    if (abs(diff) > SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD || currentTime % 10 == 0)
                     {
                         ShowTrainArrival(arrivedAtNextNodeRequest->train, (STRING)trainSchedule->nextNode->name, diff);
                     }
@@ -166,6 +169,11 @@ SchedulerpTask
                 else
                 {
                     trainSchedule->nextNodeExpectedArrivalTime = 0;
+                }
+
+                if (currentTime % 10 == 0)
+                {
+                    ShowTrainLocation(updateLocationRequest->train, (STRING)trainSchedule->nextNode->name, (INT)trainSchedule->nextNodeDistance - (INT)updateLocationRequest->distancePastCurrentNode);
                 }
 
                 if (trainSchedule->stopNode)

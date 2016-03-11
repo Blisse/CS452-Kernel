@@ -229,7 +229,7 @@ LocationServerpTask
 
                     VERIFY(RT_SUCCESS(RtCircularBufferPeekAndPop(&lostTrains, trainData, sizeof(*trainData))));
 
-                    Log("Found %d", trainData->train);
+                    Log("Found train %d", trainData->train);
                 }
 
                 // Make sure we matched the sensor to a train.  If not, just ignore the sensor
@@ -315,7 +315,7 @@ LocationServerpTask
                     // We don't know where this train is yet
                     VERIFY(RT_SUCCESS(RtCircularBufferPush(&lostTrains, &newTrain, sizeof(newTrain))));
 
-                    Log("Looking for %d", newTrain.train);
+                    Log("Searching for train %d", newTrain.train);
                 }
 
                 break;
