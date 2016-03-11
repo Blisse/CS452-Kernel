@@ -45,6 +45,7 @@ typedef struct _LOCATION_SERVER_REQUEST
 typedef struct _TRAIN_LOCATION
 {
     UCHAR train;
+    UCHAR speed;
     TRACK_NODE* currentNode;
     INT currentNodeArrivalTick;
     UINT distancePastCurrentNode; // in micrometers
@@ -269,6 +270,8 @@ LocationServerpTask
                         UINT newVelocityFactor = LOCATION_SERVER_ALPHA * v;
                         UINT oldVelocityFactor = (100 - LOCATION_SERVER_ALPHA) * trainLocation->velocity;
                         trainLocation->velocity = (newVelocityFactor + oldVelocityFactor) / 100;
+                        PhysicsSetSteadyStateVelocity(trainLocation->train, trainLocation->speed, trainLocation->velocity);
+
                     }
 
                     // Update the location
@@ -299,6 +302,7 @@ LocationServerpTask
                 {
                     TRAIN_LOCATION newTrain;
                     newTrain.train = speedUpdate.train;
+                    newTrain.speed = speedUpdate.speed;
                     newTrain.currentNode = NULL;
                     newTrain.currentNodeArrivalTick = 0;
                     newTrain.distancePastCurrentNode = 0;

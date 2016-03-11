@@ -15,6 +15,14 @@ PhysicsSteadyStateVelocity
         IN UCHAR speed
     );
 
+VOID
+PhysicsSetSteadyStateVelocity
+    (
+        IN UCHAR train,
+        IN UCHAR speed,
+        IN UINT velocity
+    );
+
 INT
 PhysicsSteadyStateAcceleration
     (
@@ -27,4 +35,12 @@ PhysicsSteadyStateDeceleration
     (
         IN UCHAR train,
         IN UCHAR speed
+    );
+
+VOID
+PhysicsSetSteadyStateDeceleration
+    (
+        IN UCHAR train,
+        IN UCHAR speed,
+        IN INT deceleration
     );

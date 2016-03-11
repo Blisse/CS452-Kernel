@@ -180,11 +180,10 @@ SchedulerpTask
 
                             // d = (vf^2 - vi^2) / (2a)
                             INT stoppingDistance = (updateLocationRequest->velocity * updateLocationRequest->velocity) / (2 * deceleration);
-                            Log("Looking to stop %d, %d", actualDistanceToNode, stoppingDistance);
 
-                            if (actualDistanceToNode < stoppingDistance)
+                            if ((actualDistanceToNode < stoppingDistance) || (distanceToNode < stoppingDistance))
                             {
-                                Log("Stopping %d...", updateLocationRequest->train);
+                                Log("Stopping train %d %d before %s", updateLocationRequest->train, actualDistanceToNode, trainSchedule->stopNode->name);
                                 TrainSetSpeed(updateLocationRequest->train, 0);
                                 trainSchedule->stopNode = NULL;
                             }
