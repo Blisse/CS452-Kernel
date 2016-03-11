@@ -173,7 +173,13 @@ SchedulerpTask
 
                 if (currentTime % 10 == 0)
                 {
-                    ShowTrainLocation(updateLocationRequest->train, (STRING)trainSchedule->nextNode->name, (INT)trainSchedule->nextNodeDistance - (INT)updateLocationRequest->distancePastCurrentNode);
+                    // Hack to get rid of incrementing bug
+                    UCHAR trainSpeed;
+                    VERIFY(SUCCESSFUL(TrainGetSpeed(updateLocationRequest->train, &trainSpeed)));
+                    if (trainSpeed != 0)
+                    {
+                        ShowTrainLocation(updateLocationRequest->train, (STRING)trainSchedule->nextNode->name, (INT)trainSchedule->nextNodeDistance - (INT)updateLocationRequest->distancePastCurrentNode);
+                    }
                 }
 
                 if (trainSchedule->stopNode)
@@ -189,7 +195,7 @@ SchedulerpTask
                     INT stoppingDistance = (updateLocationRequest->velocity * updateLocationRequest->velocity) / (deceleration);
 
                     INT actualDistanceToNode = distanceToNode + (trainSchedule->nextNodeDistance - updateLocationRequest->distancePastCurrentNode);
-                    Log("Looking to stop at [%s] %d from [%s]", trainSchedule->nextNode->name, actualDistanceToNode, trainSchedule->stopNode->name);
+                    Log("Looking to stop %d from %s", actualDistanceToNode, trainSchedule->stopNode->name);
 
                     INT sensorDelay = 5;
                     INT sensorDelayDistance = updateLocationRequest->velocity * sensorDelay;
@@ -226,7 +232,7 @@ SchedulerpTask
                             distanceToNextNode += (nextEdge->dist * 1000);
                         }
 
-                        Log("Expected to stop %d from %s", distanceToNextNode, stoppingDistance, (distanceToNextNode - stoppingDistance), nextNode->name);
+                        Log("Expected to stop %d from %s", (distanceToNextNode - stoppingDistance), nextNode->name);
                     }
 
                     trainSchedule->stopping = FALSE;
