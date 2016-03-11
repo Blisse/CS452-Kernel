@@ -25,6 +25,7 @@ typedef enum _SCHEDULER_REQUEST_TYPE
     TrainArrivedAtNextNodeRequest,
     TrainUpdateLocationRequest,
     TrainStopAtSensorRequest,
+    TrainStopRequest,
 } SCHEDULER_REQUEST_TYPE;
 
 typedef struct _SCHEDULER_TRAIN_CHANGED_NEXT_NODE_REQUEST
@@ -54,6 +55,11 @@ typedef struct _SCHEDULER_TRAIN_STOP_AT_SENSOR_REQUEST
     UINT distancePastSensor;
 } SCHEDULER_TRAIN_STOP_AT_SENSOR_REQUEST;
 
+typedef struct _SCHEDULER_TRAIN_STOP_REQUEST
+{
+    UCHAR train;
+} SCHEDULER_TRAIN_STOP_REQUEST;
+
 typedef struct _SCHEDULER_REQUEST
 {
     SCHEDULER_REQUEST_TYPE type;
@@ -64,6 +70,7 @@ typedef struct _SCHEDULER_REQUEST
         SCHEDULER_TRAIN_ARRIVED_AT_NEXT_NODE_REQUEST arrivedAtNextNodeRequest;
         SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST updateLocationRequest;
         SCHEDULER_TRAIN_STOP_AT_SENSOR_REQUEST stopAtSensorRequest;
+        SCHEDULER_TRAIN_STOP_REQUEST stopRequest;
     };
 } SCHEDULER_REQUEST;
 
@@ -190,6 +197,14 @@ SchedulerpTask
                 break;
             }
 
+            case TrainStopRequest:
+            {
+                // SCHEDULER_TRAIN_STOP_REQUEST* stopRequest = &request.stopRequest;
+                // TRAIN_SCHEDULE* trainSchedule = &trainSchedules[stopRequest->train];
+
+                break;
+            }
+
             case TrainStopAtSensorRequest:
             {
                 SCHEDULER_TRAIN_STOP_AT_SENSOR_REQUEST* stopAtSensorRequest = &request.stopAtSensorRequest;
@@ -298,6 +313,19 @@ SchedulerStopTrainAtSensor
     request.stopAtSensorRequest.train = train;
     request.stopAtSensorRequest.sensor = sensor;
     request.stopAtSensorRequest.distancePastSensor = 0;
+
+    return SchedulerpSendRequest(&request);
+}
+
+INT
+SchedulerStopTrain
+    (
+        IN UCHAR train
+    )
+{
+    SCHEDULER_REQUEST request;
+    request.type = TrainStopRequest;
+    request.stopRequest.train = train;
 
     return SchedulerpSendRequest(&request);
 }

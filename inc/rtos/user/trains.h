@@ -151,6 +151,12 @@ SchedulerStopTrainAtSensor
         IN SENSOR sensor
     );
 
+INT
+SchedulerStopTrain
+    (
+        IN UCHAR train
+    );
+
 /************************************
  *           INIT TASK              *
  ************************************/

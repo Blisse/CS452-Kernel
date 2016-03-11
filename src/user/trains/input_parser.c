@@ -120,6 +120,15 @@ InputParserpParseCommand
             }
         }
     }
+    else if (RtStrEqual(token, "stop-now"))
+    {
+
+        read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
+        if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
+        {
+            SchedulerStopTrain(arg1);
+        }
+    }
     else if (RtStrEqual(token, "q"))
     {
         if (RtStrIsWhitespace(buffer))
