@@ -11,10 +11,19 @@
 
 #include <user/trains.h>
 
-#define CURSOR_MOVE "\033[%d;%dH"
-#define CURSOR_CLEAR "\033[2J"
-#define CURSOR_DELETE_LINE "\033[K"
-#define CURSOR_HIDE "\033[?25l"
+#define CURSOR_MOVE         "\033[%d;%dH"
+#define CURSOR_CLEAR        "\033[2J"
+#define CURSOR_DELETE_LINE  "\033[K"
+#define CURSOR_HIDE         "\033[?25l"
+
+#define CURSOR_RESET    "\033[0m"
+#define CURSOR_RED      "\033[31m"
+#define CURSOR_GREEN    "\033[32m"
+#define CURSOR_YELLOW   "\033[33m"
+#define CURSOR_BLUE     "\033[34m"
+#define CURSOR_MAGENTA  "\033[35m"
+#define CURSOR_CYAN     "\033[36m"
+#define CURSOR_WHITE    "\033[37m"
 
 #define DISPLAY_NAME "display"
 
@@ -27,19 +36,13 @@ typedef enum _DISPLAY_REQUEST_TYPE
     DisplaySensorRequest,
     DisplayShutdownRequest,
     DisplaySwitchRequest,
+    DisplayTrainArrivalRequest,
+    DisplayTrainLocationRequest,
 } DISPLAY_REQUEST_TYPE;
-
-typedef struct _DISPLAY_REQUEST
-{
-    DISPLAY_REQUEST_TYPE type;
-    PVOID buffer;
-    UINT bufferLength;
-} DISPLAY_REQUEST;
 
 typedef struct _DISPLAY_LOG_REQUEST
 {
     CHAR message[128];
-    INT messageSize;
     INT length;
 } DISPLAY_LOG_REQUEST;
 
@@ -55,6 +58,38 @@ typedef struct _DISPLAY_SWITCH_REQUEST
     SWITCH_DIRECTION direction;
 } DISPLAY_SWITCH_REQUEST;
 
+typedef struct _DISPLAY_TRAIN_ARRIVAL_REQUEST
+{
+    UCHAR train;
+    STRING node;
+    INT diff;
+} DISPLAY_TRAIN_ARRIVAL_REQUEST;
+
+typedef struct _DISPLAY_TRAIN_LOCATION_REQUEST
+{
+    UCHAR train;
+    STRING node;
+    INT distanceToNode;
+} DISPLAY_TRAIN_LOCATION_REQUEST;
+
+typedef struct _DISPLAY_REQUEST
+{
+    DISPLAY_REQUEST_TYPE type;
+
+    union
+    {
+        CHAR commandLineChar;
+        INT clockTicks;
+        INT idlePercentage;
+        DISPLAY_LOG_REQUEST* logRequest;
+        DISPLAY_SENSOR_REQUEST sensorRequest;
+        DISPLAY_SWITCH_REQUEST switchRequest;
+        DISPLAY_TRAIN_ARRIVAL_REQUEST arrivalRequest;
+        DISPLAY_TRAIN_LOCATION_REQUEST locationRequest;
+    };
+
+} DISPLAY_REQUEST;
+
 #define CURSOR_CMD_X 13
 #define CURSOR_CMD_Y 2
 
@@ -65,13 +100,19 @@ typedef struct _DISPLAY_SWITCH_REQUEST
 #define CURSOR_IDLE_Y 4
 
 #define CURSOR_LOG_X 25
-#define CURSOR_LOG_Y 6
+#define CURSOR_LOG_Y 11
 
 #define CURSOR_SWITCH_X 4
 #define CURSOR_SWITCH_Y 6
 
 #define CURSOR_SENSOR_X 16
 #define CURSOR_SENSOR_Y 6
+
+#define CURSOR_TRAIN_ARRIVAL_X 25
+#define CURSOR_TRAIN_ARRIVAL_Y 8
+
+#define CURSOR_TRAIN_LOCATION_X 25
+#define CURSOR_TRAIN_LOCATION_Y 6
 
 typedef struct _CURSOR_POSITION
 {
@@ -143,7 +184,7 @@ DisplaypClock
 
     CURSOR_POSITION cursor = { CURSOR_CLOCK_X, CURSOR_CLOCK_Y };
     WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[36m" "%02d:%02d:%d>" "\033[0m", m % 60, s % 60, ts % 10);
+    WriteFormattedString(com2Device, CURSOR_CYAN "%02d:%02d:%d>" CURSOR_RESET, m % 60, s % 60, ts % 10);
 }
 
 static
@@ -156,7 +197,7 @@ DisplaypIdlePercentage
 {
     CURSOR_POSITION cursor = { CURSOR_IDLE_X, CURSOR_IDLE_Y };
     WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[32m%02d.%02d%%" "\033[0m", idlePercentage / 100, idlePercentage % 100);
+    WriteFormattedString(com2Device, CURSOR_GREEN "%02d.%02d%%" CURSOR_RESET, idlePercentage / 100, idlePercentage % 100);
 }
 
 static
@@ -170,12 +211,12 @@ DisplaypLogRequest
 {
     if (RtCircularBufferIsFull(logBuffer))
     {
-        RtCircularBufferPop(logBuffer, logRequest->messageSize);
+        RtCircularBufferPop(logBuffer, sizeof(logRequest->message));
     }
 
-    RtCircularBufferPush(logBuffer, &logRequest->message, logRequest->messageSize);
+    RtCircularBufferPush(logBuffer, &logRequest->message, sizeof(logRequest->message));
 
-    UINT logBufferSize = RtCircularBufferSize(logBuffer) / logRequest->messageSize;
+    UINT logBufferSize = RtCircularBufferSize(logBuffer) / sizeof(logRequest->message);
 
     for (UINT i = 0; i < logBufferSize; i++)
     {
@@ -198,7 +239,7 @@ DisplaypSwitchRequest
 {
     CURSOR_POSITION cursor = { CURSOR_SWITCH_X, CURSOR_SWITCH_Y + switchRequest->index };
     WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, "\033[36msw\033[0m %3d \033[33m%c\033[0m", switchRequest->number, switchRequest->direction == SwitchStraight ? 'S' : 'C');
+    WriteFormattedString(com2Device, CURSOR_CYAN "sw" CURSOR_RESET " %3d " CURSOR_YELLOW "%c" CURSOR_RESET, switchRequest->number, switchRequest->direction == SwitchStraight ? 'S' : 'C');
 }
 
 static
@@ -226,7 +267,7 @@ DisplaypSensorRequest
         CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + i };
         VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
         VERIFY(SUCCESSFUL(WriteFormattedString(com2Device,
-                                               "\033[36m%c%02d \033[33m%d\033[0m",
+                                               CURSOR_CYAN "%c%02d " CURSOR_YELLOW "%d" CURSOR_RESET,
                                                displayData.sensor.module,
                                                displayData.sensor.number,
                                                displayData.isOn)));
@@ -234,18 +275,63 @@ DisplaypSensorRequest
 }
 
 static
+VOID
+DisplaypTrainArrivalRequest
+    (
+        IN IO_DEVICE* com2Device,
+        IN DISPLAY_TRAIN_ARRIVAL_REQUEST* arrivalRequest
+    )
+{
+    CURSOR_POSITION earlyCursor = { CURSOR_TRAIN_ARRIVAL_X, CURSOR_TRAIN_ARRIVAL_Y };
+    CURSOR_POSITION lateCursor = { CURSOR_TRAIN_ARRIVAL_X, CURSOR_TRAIN_ARRIVAL_Y + 1 };
+
+    if (arrivalRequest->diff > 0)
+    {
+        WriteCursorPosition(com2Device, &earlyCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE);
+        WriteCursorPosition(com2Device, &lateCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE "Train %d is " CURSOR_RED "LATE" CURSOR_RESET " to %s by %d ticks", arrivalRequest->train, arrivalRequest->node, arrivalRequest->diff);
+    }
+    else if (arrivalRequest->diff < 0)
+    {
+        WriteCursorPosition(com2Device, &earlyCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE "Train %d is " CURSOR_GREEN "EARLY" CURSOR_RESET " to %s by %d ticks", arrivalRequest->train, arrivalRequest->node, abs(arrivalRequest->diff));
+        WriteCursorPosition(com2Device, &lateCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE);
+    }
+    else
+    {
+        WriteCursorPosition(com2Device, &earlyCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE "Train %d is " CURSOR_GREEN "ON TIME" CURSOR_RESET " to %s", arrivalRequest->train, arrivalRequest->node, arrivalRequest->diff);
+        WriteCursorPosition(com2Device, &lateCursor);
+        WriteFormattedString(com2Device, CURSOR_DELETE_LINE);
+    }
+}
+
+static
+VOID
+DisplaypTrainLocationRequest
+    (
+        IN IO_DEVICE* ioDevice,
+        IN DISPLAY_TRAIN_LOCATION_REQUEST* locationRequest
+    )
+{
+    CURSOR_POSITION cursor = { CURSOR_TRAIN_LOCATION_X, CURSOR_TRAIN_LOCATION_Y };
+
+    WriteCursorPosition(ioDevice, &cursor);
+    WriteFormattedString(ioDevice, CURSOR_DELETE_LINE "Train %d is " CURSOR_CYAN "%2d cm" CURSOR_RESET " from %s", locationRequest->train, locationRequest->distanceToNode / 100000, locationRequest->node);
+}
+
+static
 INT
 DisplaypSendRequest
     (
-        IN DISPLAY_REQUEST_TYPE type,
-        IN PVOID buffer,
-        IN INT bufferLength
+        IN DISPLAY_REQUEST* request
     )
 {
-    DISPLAY_REQUEST request = { type, buffer, bufferLength };
     INT displayServerId = WhoIs(DISPLAY_NAME);
     ASSERT(SUCCESSFUL(displayServerId));
-    return Send(displayServerId, &request, sizeof(request), NULL, 0);
+    return Send(displayServerId, request, sizeof(*request), NULL, 0);
 }
 
 static
@@ -255,7 +341,9 @@ DisplaypShutdownHook
         VOID
     )
 {
-    DisplaypSendRequest(DisplayShutdownRequest, NULL, 0);
+    DISPLAY_REQUEST request;
+    request.type = DisplayShutdownRequest;
+    DisplaypSendRequest(&request);
 }
 
 static
@@ -295,38 +383,42 @@ DisplaypTask
         {
             case DisplayCharRequest:
             {
-                CHAR c = *((CHAR*) request.buffer);
-                DisplaypCommandLine(&com2Device, &cursor, c);
+                DisplaypCommandLine(&com2Device, &cursor, request.commandLineChar);
                 break;
             }
             case DisplayClockRequest:
             {
-                INT tick = *((INT*) request.buffer);
-                DisplaypClock(&com2Device, tick);
+                DisplaypClock(&com2Device, request.clockTicks);
                 break;
             }
             case DisplayIdleRequest:
             {
-                INT idle = *((INT*) request.buffer);
-                DisplaypIdlePercentage(&com2Device, idle);
+                DisplaypIdlePercentage(&com2Device, request.idlePercentage);
                 break;
             }
             case DisplayLogRequest:
             {
-                DISPLAY_LOG_REQUEST* logRequest = (DISPLAY_LOG_REQUEST*) request.buffer;
-                DisplaypLogRequest(&com2Device, &logBuffer, logRequest);
+                DisplaypLogRequest(&com2Device, &logBuffer, request.logRequest);
                 break;
             }
             case DisplaySwitchRequest:
             {
-                DISPLAY_SWITCH_REQUEST switchRequest = *((DISPLAY_SWITCH_REQUEST*) request.buffer);
-                DisplaypSwitchRequest(&com2Device, &switchRequest);
+                DisplaypSwitchRequest(&com2Device, &request.switchRequest);
                 break;
             }
             case DisplaySensorRequest:
             {
-                DISPLAY_SENSOR_REQUEST sensorRequest = *((DISPLAY_SENSOR_REQUEST*) request.buffer);
-                DisplaypSensorRequest(&com2Device, &sensorRequest, &sensorDataBuffer);
+                DisplaypSensorRequest(&com2Device, &request.sensorRequest, &sensorDataBuffer);
+                break;
+            }
+            case DisplayTrainArrivalRequest:
+            {
+                DisplaypTrainArrivalRequest(&com2Device, &request.arrivalRequest);
+                break;
+            }
+            case DisplayTrainLocationRequest:
+            {
+                DisplaypTrainLocationRequest(&com2Device, &request.locationRequest);
                 break;
             }
             case DisplayShutdownRequest:
@@ -358,7 +450,10 @@ ShowKeyboardChar
         IN CHAR c
     )
 {
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayCharRequest, &c, sizeof(c))));
+    DISPLAY_REQUEST request;
+    request.type = DisplayCharRequest;
+    request.commandLineChar = c;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
@@ -367,7 +462,10 @@ ShowClockTime
         IN INT clockTicks
     )
 {
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayClockRequest, &clockTicks, sizeof(clockTicks))));
+    DISPLAY_REQUEST request;
+    request.type = DisplayClockRequest;
+    request.clockTicks = clockTicks;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
@@ -376,7 +474,10 @@ ShowIdleTime
         IN INT idlePercentage
     )
 {
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayIdleRequest, &idlePercentage, sizeof(idlePercentage))));
+    DISPLAY_REQUEST request;
+    request.type = DisplayIdleRequest;
+    request.idlePercentage = idlePercentage;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
@@ -388,7 +489,6 @@ Log
 {
     DISPLAY_LOG_REQUEST logRequest;
     RtMemset(logRequest.message, sizeof(logRequest.message), 0);
-    logRequest.messageSize = 128;
 
     VA_LIST va;
     VA_START(va, message);
@@ -400,7 +500,10 @@ Log
 
     logRequest.length = written;
 
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplayLogRequest, &logRequest, sizeof(logRequest))));
+    DISPLAY_REQUEST request;
+    request.type = DisplayLogRequest;
+    request.logRequest = &logRequest;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
@@ -412,7 +515,10 @@ ShowSwitchDirection
     )
 {
     DISPLAY_SWITCH_REQUEST switchRequest = { idx, number, direction };
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySwitchRequest, &switchRequest, sizeof(switchRequest))));
+    DISPLAY_REQUEST request;
+    request.type = DisplaySwitchRequest;
+    request.switchRequest = switchRequest;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
@@ -422,5 +528,38 @@ ShowSensorStatus
     )
 {
     DISPLAY_SENSOR_REQUEST sensorRequest = { data };
-    VERIFY(SUCCESSFUL(DisplaypSendRequest(DisplaySensorRequest, &sensorRequest, sizeof(sensorRequest))));
+    DISPLAY_REQUEST request;
+    request.type = DisplaySensorRequest;
+    request.sensorRequest = sensorRequest;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
+}
+
+VOID
+ShowTrainArrival
+    (
+        IN UCHAR train,
+        IN STRING node,
+        IN INT diff
+    )
+{
+    DISPLAY_TRAIN_ARRIVAL_REQUEST arrivalRequest = { train, node, diff };
+    DISPLAY_REQUEST request;
+    request.type = DisplayTrainArrivalRequest;
+    request.arrivalRequest = arrivalRequest;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
+}
+
+VOID
+ShowTrainLocation
+    (
+        IN UCHAR train,
+        IN STRING node,
+        IN INT distanceToNode
+    )
+{
+    DISPLAY_TRAIN_LOCATION_REQUEST locationRequest = { train, node, distanceToNode };
+    DISPLAY_REQUEST request;
+    request.type = DisplayTrainLocationRequest;
+    request.locationRequest = locationRequest;
+    VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }

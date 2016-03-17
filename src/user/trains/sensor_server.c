@@ -111,6 +111,12 @@ SensorReaderpTask
     IO_DEVICE com1Device;
     VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1Device)));
 
+    Log("Waiting for junk sensor data (10s)");
+    VERIFY(SUCCESSFUL(Delay(500)));
+    Log("Waiting for junk sensor data (5s)");
+    VERIFY(SUCCESSFUL(FlushInput(&com1Device)));
+    Log("Flushed junk sensor data");
+
     while (1)
     {
         VERIFY(SUCCESSFUL(WriteChar(&com1Device, SENSOR_COMMAND_QUERY)));

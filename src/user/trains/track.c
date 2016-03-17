@@ -34,10 +34,9 @@ TrackFindSensor
     return &g_trackNodes[index];
 }
 
-static
 inline
 TRACK_EDGE*
-TrackpNextEdge
+TrackNextEdge
     (
         IN TRACK_NODE* node
     )
@@ -62,29 +61,28 @@ TrackpNextEdge
     }
 }
 
-static
 inline
 TRACK_NODE*
-TrackpNextNode
+TrackNextNode
     (
         IN TRACK_NODE* node
     )
 {
-    return TrackpNextEdge(node)->dest;
+    return TrackNextEdge(node)->dest;
 }
 
 INT
 TrackFindNextSensor
     (
-        IN TRACK_NODE* node, 
+        IN TRACK_NODE* node,
         OUT TRACK_NODE** nextSensor
     )
 {
-    TRACK_NODE* iterator = TrackpNextNode(node);
+    TRACK_NODE* iterator = TrackNextNode(node);
 
     while(NODE_SENSOR != iterator->type && NODE_EXIT != iterator->type)
     {
-        iterator = TrackpNextNode(iterator);
+        iterator = TrackNextNode(iterator);
     }
 
     if(NODE_SENSOR == iterator->type)
@@ -101,18 +99,18 @@ TrackFindNextSensor
 INT
 TrackDistanceBetween
     (
-        IN TRACK_NODE* n1, 
-        IN TRACK_NODE* n2, 
+        IN TRACK_NODE* n1,
+        IN TRACK_NODE* n2,
         OUT UINT* distance
     )
 {
-    TRACK_EDGE* nextEdge = TrackpNextEdge(n1);
+    TRACK_EDGE* nextEdge = TrackNextEdge(n1);
     TRACK_NODE* nextNode = nextEdge->dest;
     UINT d = nextEdge->dist;
 
     while(nextNode != n1 && nextNode != n2 && NODE_EXIT != nextNode->type)
     {
-        nextEdge = TrackpNextEdge(nextNode);
+        nextEdge = TrackNextEdge(nextNode);
         nextNode = nextEdge->dest;
         d += nextEdge->dist;
     }
@@ -131,12 +129,12 @@ TrackDistanceBetween
 INT
 TrackNumBranchesBetween
     (
-        IN TRACK_NODE* n1, 
-        IN TRACK_NODE* n2, 
+        IN TRACK_NODE* n1,
+        IN TRACK_NODE* n2,
         OUT UINT* numBranches
     )
 {
-    TRACK_NODE* iterator = TrackpNextNode(n1);
+    TRACK_NODE* iterator = TrackNextNode(n1);
     UINT count = 0;
 
     while(iterator != n1 && iterator != n2 && NODE_EXIT != iterator->type)
@@ -146,7 +144,7 @@ TrackNumBranchesBetween
             count++;
         }
 
-        iterator = TrackpNextNode(iterator);
+        iterator = TrackNextNode(iterator);
     }
 
     if(iterator == n2)

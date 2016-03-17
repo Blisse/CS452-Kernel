@@ -23,12 +23,12 @@ InputParserpGetSwitchDirection
         case 's':
             *direction = SwitchStraight;
             return TRUE;
-            
+
         case 'C':
         case 'c':
             *direction = SwitchCurved;
             return TRUE;
-            
+
         default:
             return FALSE;
     }
@@ -118,6 +118,15 @@ InputParserpParseCommand
                     }
                 }
             }
+        }
+    }
+    else if (RtStrEqual(token, "stop-now"))
+    {
+
+        read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
+        if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
+        {
+            SchedulerStopTrain(arg1);
         }
     }
     else if (RtStrEqual(token, "q"))

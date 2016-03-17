@@ -48,16 +48,21 @@ PhysicsInit
 
     for (UINT i = 0; i < MAX_TRAINS + 1; i++)
     {
-        g_steadyStateDeceleration[i][5] = 9;
-        g_steadyStateDeceleration[i][6] = 11;
-        g_steadyStateDeceleration[i][7] = 14;
-        g_steadyStateDeceleration[i][8] = 15;
-        g_steadyStateDeceleration[i][9] = 17;
-        g_steadyStateDeceleration[i][10] = 20;
-        g_steadyStateDeceleration[i][11] = 23;
+        g_steadyStateDeceleration[i][0] = 20;
+        g_steadyStateDeceleration[i][1] = 20;
+        g_steadyStateDeceleration[i][2] = 20;
+        g_steadyStateDeceleration[i][3] = 20;
+        g_steadyStateDeceleration[i][4] = 20;
+        g_steadyStateDeceleration[i][5] = 20;
+        g_steadyStateDeceleration[i][6] = 20;
+        g_steadyStateDeceleration[i][7] = 20;
+        g_steadyStateDeceleration[i][8] = 21;
+        g_steadyStateDeceleration[i][9] = 21;
+        g_steadyStateDeceleration[i][10] = 21;
+        g_steadyStateDeceleration[i][11] = 22;
         g_steadyStateDeceleration[i][12] = 24;
-        g_steadyStateDeceleration[i][13] = 25;
-        g_steadyStateDeceleration[i][14] = 26;
+        g_steadyStateDeceleration[i][13] = 24;
+        g_steadyStateDeceleration[i][14] = 24;
     }
 }
 
