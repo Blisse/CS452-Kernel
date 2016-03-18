@@ -233,10 +233,10 @@ TrainpTask
                 // Set the train's speed
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, request.speed)));
                 speeds[request.train - 1] = request.speed;
+                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
 
                 // Let the location server know the train's new speed
                 VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, request.speed)));
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 break;
             }
 
@@ -247,6 +247,7 @@ TrainpTask
                 // Stop the train
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, 0)));
                 speeds[request.train - 1] = 0;
+                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
 
                 // Let the location server know that the train is stopping
                 VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, 0)));
@@ -261,7 +262,6 @@ TrainpTask
                 nextWorkerTask++;
 
                 VERIFY(SUCCESSFUL(Send(nextWorkerTaskId, &workerRequest, sizeof(workerRequest), NULL, 0)));
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 break;
             }
 
@@ -269,6 +269,9 @@ TrainpTask
             {
                 // Reverse the train
                 VERIFY(SUCCESSFUL(TrainpReverse(&com1, request.train)));
+                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
+
+                // Let the train server know about the new directions
                 VERIFY(SUCCESSFUL(LocationServerFlipTrainDirection(request.train)));
 
                 TRAIN_WORKER_REQUEST workerRequest;
@@ -279,10 +282,7 @@ TrainpTask
 
                 INT nextWorkerTaskId = workerTasks[nextWorkerTask % MAX_TRACKABLE_TRAINS];
                 nextWorkerTask++;
-
-                // Since this request was sent to us by a worker task, we should reply before sending
-                // another request to a worker task
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
+                
                 VERIFY(SUCCESSFUL(Send(nextWorkerTaskId, &workerRequest, sizeof(workerRequest), NULL, 0)));
                 break;
             }
