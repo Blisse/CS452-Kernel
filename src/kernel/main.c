@@ -4,10 +4,7 @@
 #include "kernel.h"
 
 INT
-main
-    (
-        VOID
-    )
+main()
 {
     // Setup bwio so that asserts can work
     bwsetfifo(BWCOM2, OFF);

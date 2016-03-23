@@ -22,10 +22,7 @@ StackpCalculateAddress
 }
 
 RT_STATUS
-StackInit
-    (
-        VOID
-    )
+StackInit()
 {
     UINT i;
     RT_STATUS status = STATUS_SUCCESS;
@@ -34,7 +31,7 @@ StackInit
                          g_availableStacksBuffer,
                          sizeof(g_availableStacksBuffer));
 
-    for(i = 0; i < NUM_TASKS && RT_SUCCESS(status); i++)
+    for (i = 0; i < NUM_TASKS && RT_SUCCESS(status); i++)
     {
         STACK* stack = &g_stacks[i];
         stack->top = StackpCalculateAddress(i);

@@ -3,7 +3,4 @@
 #include <rt.h>
 
 VOID
-SyscallInit
-    (
-        VOID
-    );
+SyscallInit();

@@ -19,7 +19,7 @@ typedef struct _IO_WRITE_TASK_PARAMS
 
 typedef enum _IO_WRITE_REQUEST_TYPE
 {
-    NotifierRequest = 0, 
+    NotifierRequest = 0,
     WriteRequest
 } IO_WRITE_REQUEST_TYPE;
 
@@ -32,10 +32,7 @@ typedef struct _IO_WRITE_REQUEST
 
 static
 VOID
-IopWriteNotifierTask
-    (
-        VOID
-    )
+IopWriteNotifierTask()
 {
     IO_WRITE_REQUEST request = { NotifierRequest };
     IO_WRITE_TASK_NOTIFIER_PARAMS params;
@@ -46,7 +43,7 @@ IopWriteNotifierTask
     VERIFY(SUCCESSFUL(Reply(parentId, NULL, 0)));
 
     // Run the notifier
-    while(1)
+    while (1)
     {
         // Wait for the event to come in
         VERIFY(SUCCESSFUL(AwaitEvent(params.event)));
@@ -62,7 +59,7 @@ VOID
 IopPerformWrite
     (
         IN INT notifierTaskId,
-        IN IO_WRITE_FUNC write, 
+        IN IO_WRITE_FUNC write,
         IN RT_CIRCULAR_BUFFER* buffer
     )
 {
@@ -80,10 +77,7 @@ IopPerformWrite
 
 static
 VOID
-IopWriteTask
-    (
-        VOID
-    )
+IopWriteTask()
 {
     CHAR underlyingTransmitBuffer[DEFAULT_BUFFER_SIZE];
     RT_CIRCULAR_BUFFER transmitBuffer;
@@ -104,20 +98,20 @@ IopWriteTask
     ASSERT(SUCCESSFUL(notifierTaskId));
 
     // Send the notifier task the necessary parameters
-    VERIFY(SUCCESSFUL(Send(notifierTaskId, 
-                           &params.notifierParams, 
-                           sizeof(params.notifierParams), 
-                           NULL, 
+    VERIFY(SUCCESSFUL(Send(notifierTaskId,
+                           &params.notifierParams,
+                           sizeof(params.notifierParams),
+                           NULL,
                            0)));
 
     // Initialize task variables
     canWrite = FALSE;
-    RtCircularBufferInit(&transmitBuffer, 
-                         underlyingTransmitBuffer, 
+    RtCircularBufferInit(&transmitBuffer,
+                         underlyingTransmitBuffer,
                          sizeof(underlyingTransmitBuffer));
 
     // Run the server
-    while(1)
+    while (1)
     {
         IO_WRITE_REQUEST request;
 
@@ -126,7 +120,7 @@ IopWriteTask
         switch(request.type)
         {
             case NotifierRequest:
-                if(RtCircularBufferIsEmpty(&transmitBuffer))
+                if (RtCircularBufferIsEmpty(&transmitBuffer))
                 {
                     canWrite = TRUE;
                 }
@@ -134,15 +128,15 @@ IopWriteTask
                 {
                     IopPerformWrite(notifierTaskId, params.write, &transmitBuffer);
                 }
-                
+
                 break;
 
             case WriteRequest:
-                VERIFY(RT_SUCCESS(RtCircularBufferPush(&transmitBuffer, 
-                                                       request.buffer, 
+                VERIFY(RT_SUCCESS(RtCircularBufferPush(&transmitBuffer,
+                                                       request.buffer,
                                                        request.bufferLength)));
 
-                if(canWrite)
+                if (canWrite)
                 {
                     canWrite = FALSE;
                     IopPerformWrite(notifierTaskId, params.write, &transmitBuffer);
@@ -161,15 +155,15 @@ IopWriteTask
 INT
 IoCreateWriteTask
     (
-        IN TASK_PRIORITY priority, 
-        IN EVENT event, 
-        IN IO_WRITE_FUNC writeFunc, 
+        IN TASK_PRIORITY priority,
+        IN EVENT event,
+        IN IO_WRITE_FUNC writeFunc,
         IN STRING name
     )
 {
     INT result = Create(priority, IopWriteTask);
 
-    if(SUCCESSFUL(result))
+    if (SUCCESSFUL(result))
     {
         INT taskId = result;
         IO_WRITE_TASK_PARAMS params;
@@ -178,10 +172,10 @@ IoCreateWriteTask
         params.write = writeFunc;
         params.name = name;
 
-        result = Send(taskId, 
-                      &params, 
-                      sizeof(params), 
-                      NULL, 
+        result = Send(taskId,
+                      &params,
+                      sizeof(params),
+                      NULL,
                       0);
     }
 
@@ -191,7 +185,7 @@ IoCreateWriteTask
 INT
 Write
     (
-        IN IO_DEVICE* device, 
+        IN IO_DEVICE* device,
         IN PVOID buffer,
         IN UINT bufferLength
     )

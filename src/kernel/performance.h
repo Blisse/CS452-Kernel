@@ -4,10 +4,7 @@
 #include <rtkernel.h>
 
 VOID
-PerformanceInit
-    (
-        VOID
-    );
+PerformanceInit();
 
 RT_STATUS
 PerformanceGet
@@ -17,10 +14,7 @@ PerformanceGet
     );
 
 VOID
-PerformanceEnterTask
-    (
-        VOID
-    );
+PerformanceEnterTask();
 
 VOID
 PerformanceExitTask

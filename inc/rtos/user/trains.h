@@ -3,6 +3,13 @@
 #include <rt.h>
 #include <track/track_node.h>
 
+typedef enum _TRACK {
+    TRACK_A = 0,
+    TRACK_B
+} TRACK;
+
+#define CHOSEN_TRACK TRACK_B
+
 #define MAX_TRAINS 80
 #define MAX_TRACKABLE_TRAINS 6
 
@@ -12,47 +19,83 @@
 
 #define MAX_SPEED 14
 
+typedef struct _TRAIN_DATA {
+    UCHAR train;
+    INT velocity; // in micrometers / tick
+    INT acceleration; // in micrometers / tick^2
+
+    TRACK_NODE* currentNode;
+
+    UINT distancePastCurrentNode; // in micrometers
+    UINT distanceCurrentToNextNode; // in micrometers
+
+    UINT currentNodeArrivalTick;
+    INT nextNodeExpectedArrivalTick;
+
+    UINT lastTick;
+    UINT accelerateUntilTick;
+} TRAIN_DATA;
+
 INT
-TrainGetSpeed
-    (
+TrainGetSpeed (
         IN INT train,
         OUT UCHAR* speed
     );
 
 INT
-TrainSetSpeed
-    (
+TrainSetSpeed (
         IN INT train,
         IN INT speed
     );
 
 INT
-TrainReverse
-    (
+TrainReverse (
         IN INT train
+    );
+
+INT
+GetTrainData (
+        IN UCHAR train,
+        OUT TRAIN_DATA** data
+    );
+
+
+
+/************************************
+ *           TRACK API              *
+ ************************************/
+
+INT
+ReserveTrackNode (
+        IN TRACK_NODE* trackNode,
+        IN UINT trainId,
+        IN UINT reserveUntilTick
+    );
+
+INT
+ReleaseTrackNode (
+        IN TRACK_NODE* trackNode,
+        IN UINT trainId
     );
 
 /************************************
  *          SWITCH API              *
  ************************************/
 
-typedef enum _SWITCH_DIRECTION
-{
+typedef enum _SWITCH_DIRECTION {
     SwitchCurved = 0,
     SwitchStraight
 } SWITCH_DIRECTION;
 
 INT
-SwitchSetDirection
-    (
+SwitchSetDirection (
         IN INT sw,
         IN SWITCH_DIRECTION direction
     );
 
 INT
-SwitchGetDirection
-    (
-        IN INT sw, 
+SwitchGetDirection (
+        IN INT sw,
         OUT SWITCH_DIRECTION* direction
     );
 
@@ -60,96 +103,26 @@ SwitchGetDirection
  *           SENSOR API             *
  ************************************/
 
-typedef struct _SENSOR
-{
+#define NUM_SENSORS 80
+
+typedef struct _SENSOR {
     CHAR module;
     UINT number;
 } SENSOR;
 
-typedef struct _SENSOR_DATA
-{
+typedef struct _SENSOR_DATA {
     SENSOR sensor;
     BOOLEAN isOn;
 } SENSOR_DATA;
 
-typedef struct _CHANGED_SENSORS
-{
+typedef struct _CHANGED_SENSORS {
     SENSOR_DATA sensors[MAX_TRACKABLE_TRAINS];
     UINT size;
 } CHANGED_SENSORS;
 
 INT
-SensorAwait
-    (
+SensorAwait (
         OUT CHANGED_SENSORS* changedSensors
-    );
-
-/************************************
- *            TRACK API             *
- ************************************/
-typedef enum _TRACK
-{
-    TrackA = 0, 
-    TrackB
-} TRACK;
-
-typedef enum _DIRECTION
-{
-    DirectionForward = 0, 
-    DirectionReverse
-} DIRECTION;
-
-VOID
-TrackInit
-    (
-        IN TRACK track
-    );
-
-TRACK_EDGE*
-TrackNextEdge
-    (
-        IN TRACK_NODE* node
-    );
-
-TRACK_NODE*
-TrackNextNode
-    (
-        IN TRACK_NODE* node
-    );
-
-TRACK_NODE*
-TrackFindSensor
-    (
-        IN SENSOR* sensor
-    );
-
-INT
-TrackFindNextSensor
-    (
-        IN TRACK_NODE* node,
-        OUT TRACK_NODE** nextSensor
-    );
-
-INT
-TrackDistanceBetween
-    (
-        IN TRACK_NODE* n1,
-        IN TRACK_NODE* n2,
-        OUT UINT* distance
-    );
-
-INT
-TrackNumBranchesBetween
-    (
-        IN TRACK_NODE* n1,
-        IN TRACK_NODE* n2,
-        OUT UINT* numBranches
-    );
-
-UINT
-TrackGetCorrectiveTime
-    (
-        IN TRACK_NODE* node
     );
 
 /************************************
@@ -157,15 +130,14 @@ TrackGetCorrectiveTime
  ************************************/
 
 INT
-SchedulerStopTrainAtSensor
-    (
+SchedulerMoveTrainToSensor (
         IN UCHAR train,
-        IN SENSOR sensor
+        IN SENSOR sensor,
+        IN UINT distancePastSensor
     );
 
 INT
-SchedulerStopTrain
-    (
+SchedulerStopTrain (
         IN UCHAR train
     );
 
@@ -174,7 +146,4 @@ SchedulerStopTrain
  ************************************/
 
 VOID
-InitTrainTasks
-    (
-        VOID
-    );
+InitTrainTasks();

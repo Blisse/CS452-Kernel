@@ -29,10 +29,7 @@ Delay
     );
 
 INT
-Time
-    (
-        VOID
-    );
+Time();
 
 INT
 DelayUntil
@@ -152,17 +149,11 @@ ShutdownRegisterHook
     );
 
 VOID
-Shutdown
-    (
-        VOID
-    );
+Shutdown();
 
 /************************************
  *            INIT TASK             *
  ************************************/
 
 VOID
-InitOsTasks
-    (
-        VOID
-    );
+InitOsTasks();

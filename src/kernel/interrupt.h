@@ -5,16 +5,10 @@
 #include "task_descriptor.h"
 
 VOID
-InterruptInit
-    (
-        VOID
-    );
+InterruptInit();
 
 VOID
-InterruptDisableAll
-    (
-        VOID
-    );
+InterruptDisableAll();
 
 RT_STATUS
 InterruptAwaitEvent

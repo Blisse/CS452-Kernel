@@ -9,10 +9,7 @@ typedef struct _STACK
 } STACK;
 
 RT_STATUS
-StackInit
-    (
-        VOID
-    );
+StackInit();
 
 RT_STATUS
 StackAllocate

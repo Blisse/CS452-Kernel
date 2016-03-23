@@ -10,10 +10,7 @@
 
 static
 VOID
-CalibrationpSteadyStateVelocityTask
-    (
-        VOID
-    )
+CalibrationpSteadyStateVelocityTask()
 {
     // Setup the track
     // This currently assumes track B
@@ -32,32 +29,32 @@ CalibrationpSteadyStateVelocityTask
     UINT currentSpeed = 14;
     VERIFY(SUCCESSFUL(TrainSetSpeed(TRAIN_NUMBER, currentSpeed)));
 
-    while(1)
+    while (1)
     {
         CHANGED_SENSORS changedSensors;
         VERIFY(SUCCESSFUL(SensorAwait(&changedSensors)));
 
-        for(UINT i = 0; i < changedSensors.size; i++)
+        for (UINT i = 0; i < changedSensors.size; i++)
         {
             SENSOR_DATA* data = &changedSensors.sensors[i];
 
-            if(!data->isOn)
+            if (!data->isOn)
             {
                 continue;
             }
 
             SENSOR sensor = data->sensor;
 
-            if('C' == sensor.module && 13 == sensor.number)
+            if ('C' == sensor.module && 13 == sensor.number)
             {
                 startTime = Time();
             }
-            else if('E' == sensor.module && 7 == sensor.number)
+            else if ('E' == sensor.module && 7 == sensor.number)
             {
                 UINT totalTime = Time() - startTime;
                 bwprintf(BWCOM2, "%d\r\n", totalTime);
 
-                if(currentSpeed == 5)
+                if (currentSpeed == 5)
                 {
                     bwprintf(BWCOM2, "\r\n");
                     currentSpeed = 14;
@@ -74,10 +71,7 @@ CalibrationpSteadyStateVelocityTask
 }
 
 VOID
-CalibrationCreateTask
-    (
-        VOID
-    )
+CalibrationCreateTask()
 {
     VERIFY(SUCCESSFUL(Create(LowestUserPriority, CalibrationpSteadyStateVelocityTask)));
 }

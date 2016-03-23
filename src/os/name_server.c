@@ -40,7 +40,7 @@ NameServerpInitializeHashTable
 {
     UINT i;
 
-    for(i = 0; i < NAME_SERVER_HASH_TABLE_SIZE; i++)
+    for (i = 0; i < NAME_SERVER_HASH_TABLE_SIZE; i++)
     {
         NAME_SERVER_ENTRY* entry = &hashTable[i];
 
@@ -63,7 +63,7 @@ NameServerpHash
 
     // Index dependant string hashing algorithm
     // Inspired by notes from CS240
-    while('\0' != (c = name[i]))
+    while ('\0' != (c = name[i]))
     {
         hash = (73 * hash) + c;
         i++;
@@ -85,12 +85,12 @@ NameServerpInsert
     UINT hash = NameServerpHash(key);
     UINT i;
 
-    for(i = 0; i < NAME_SERVER_HASH_TABLE_SIZE; i++)
+    for (i = 0; i < NAME_SERVER_HASH_TABLE_SIZE; i++)
     {
         UINT index = (hash + i) % NAME_SERVER_HASH_TABLE_SIZE;
         NAME_SERVER_ENTRY* entry = &hashTable[index];
 
-        if(entry->key == "" || RtStrEqual(key, entry->key))
+        if (entry->key == "" || RtStrEqual(key, entry->key))
         {
             entry->key = key;
             entry->value = value;
@@ -115,12 +115,12 @@ NameServerpFind
     UINT hash = NameServerpHash(key);
     UINT i;
 
-    for(i = 0; i < NAME_SERVER_HASH_TABLE_SIZE; i++)
+    for (i = 0; i < NAME_SERVER_HASH_TABLE_SIZE; i++)
     {
         UINT index = (hash + i) % NAME_SERVER_HASH_TABLE_SIZE;
         NAME_SERVER_ENTRY* entry = &hashTable[index];
 
-        if(RtStrEqual(key, entry->key))
+        if (RtStrEqual(key, entry->key))
         {
             *value = entry->value;
 
@@ -132,50 +132,40 @@ NameServerpFind
 }
 
 VOID
-NameServerpTask
-    (
-        VOID
-    )
+NameServerpTask()
 {
     NAME_SERVER_ENTRY hashTable[NAME_SERVER_HASH_TABLE_SIZE];
 
     NameServerpInitializeHashTable(hashTable);
 
-    while(1)
+    while (1)
     {
-        NAME_SERVER_REQUEST request;
-        INT response;
         INT senderTaskId;
-        BOOLEAN success;
-
+        NAME_SERVER_REQUEST request;
         VERIFY(SUCCESSFUL(Receive(&senderTaskId, &request, sizeof(request))));
 
+        INT response;
         switch(request.type)
         {
             case RegisterRequest:
-                success = NameServerpInsert(hashTable,
-                                            request.name,
-                                            senderTaskId);
+            {
+                BOOLEAN success = NameServerpInsert(hashTable, request.name, senderTaskId);
 
                 response = success ? ERROR_SUCCESS : ERROR_NAME_SERVER_FULL;
                 break;
-
+            }
             case WhoIsRequest:
-                success = NameServerpFind(hashTable,
-                                          request.name,
-                                          &response);
-                
-                if(!success)
+            {
+                BOOLEAN success = NameServerpFind(hashTable, request.name, &response);
+
+                if (!success)
                 {
                     response = ERROR_NAME_SERVER_NOT_FOUND;
                     ASSERT(FALSE);
                 }
 
                 break;
-
-            default:
-                ASSERT(FALSE);
-                break;
+            }
         }
 
         VERIFY(SUCCESSFUL(Reply(senderTaskId, &response, sizeof(response))));
@@ -183,10 +173,7 @@ NameServerpTask
 }
 
 VOID
-NameServerCreateTask
-    (
-        VOID
-    )
+NameServerCreateTask()
 {
     g_nameServerId = Create(Priority29, NameServerpTask);
     ASSERT(SUCCESSFUL(g_nameServerId));

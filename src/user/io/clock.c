@@ -3,17 +3,12 @@
 #include <rtkernel.h>
 #include <rtos.h>
 #include <rtosc/assert.h>
-
-#include "display.h"
+#include <user/io.h>
 
 VOID
-ClockpTask
-    (
-        VOID
-    )
+ClockpTask()
 {
-    while (1)
-    {
+    while (1) {
         INT ticks = Time();
 
         ShowClockTime(ticks);
@@ -23,10 +18,7 @@ ClockpTask
 }
 
 VOID
-ClockCreateTask
-    (
-        VOID
-    )
+ClockCreateTask()
 {
     VERIFY(SUCCESSFUL(Create(LowestUserPriority, ClockpTask)));
 }

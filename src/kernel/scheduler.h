@@ -4,10 +4,7 @@
 #include "task.h"
 
 VOID
-SchedulerInit
-    (
-        VOID
-    );
+SchedulerInit();
 
 RT_STATUS
 SchedulerAddTask
@@ -26,10 +23,7 @@ extern TASK_DESCRIPTOR* g_currentTd;
 static
 inline
 TASK_DESCRIPTOR*
-SchedulerGetCurrentTask
-    (
-        VOID
-    )
+SchedulerGetCurrentTask()
 {
     return g_currentTd;
 }

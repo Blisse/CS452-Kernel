@@ -3,26 +3,18 @@
 #include <rt.h>
 
 VOID
-LocationServerCreateTask
-    (
-        VOID
-    );
+LocationServerCreateTask();
 
 INT
-LocationServerUpdateTrainSpeed
-    (
-        IN UCHAR train, 
+LocationServerUpdateTrainSpeed(
+        IN UCHAR train,
         IN UCHAR speed
     );
 
 INT
-LocationServerSwitchUpdated
-    (
-        VOID
-    );
+LocationServerSwitchUpdated();
 
 INT
-LocationServerFlipTrainDirection
-    (
+LocationServerTrainDirectionReverse(
         IN UCHAR train
     );

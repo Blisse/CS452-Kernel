@@ -1,6 +1,7 @@
 #include "train_server.h"
 
 #include <rtosc/assert.h>
+#include <rtosc/string.h>
 #include <rtkernel.h>
 #include <rtos.h>
 #include <user/trains.h>
@@ -14,16 +15,14 @@
 #define TRAIN_COMMAND_GO 0x60
 #define TRAIN_COMMAND_STOP 0x61
 
-typedef enum _TRAIN_REQUEST_TYPE
-{
+typedef enum _TRAIN_REQUEST_TYPE {
     ShutdownRequest = 0,
     SetSpeedRequest,
     GetSpeedRequest,
     ReverseRequest
 } TRAIN_REQUEST_TYPE;
 
-typedef struct _TRAIN_REQUEST
-{
+typedef struct _TRAIN_REQUEST {
     TRAIN_REQUEST_TYPE type;
     UCHAR train;
     UCHAR speed;
@@ -32,29 +31,18 @@ typedef struct _TRAIN_REQUEST
 
 static
 INT
-TrainpSendRequest
-    (
+TrainpSendRequest(
         IN TRAIN_REQUEST* request
     )
 {
-    INT result = WhoIs(TRAIN_SERVER_NAME);
+    INT trainServerId = WhoIs(TRAIN_SERVER_NAME);
 
-    if(SUCCESSFUL(result))
-    {
-        INT trainServerId = result;
-
-        result = Send(trainServerId, request, sizeof(*request), NULL, 0);
-    }
-
-    return result;
+    return Send(trainServerId, request, sizeof(*request), NULL, 0);
 }
 
 static
 VOID
-TrainpShutdownHook
-    (
-        VOID
-    )
+TrainpShutdownHook()
 {
     TRAIN_REQUEST request = { ShutdownRequest };
 
@@ -63,8 +51,7 @@ TrainpShutdownHook
 
 static
 INT
-TrainpSendOneByteCommand
-    (
+TrainpSendOneByteCommand(
         IN IO_DEVICE* device,
         IN UCHAR byte
     )
@@ -74,8 +61,7 @@ TrainpSendOneByteCommand
 
 static
 INT
-TrainpSendTwoByteCommand
-    (
+TrainpSendTwoByteCommand(
         IN IO_DEVICE* device,
         IN UCHAR byte1,
         IN UCHAR byte2
@@ -88,8 +74,7 @@ TrainpSendTwoByteCommand
 
 static
 INT
-TrainpGo
-    (
+TrainpGo(
         IN IO_DEVICE* device
     )
 {
@@ -98,8 +83,7 @@ TrainpGo
 
 static
 INT
-TrainpStop
-    (
+TrainpStop(
         IN IO_DEVICE* device
     )
 {
@@ -108,22 +92,18 @@ TrainpStop
 
 static
 INT
-TrainpSetSpeed
-    (
+TrainpSetSpeed(
         IN IO_DEVICE* device,
         IN UCHAR train,
         IN UCHAR speed
     )
 {
-    // Bytes must be sent in a weird order.
-    // Speed first, then train.
     return TrainpSendTwoByteCommand(device, speed, train);
 }
 
 static
 INT
-TrainpReverse
-    (
+TrainpReverse(
         IN IO_DEVICE* device,
         IN UCHAR train
     )
@@ -133,58 +113,46 @@ TrainpReverse
 
 static
 VOID
-TrainpTask
-    (
-        VOID
-    )
+TrainpTask()
 {
-    IO_DEVICE com1;
-    UCHAR speeds[NUM_TRAINS];
-    INT i;
-    BOOLEAN running = TRUE;
-
-    for(i = 0; i < NUM_TRAINS; i++)
-    {
-        speeds[i] = 0;
-    }
-
-    // Setup the server
     VERIFY(SUCCESSFUL(RegisterAs(TRAIN_SERVER_NAME)));
     VERIFY(SUCCESSFUL(ShutdownRegisterHook(TrainpShutdownHook)));
+
+    IO_DEVICE com1;
     VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1)));
 
-    // Turn the train controller on
     VERIFY(SUCCESSFUL(TrainpGo(&com1)));
 
-    // Stop all known trains, in case any group forgot to turn them off
-    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 58, 0)));
-    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 62, 0)));
-    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 63, 0)));
-    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 64, 0)));
-    VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, 68, 0)));
+    UCHAR speeds[NUM_TRAINS];
+    RtMemset(speeds, sizeof(speeds), 0);
 
-    while(running)
+    for (UINT i = 0; i < sizeof(speeds); i++) {
+        VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, i + 1, 0)));
+    }
+
+    BOOLEAN running = TRUE;
+    while (running)
     {
-        INT sender;
+        INT senderId;
         TRAIN_REQUEST request;
-
-        VERIFY(SUCCESSFUL(Receive(&sender, &request, sizeof(request))));
+        VERIFY(SUCCESSFUL(Receive(&senderId, &request, sizeof(request))));
 
         switch(request.type)
         {
             case ShutdownRequest:
                 running = FALSE;
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
                 break;
 
             case GetSpeedRequest:
                 *request.trainSpeed = speeds[request.train - 1];
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
                 break;
 
             case SetSpeedRequest:
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, request.speed)));
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, request.speed)));
 
                 speeds[request.train - 1] = request.speed;
@@ -192,53 +160,40 @@ TrainpTask
 
             case ReverseRequest:
             {
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+
                 UCHAR oldSpeed = speeds[request.train - 1];
 
-                // Stop the train
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, 0)));
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, 0)));
 
-                // Wait for the train to come to a stop
-                // TODO - Better implementation
                 Delay(100 * (oldSpeed / 3 + 1));
 
-                // Reverse the train
                 VERIFY(SUCCESSFUL(TrainpReverse(&com1, request.train)));
-                VERIFY(SUCCESSFUL(LocationServerFlipTrainDirection(request.train)));
+                VERIFY(SUCCESSFUL(LocationServerTrainDirectionReverse(request.train)));
 
-                // TODO - Why do we need this, and only on track B?
-                Delay(10);
-
-                // Speed the train back up to its original speed
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, oldSpeed)));
                 VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, oldSpeed)));
+
                 break;
             }
-
-            default:
-                ASSERT(FALSE);
-                break;
         }
 
     }
 
-    // Stop any trains that are moving
-    for(i = 0; i < NUM_TRAINS; i++)
+    for (UINT i = 0; i < NUM_TRAINS; i++)
     {
-        if(0 != speeds[i])
+        if (speeds[i] != 0)
         {
             VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, i + 1, 0)));
         }
     }
 
-    // Turn the train controller off
     VERIFY(SUCCESSFUL(TrainpStop(&com1)));
 }
 
 INT
-TrainGetSpeed
-    (
+TrainGetSpeed(
         IN INT train,
         OUT UCHAR* speed
     )
@@ -253,8 +208,7 @@ TrainGetSpeed
 }
 
 INT
-TrainSetSpeed
-    (
+TrainSetSpeed(
         IN INT train,
         IN INT speed
     )
@@ -274,8 +228,7 @@ TrainSetSpeed
 }
 
 INT
-TrainReverse
-    (
+TrainReverse(
         IN INT train
     )
 {
@@ -289,10 +242,7 @@ TrainReverse
 }
 
 VOID
-TrainServerCreate
-    (
-        VOID
-    )
+TrainServerCreate()
 {
     VERIFY(SUCCESSFUL(Create(Priority20, TrainpTask)));
 }

@@ -3,7 +3,4 @@
 #include <rt.h>
 
 VOID
-TrainServerCreate
-    (
-        VOID
-    );
+TrainServerCreate();

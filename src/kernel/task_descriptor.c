@@ -5,17 +5,14 @@ static INT g_taskDescriptorIds[NUM_TASKS];
 static RT_CIRCULAR_BUFFER g_taskDescriptorIdQueue;
 
 RT_STATUS
-TaskDescriptorInit
-    (
-        VOID
-    )
+TaskDescriptorInit()
 {
     UINT i;
     RT_STATUS status = STATUS_SUCCESS;
 
     RtCircularBufferInit(&g_taskDescriptorIdQueue, g_taskDescriptorIds, sizeof(g_taskDescriptorIds));
 
-    for(i = 0; i < NUM_TASKS && RT_SUCCESS(status); i++)
+    for (i = 0; i < NUM_TASKS && RT_SUCCESS(status); i++)
     {
         TASK_DESCRIPTOR* td = &g_taskDescriptors[i];
 
@@ -45,7 +42,7 @@ TaskDescriptorAllocate
 
         newTd->taskId = taskId;
 
-        *td = newTd;        
+        *td = newTd;
     }
 
     return status;
@@ -80,7 +77,7 @@ TaskDescriptorGet
         OUT TASK_DESCRIPTOR** td
     )
 {
-    if(likely(TaskDescriptorpIsValidId(taskId)))
+    if (likely(TaskDescriptorpIsValidId(taskId)))
     {
         TASK_DESCRIPTOR* getTd = &g_taskDescriptors[taskId % NUM_TASKS];
 

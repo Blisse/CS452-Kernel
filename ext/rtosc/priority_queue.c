@@ -19,7 +19,7 @@ RtPriorityQueueInit
     UINT actualBufferCapacity = typeSize * capacity;
 
     UINT i;
-    for(i = 0; i < priorities; i++)
+    for (i = 0; i < priorities; i++)
     {
         RtCircularBufferInit(&queues[i], buffers + (i * actualBufferCapacity), actualBufferCapacity);
     }
@@ -91,12 +91,12 @@ RtPriorityQueuePush
         IN UINT bytesToAdd
     )
 {
-    if(likely(IsPower2(priority)))
+    if (likely(IsPower2(priority)))
     {
         UINT index = Power2Log2(priority);
         RT_CIRCULAR_BUFFER* queue = &priorityQueue->queues[index];
         RT_STATUS status = RtCircularBufferPush(queue, sourceBuffer, bytesToAdd);
-        
+
         if (RT_SUCCESS(status))
         {
             priorityQueue->bitmask |= priority;
@@ -118,7 +118,7 @@ RtPriorityQueuePeek
         IN UINT bytesToGet
     )
 {
-    if(likely(priorityQueue->bitmask))
+    if (likely(priorityQueue->bitmask))
     {
         UINT index = Log2(priorityQueue->bitmask);
         RT_CIRCULAR_BUFFER* queue = &priorityQueue->queues[index];
@@ -138,13 +138,13 @@ RtPriorityQueuePop
         IN UINT bytesToRemove
     )
 {
-    if(likely(priorityQueue->bitmask))
+    if (likely(priorityQueue->bitmask))
     {
         UINT index = Log2(priorityQueue->bitmask);
         RT_CIRCULAR_BUFFER* queue = &priorityQueue->queues[index];
         RT_STATUS status = RtCircularBufferPop(queue, bytesToRemove);
 
-        if(RT_SUCCESS(status) && RtCircularBufferIsEmpty(queue))
+        if (RT_SUCCESS(status) && RtCircularBufferIsEmpty(queue))
         {
             priorityQueue->bitmask &= ~(1 << index);
         }
@@ -167,7 +167,7 @@ RtPriorityQueuePeekAndPop
 {
     RT_STATUS status = RtPriorityQueuePeek(priorityQueue, targetBuffer, bytesToGet);
 
-    if(RT_SUCCESS(status))
+    if (RT_SUCCESS(status))
     {
         status = RtPriorityQueuePop(priorityQueue, bytesToGet);
     }

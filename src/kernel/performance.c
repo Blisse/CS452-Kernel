@@ -11,10 +11,7 @@ static UINT g_lastTick;
 static
 inline
 VOID
-PerformancepSetupTimer3
-    (
-        VOID
-    )
+PerformancepSetupTimer3()
 {
     UINT* control = (UINT*)(TIMER3_BASE + CRTL_OFFSET);
     *control = *control | CLKSEL_MASK | MODE_MASK | ENABLE_MASK;
@@ -25,19 +22,13 @@ PerformancepSetupTimer3
 static
 inline
 UINT
-PerformancepGetTimer3
-    (
-        VOID
-    )
+PerformancepGetTimer3()
 {
     return *(UINT*)(TIMER3_BASE + VAL_OFFSET);
 }
 
 VOID
-PerformanceInit
-    (
-        VOID
-    )
+PerformanceInit()
 {
     PerformancepSetupTimer3();
 
@@ -67,10 +58,7 @@ PerformanceGet
 }
 
 VOID
-PerformanceEnterTask
-    (
-        VOID
-    )
+PerformanceEnterTask()
 {
     g_lastTick = PerformancepGetTimer3();
 }

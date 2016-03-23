@@ -20,7 +20,7 @@ UartpOpen
         OUT IO_DEVICE* device
     )
 {
-    if(ChannelCom1 == channel)
+    if (ChannelCom1 == channel)
     {
         device->readTaskId = WhoIs(UART_COM1_READ_NAME);
         ASSERT(SUCCESSFUL(device->readTaskId));
@@ -30,7 +30,7 @@ UartpOpen
 
         return 0;
     }
-    else if(ChannelCom2 == channel)
+    else if (ChannelCom2 == channel)
     {
         device->readTaskId = WhoIs(UART_COM2_READ_NAME);
         ASSERT(SUCCESSFUL(device->readTaskId));
@@ -49,10 +49,7 @@ UartpOpen
 
 static
 CHAR
-UartpCom1Read
-    (
-        VOID
-    )
+UartpCom1Read()
 {
     return *UART_DATA(UART1_BASE);
 }
@@ -69,10 +66,7 @@ UartpCom1Write
 
 static
 CHAR
-UartpCom2Read
-    (
-        VOID
-    )
+UartpCom2Read()
 {
     return *UART_DATA(UART2_BASE);
 }
@@ -88,29 +82,26 @@ UartpCom2Write
 }
 
 VOID
-UartCreateTasks
-    (
-        VOID
-    )
+UartCreateTasks()
 {
     // Register with the I/O framework
     VERIFY(SUCCESSFUL(IoRegisterDriver(UartDevice, UartpOpen)));
 
     // Create the uart I/O servers
-    VERIFY(SUCCESSFUL(IoCreateReadTask(Priority29, 
-                                       UartCom1ReceiveEvent, 
-                                       UartpCom1Read, 
+    VERIFY(SUCCESSFUL(IoCreateReadTask(Priority29,
+                                       UartCom1ReceiveEvent,
+                                       UartpCom1Read,
                                        UART_COM1_READ_NAME)));
-    VERIFY(SUCCESSFUL(IoCreateWriteTask(Priority29, 
-                                        UartCom1TransmitEvent, 
-                                        UartpCom1Write, 
+    VERIFY(SUCCESSFUL(IoCreateWriteTask(Priority29,
+                                        UartCom1TransmitEvent,
+                                        UartpCom1Write,
                                         UART_COM1_WRITE_NAME)));
-    VERIFY(SUCCESSFUL(IoCreateReadTask(Priority11, 
-                                       UartCom2ReceiveEvent, 
-                                       UartpCom2Read, 
+    VERIFY(SUCCESSFUL(IoCreateReadTask(Priority11,
+                                       UartCom2ReceiveEvent,
+                                       UartpCom2Read,
                                        UART_COM2_READ_NAME)));
-    VERIFY(SUCCESSFUL(IoCreateWriteTask(Priority11, 
-                                        UartCom2TransmitEvent, 
-                                        UartpCom2Write, 
+    VERIFY(SUCCESSFUL(IoCreateWriteTask(Priority11,
+                                        UartCom2TransmitEvent,
+                                        UartpCom2Write,
                                         UART_COM2_WRITE_NAME)));
 }

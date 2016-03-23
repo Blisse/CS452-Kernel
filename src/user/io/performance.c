@@ -3,17 +3,13 @@
 #include <rtosc/assert.h>
 #include <rtkernel.h>
 #include <rtos.h>
+#include <user/io.h>
 
-#include "display.h"
-
-#define NUM_PERFORMANCE_TASKS 21
+#define NUM_PERFORMANCE_TASKS 30
 #define IDLE_TASK_ID 1
 
 VOID
-PerformancepTask
-    (
-        VOID
-    )
+PerformancepTask()
 {
     TASK_PERFORMANCE performanceCounters[NUM_PERFORMANCE_TASKS];
 
@@ -21,8 +17,7 @@ PerformancepTask
     {
         UINT totalTime = 0;
 
-        UINT i;
-        for (i = 0; i < NUM_PERFORMANCE_TASKS; i++)
+        for (UINT i = 0; i < NUM_PERFORMANCE_TASKS; i++)
         {
             QueryPerformance(i, &performanceCounters[i]);
             totalTime += performanceCounters[i].activeTicks;
@@ -37,10 +32,7 @@ PerformancepTask
 }
 
 VOID
-PerformanceCreateTask
-    (
-        VOID
-    )
+PerformanceCreateTask()
 {
     VERIFY(SUCCESSFUL(Create(LowestUserPriority, PerformancepTask)));
 }

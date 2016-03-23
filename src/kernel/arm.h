@@ -4,140 +4,80 @@
 
 extern
 INT
-GetR0
-    (
-        VOID
-    );
+GetR0();
 
 extern
 INT
-GetR1
-    (
-        VOID
-    );
+GetR1();
 
 extern
 INT
-GetR2
-    (
-        VOID
-    );
+GetR2();
 
 extern
 INT
-GetR3
-    (
-        VOID
-    );
+GetR3();
 
 extern
 INT
-GetR4
-    (
-        VOID
-    );
+GetR4();
 
 extern
 INT
-GetR5
-    (
-        VOID
-    );
+GetR5();
 
 extern
 INT
-GetR6
-    (
-        VOID
-    );
+GetR6();
 
 extern
 INT
-GetR7
-    (
-        VOID
-    );
+GetR7();
 
 extern
 INT
-GetR8
-    (
-        VOID
-    );
+GetR8();
 
 extern
 INT
-GetR9
-    (
-        VOID
-    );
+GetR9();
 
 extern
 INT
-GetR10
-    (
-        VOID
-    );
+GetR10();
 
 extern
 INT
-GetR11
-    (
-        VOID
-    );
+GetR11();
 
 extern
 INT
-GetR12
-    (
-        VOID
-    );
+GetR12();
 
 extern
 UINT*
-GetSP
-    (
-        VOID
-    );
+GetSP();
 
 extern
 UINT*
-GetUserSP
-    (
-        VOID
-    );
+GetUserSP();
 
 extern
 INT
-GetLR
-    (
-        VOID
-    );
+GetLR();
 
 extern
 INT
-GetPC
-    (
-        VOID
-    );
+GetPC();
 
 extern
 INT
-GetCurrentSP
-    (
-        VOID
-    );
+GetCurrentSP();
 
 extern
 INT
-GetCPSR
-    (
-        VOID
-    );
+GetCPSR();
 
 extern
 INT
-GetSPSR
-    (
-        VOID
-    );
+GetSPSR();

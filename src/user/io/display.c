@@ -319,7 +319,7 @@ DisplaypTrainLocationRequest
     CURSOR_POSITION cursor = { CURSOR_TRAIN_LOCATION_X, CURSOR_TRAIN_LOCATION_Y };
 
     WriteCursorPosition(ioDevice, &cursor);
-    WriteFormattedString(ioDevice, CURSOR_DELETE_LINE "Train %d is " CURSOR_CYAN "%2d cm" CURSOR_RESET " from %s", locationRequest->train, locationRequest->distanceToNode / 100000, locationRequest->node);
+    WriteFormattedString(ioDevice, CURSOR_DELETE_LINE "Train %d is " CURSOR_CYAN "%2d cm" CURSOR_RESET " from %s", locationRequest->train, locationRequest->distanceToNode / 10000, locationRequest->node);
 }
 
 static
@@ -336,10 +336,7 @@ DisplaypSendRequest
 
 static
 VOID
-DisplaypShutdownHook
-    (
-        VOID
-    )
+DisplaypShutdownHook()
 {
     DISPLAY_REQUEST request;
     request.type = DisplayShutdownRequest;
@@ -348,10 +345,7 @@ DisplaypShutdownHook
 
 static
 VOID
-DisplaypTask
-    (
-        VOID
-    )
+DisplaypTask()
 {
     VERIFY(SUCCESSFUL(RegisterAs(DISPLAY_NAME)));
     VERIFY(SUCCESSFUL(ShutdownRegisterHook(DisplaypShutdownHook)));
@@ -429,17 +423,14 @@ DisplaypTask
             }
         }
 
-        WriteCursorPosition(&com2Device, &cursor);
-
         VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+
+        WriteCursorPosition(&com2Device, &cursor);
     }
 }
 
 VOID
-DisplayCreateTask
-    (
-        VOID
-    )
+DisplayCreateTask()
 {
     VERIFY(SUCCESSFUL(Create(Priority10, DisplaypTask)));
 }

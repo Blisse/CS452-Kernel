@@ -38,10 +38,7 @@ KernelCreateTask
 static
 inline
 VOID
-KernelpInit
-    (
-        VOID
-    )
+KernelpInit()
 {
     CacheInit();
     InterruptInit();
@@ -55,10 +52,7 @@ KernelpInit
 }
 
 VOID
-KernelRun
-    (
-        VOID
-    )
+KernelRun()
 {
     // Other group's kernel may have forgotten to disable an interrupt.
     // Disable all interrupts to handle this.
@@ -68,13 +62,13 @@ KernelRun
     KernelpInit();
 
     // Run the kernel
-    while(1)
+    while (1)
     {
         TASK_DESCRIPTOR* nextTd;
 
         RT_STATUS status = SchedulerGetNextTask(&nextTd);
 
-        if(RT_SUCCESS(status))
+        if (RT_SUCCESS(status))
         {
             ASSERT(TaskValidate(nextTd));
 
@@ -88,12 +82,12 @@ KernelRun
             // The task may have transitioned to a new state
             // due to interrupts, Exit(), etc.  Don't update
             // the state unless nothing happened to the task
-            if(nextTd->state == RunningState)
+            if (nextTd->state == RunningState)
             {
                 nextTd->state = ReadyState;
             }
         }
-        else if(STATUS_NOT_FOUND == status)
+        else if (STATUS_NOT_FOUND == status)
         {
             // No more tasks to run, quit the system
             break;

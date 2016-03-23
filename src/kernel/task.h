@@ -4,10 +4,7 @@
 #include "task_descriptor.h"
 
 VOID
-TaskInit
-    (
-        VOID
-    );
+TaskInit();
 
 RT_STATUS
 TaskCreate

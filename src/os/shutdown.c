@@ -9,7 +9,7 @@
 
 typedef enum _SHUTDOWN_REQUEST_TYPE
 {
-    RegisterRequest = 0, 
+    RegisterRequest = 0,
     ShutdownRequest
 } SHUTDOWN_REQUEST_TYPE;
 
@@ -21,33 +21,28 @@ typedef struct _SHUTDOWN_REQUEST
 
 static
 VOID
-ShutdownpTask
-    (
-        VOID
-    )
+ShutdownpTask()
 {
-    INT i;
-    BOOLEAN running = TRUE;
     SHUTDOWN_HOOK_FUNC shutdownHooks[NUM_TASKS];
-
-    for(i = 0; i < NUM_TASKS; i++)
+    for (UINT i = 0; i < NUM_TASKS; i++)
     {
         shutdownHooks[i] = NULL;
     }
-    
+
     VERIFY(SUCCESSFUL(RegisterAs(SHUTDOWN_TASK_NAME)));
 
-    while(running)
+    BOOLEAN running = TRUE;
+    while (running)
     {
-        INT sender;
+        INT senderId;
         SHUTDOWN_REQUEST request;
 
-        VERIFY(SUCCESSFUL(Receive(&sender, &request, sizeof(request))));
+        VERIFY(SUCCESSFUL(Receive(&senderId, &request, sizeof(request))));
 
         switch(request.type)
         {
             case RegisterRequest:
-                shutdownHooks[sender % NUM_TASKS] = request.shutdownHook;
+                shutdownHooks[senderId % NUM_TASKS] = request.shutdownHook;
                 break;
 
             case ShutdownRequest:
@@ -59,15 +54,15 @@ ShutdownpTask
                 break;
         }
 
-        VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
+        VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
     }
 
     // Run shutdown hooks
-    for(i = 0; i < NUM_TASKS; i++)
+    for (UINT i = 0; i < NUM_TASKS; i++)
     {
         SHUTDOWN_HOOK_FUNC shutdownHook = shutdownHooks[i];
 
-        if(NULL != shutdownHook)
+        if (shutdownHook != NULL)
         {
             shutdownHook();
         }
@@ -90,14 +85,14 @@ ShutdownpSendRequest
 {
     INT result = WhoIs(SHUTDOWN_TASK_NAME);
 
-    if(SUCCESSFUL(result))
+    if (SUCCESSFUL(result))
     {
         INT shutdownTaskId = result;
 
-        result = Send(shutdownTaskId, 
-                      request, 
-                      sizeof(*request), 
-                      NULL, 
+        result = Send(shutdownTaskId,
+                      request,
+                      sizeof(*request),
+                      NULL,
                       0);
     }
 
@@ -111,15 +106,12 @@ ShutdownRegisterHook
     )
 {
     SHUTDOWN_REQUEST request = { RegisterRequest, shutdownFunc };
-    
+
     return ShutdownpSendRequest(&request);
 }
 
 VOID
-Shutdown
-    (
-        VOID
-    )
+Shutdown()
 {
     SHUTDOWN_REQUEST request = { ShutdownRequest };
 
@@ -127,10 +119,7 @@ Shutdown
 }
 
 VOID
-ShutdownCreateTask
-    (
-        VOID
-    )
+ShutdownCreateTask()
 {
     VERIFY(SUCCESSFUL(Create(LowestSystemPriority, ShutdownpTask)));
 }

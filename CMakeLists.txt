@@ -23,6 +23,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # libraries
 set(LIB_TRACK "track")
+set(LIB_IO "io")
 set(LIB_BWIO "bwio")
 set(LIB_RTOSC "rtosc")
 set(LIB_USER "user")
@@ -89,11 +90,7 @@ function(add_c_executable EXEC_NAME EXEC_SOURCES EXEC_DEPENDENCIES)
     target_link_libraries("${EXEC_NAME}" "${EXEC_DEPENDENCIES}")
     set_target_properties("${EXEC_NAME}" PROPERTIES LINKER_LANGUAGE C)
     if (NOT LOCAL)
-        if (${CMAKE_RUNTIME_OUTPUT_DIRECTORY} MATCHES "/tstark/")
-            set(TFTP_EXEC_PATH "/u/cs452/tftp/ARM/tstark/${EXEC_NAME}")
-        else()
-            set(TFTP_EXEC_PATH "/u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}")
-        endif()
+        set(TFTP_EXEC_PATH "/u/cs452/tftp/ARM/v6lai/shared/${EXEC_NAME}")
         add_custom_command(
             TARGET "${EXEC_NAME}"
             POST_BUILD

@@ -12,10 +12,7 @@ typedef struct _COURIER_PARAMETERS
 
 static
 VOID
-CourierpTask
-    (
-        VOID
-    )
+CourierpTask()
 {
     CHAR buffer[COURIER_BUFFER_SIZE];
     INT bytesReceived;
@@ -25,20 +22,20 @@ CourierpTask
     Receive(&sender, &parameters, sizeof(parameters));
     Reply(sender, NULL, 0);
 
-    while(1)
-    {   
+    while (1)
+    {
         bytesReceived = Send(parameters.sourceTask,
-                             NULL, 
-                             0, 
-                             buffer, 
+                             NULL,
+                             0,
+                             buffer,
                              sizeof(buffer));
 
         ASSERT(SUCCESSFUL(bytesReceived));
 
-        bytesReceived = Send(parameters.destinationTask, 
-                             buffer, 
-                             bytesReceived, 
-                             NULL, 
+        bytesReceived = Send(parameters.destinationTask,
+                             buffer,
+                             bytesReceived,
+                             NULL,
                              0);
 
         ASSERT(SUCCESSFUL(bytesReceived));
@@ -48,7 +45,7 @@ CourierpTask
 VOID
 CourierPickup
     (
-        IN PVOID buffer, 
+        IN PVOID buffer,
         IN INT size
     )
 {
@@ -61,8 +58,8 @@ CourierPickup
 VOID
 CourierCreateTask
     (
-        IN TASK_PRIORITY priority, 
-        IN INT sourceTask, 
+        IN TASK_PRIORITY priority,
+        IN INT sourceTask,
         IN INT destinationTask
     )
 {
@@ -71,9 +68,9 @@ CourierCreateTask
 
     ASSERT(SUCCESSFUL(courierTaskId));
 
-    VERIFY(SUCCESSFUL(Send(courierTaskId, 
-                      &parameters, 
-                      sizeof(parameters), 
-                      NULL, 
+    VERIFY(SUCCESSFUL(Send(courierTaskId,
+                      &parameters,
+                      sizeof(parameters),
+                      NULL,
                       0)));
 }

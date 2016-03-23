@@ -14,7 +14,7 @@
 typedef enum _CLOCK_SERVER_REQUEST_TYPE
 {
     TickRequest = 0,
-    TimeRequest, 
+    TimeRequest,
     DelayRequest,
     DelayUntilRequest,
 } CLOCK_SERVER_REQUEST_TYPE;
@@ -36,16 +36,13 @@ typedef struct _CLOCK_SERVER_DELAY_REQUEST
 
 static
 VOID
-ClockNotifierpTask
-    (
-        VOID
-    )
+ClockNotifierpTask()
 {
     CLOCK_SERVER_REQUEST notifyRequest = { TickRequest };
 
     CourierCreateTask(Priority30, MyTid(), MyParentTid());
 
-    while(1)
+    while (1)
     {
         // Wait for the event
         AwaitEvent(ClockEvent);
@@ -63,22 +60,22 @@ inline
 RT_STATUS
 ClockServerpUnblockDelayedTasks
     (
-        IN RT_LINKED_LIST* delayedTasks, 
+        IN RT_LINKED_LIST* delayedTasks,
         IN UINT currentTick
     )
 {
     RT_STATUS status = STATUS_SUCCESS;
-    RT_LINKED_LIST_NODE* node;    
+    RT_LINKED_LIST_NODE* node;
 
-    while(!RtLinkedListIsEmpty(delayedTasks) && RT_SUCCESS(status))
+    while (!RtLinkedListIsEmpty(delayedTasks) && RT_SUCCESS(status))
     {
         status = RtLinkedListPeekFront(delayedTasks, &node);
 
-        if(RT_SUCCESS(status))
+        if (RT_SUCCESS(status))
         {
             CLOCK_SERVER_DELAY_REQUEST* delayRequest = NODE_TO_DELAY_REQUEST(node);
 
-            if(delayRequest->delayUntilTick <= currentTick)
+            if (delayRequest->delayUntilTick <= currentTick)
             {
                 Reply(delayRequest->taskId, NULL, 0);
 
@@ -99,8 +96,8 @@ inline
 RT_STATUS
 ClockServerpDelayTask
     (
-        IN RT_LINKED_LIST* delayedTasks, 
-        IN CLOCK_SERVER_DELAY_REQUEST* delayRequests, 
+        IN RT_LINKED_LIST* delayedTasks,
+        IN CLOCK_SERVER_DELAY_REQUEST* delayRequests,
         IN INT taskId,
         IN UINT delayUntilTick
     )
@@ -109,17 +106,17 @@ ClockServerpDelayTask
     RT_LINKED_LIST_NODE* node = NULL;
 
     delayRequest->taskId = taskId;
-    delayRequest->delayUntilTick = delayUntilTick;    
+    delayRequest->delayUntilTick = delayUntilTick;
 
     (VOID) RtLinkedListPeekFront(delayedTasks, &node);
 
-    while(NULL != node && 
+    while (NULL != node &&
           NODE_TO_DELAY_REQUEST(node)->delayUntilTick < delayRequest->delayUntilTick)
     {
         node = node->next;
     }
 
-    if(NULL != node)
+    if (NULL != node)
     {
         return RtLinkedListInsertBetween(delayedTasks,
                                          node->previous,
@@ -134,10 +131,7 @@ ClockServerpDelayTask
 
 static
 VOID
-ClockServerpTask
-    (
-        VOID
-    )
+ClockServerpTask()
 {
     UINT currentTick = 0;
     RT_LINKED_LIST delayedTasks;
@@ -168,22 +162,22 @@ ClockServerpTask
                 break;
 
             case DelayRequest:
-                VERIFY(RT_SUCCESS(ClockServerpDelayTask(&delayedTasks, 
-                                                        delayRequests, 
-                                                        taskId, 
+                VERIFY(RT_SUCCESS(ClockServerpDelayTask(&delayedTasks,
+                                                        delayRequests,
+                                                        taskId,
                                                         currentTick + request.ticks)));
                 break;
 
             case DelayUntilRequest:
-                if(request.ticks < currentTick)
+                if (request.ticks < currentTick)
                 {
                     Reply(taskId, NULL, 0);
                 }
                 else
                 {
-                    VERIFY(RT_SUCCESS(ClockServerpDelayTask(&delayedTasks, 
-                                                            delayRequests, 
-                                                            taskId, 
+                    VERIFY(RT_SUCCESS(ClockServerpDelayTask(&delayedTasks,
+                                                            delayRequests,
+                                                            taskId,
                                                             request.ticks)));
                 }
                 break;
@@ -196,10 +190,7 @@ ClockServerpTask
 }
 
 VOID
-ClockServerCreateTask
-    (
-        VOID
-    )
+ClockServerCreateTask()
 {
     VERIFY(SUCCESSFUL(Create(Priority29, ClockServerpTask)));
 }
@@ -213,10 +204,10 @@ ClockServerSendRequest
 {
     INT clockServerTaskId = WhoIs(CLOCK_SERVER_NAME);
     INT response;
-    INT status = Send(clockServerTaskId, 
-                      request, 
-                      sizeof(*request), 
-                      &response, 
+    INT status = Send(clockServerTaskId,
+                      request,
+                      sizeof(*request),
+                      &response,
                       sizeof(response));
 
     return SUCCESSFUL(status) ? response : status;
@@ -233,10 +224,7 @@ Delay
 }
 
 INT
-Time
-    (
-        VOID
-    )
+Time()
 {
     CLOCK_SERVER_REQUEST request = { TimeRequest };
     return ClockServerSendRequest(&request);

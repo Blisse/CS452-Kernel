@@ -1,265 +1,177 @@
 #include "scheduler.h"
 
-#include "display.h"
-#include "physics.h"
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
 #include <rtkernel.h>
 #include <rtos.h>
 #include <user/trains.h>
+#include <user/io.h>
 
-#define SCHEDULER_NAME "scheduler"
+#include "physics.h"
+#include "track_server.h"
+
+#define SCHEDULER_SERVER_NAME "scheduler_server"
 #define SCHEDULER_TICK_PENALTY_PER_BRANCH 2 // 20 ms
-#define SCHEDULER_TRAIN_NOT_MOVING_THRESHOLD 100 // 100 micrometers per tick
 
-// Debug builds are slower than release builds
-#ifdef NDEBUG
-#define SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD 5 // 50 ms
-#else
-#define SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD 10 // 100 ms
-#endif
-
-typedef enum _SCHEDULER_REQUEST_TYPE
-{
-    TrainChangedNextNodeRequest = 0,
-    TrainArrivedAtNextNodeRequest,
-    TrainUpdateLocationRequest,
-    TrainStopAtSensorRequest,
+typedef enum _SCHEDULER_REQUEST_TYPE {
+    UpdateTrainDataRequest = 0,
+    TrainMoveToSensorRequest,
     TrainStopRequest,
 } SCHEDULER_REQUEST_TYPE;
 
-typedef struct _SCHEDULER_TRAIN_CHANGED_NEXT_NODE_REQUEST
-{
+typedef struct _SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST {
     UCHAR train;
-    TRACK_NODE* currentNode;
-    TRACK_NODE* nextNode;
-} SCHEDULER_TRAIN_CHANGED_NEXT_NODE_REQUEST;
-
-typedef struct _SCHEDULER_TRAIN_ARRIVED_AT_NEXT_NODE_REQUEST
-{
-    UCHAR train;
-    INT arrivalTime;
-} SCHEDULER_TRAIN_ARRIVED_AT_NEXT_NODE_REQUEST;
-
-typedef struct _SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST
-{
-    UCHAR train;
-    UINT distancePastCurrentNode;
-    UINT velocity;
 } SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST;
 
-typedef struct _SCHEDULER_TRAIN_STOP_AT_SENSOR_REQUEST
-{
+typedef struct _SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST {
     UCHAR train;
     SENSOR sensor;
     UINT distancePastSensor;
-} SCHEDULER_TRAIN_STOP_AT_SENSOR_REQUEST;
+} SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST;
 
-typedef struct _SCHEDULER_TRAIN_STOP_REQUEST
-{
+typedef struct _SCHEDULER_TRAIN_STOP_REQUEST {
     UCHAR train;
 } SCHEDULER_TRAIN_STOP_REQUEST;
 
-typedef struct _SCHEDULER_REQUEST
-{
+typedef struct _SCHEDULER_REQUEST {
     SCHEDULER_REQUEST_TYPE type;
 
-    union
-    {
-        SCHEDULER_TRAIN_CHANGED_NEXT_NODE_REQUEST changedNextNodeRequest;
-        SCHEDULER_TRAIN_ARRIVED_AT_NEXT_NODE_REQUEST arrivedAtNextNodeRequest;
+    union {
         SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST updateLocationRequest;
-        SCHEDULER_TRAIN_STOP_AT_SENSOR_REQUEST stopAtSensorRequest;
+        SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST moveToSensorRequest;
         SCHEDULER_TRAIN_STOP_REQUEST stopRequest;
     };
 } SCHEDULER_REQUEST;
 
-typedef struct _TRAIN_SCHEDULE
-{
-    TRACK_NODE* nextNode;
-    UINT nextNodeDistance;
-    INT nextNodeExpectedArrivalTime;
-    TRACK_NODE* stopNode;
-    BOOLEAN stopping;
-    UCHAR stopSpeed;
+typedef struct _TRAIN_SCHEDULE {
+    TRACK_NODE* destinationNode;
 } TRAIN_SCHEDULE;
 
 static
 VOID
-SchedulerpTask
-    (
-        VOID
-    )
+SchedulerpTask()
 {
-    VERIFY(SUCCESSFUL(RegisterAs(SCHEDULER_NAME)));
+
+    VERIFY(SUCCESSFUL(RegisterAs(SCHEDULER_SERVER_NAME)));
 
     TRAIN_SCHEDULE trainSchedules[MAX_TRAINS];
     RtMemset(trainSchedules, sizeof(trainSchedules), 0);
 
-    while(1)
+    while (1)
     {
         INT senderId;
         SCHEDULER_REQUEST request;
 
         VERIFY(SUCCESSFUL(Receive(&senderId, &request, sizeof(request))));
 
+        Log("receive %d %d", senderId, request.type);
+
         // Reply immediately to unblock tasks and ensure there are no deadlocks
         VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
         switch(request.type)
         {
-            case TrainChangedNextNodeRequest:
-            {
-                SCHEDULER_TRAIN_CHANGED_NEXT_NODE_REQUEST* changedNextNodeRequest = &request.changedNextNodeRequest;
-                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[changedNextNodeRequest->train];
-
-                trainSchedule->nextNode = changedNextNodeRequest->nextNode;
-                trainSchedule->nextNodeExpectedArrivalTime = 0;
-                VERIFY(SUCCESSFUL(TrackDistanceBetween(changedNextNodeRequest->currentNode,
-                                                       changedNextNodeRequest->nextNode,
-                                                       &trainSchedule->nextNodeDistance)));
-                break;
-            }
-
-            case TrainArrivedAtNextNodeRequest:
-            {
-                INT currentTime = Time();
-                ASSERT(SUCCESSFUL(currentTime));
-
-                SCHEDULER_TRAIN_ARRIVED_AT_NEXT_NODE_REQUEST* arrivedAtNextNodeRequest = &request.arrivedAtNextNodeRequest;
-                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[arrivedAtNextNodeRequest->train];
-
-                // This might be the first time we've seen this train
-                if(trainSchedule->nextNodeExpectedArrivalTime > 0)
-                {
-                    INT diff = arrivedAtNextNodeRequest->arrivalTime - trainSchedule->nextNodeExpectedArrivalTime;
-
-                    if (abs(diff) > SCHEDULER_ALLOWABLE_ARRIVAL_THRESHOLD || currentTime % 10 == 0)
-                    {
-                        ShowTrainArrival(arrivedAtNextNodeRequest->train, (STRING)trainSchedule->nextNode->name, diff);
-                    }
-                }
-
-                break;
-            }
-
-            case TrainUpdateLocationRequest:
+            case UpdateTrainDataRequest:
             {
                 INT currentTime = Time();
                 ASSERT(SUCCESSFUL(currentTime));
 
                 SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST* updateLocationRequest = &request.updateLocationRequest;
-                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[updateLocationRequest->train];
 
-                if(updateLocationRequest->velocity > SCHEDULER_TRAIN_NOT_MOVING_THRESHOLD)
+                UCHAR trainId = updateLocationRequest->train;
+
+                TRAIN_DATA* trainData;
+                VERIFY(SUCCESSFUL(GetTrainData(trainId, &trainData)));
+
+                Log("Train Velocity: %d", trainData->velocity);
+
+                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[trainId];
+
+                if (trainData != NULL && trainData->train == trainId && trainSchedule->destinationNode != NULL)
                 {
-                    // Due to sensor latency, we may believe we've gone past the sensor
-                    // If we think we've gone past the sensor, then just use our last arrival time guess
-                    if(trainSchedule->nextNodeDistance > updateLocationRequest->distancePastCurrentNode)
-                    {
-                        UINT remainingDistance = trainSchedule->nextNodeDistance - updateLocationRequest->distancePastCurrentNode;
-                        UINT timeTillNextNode = remainingDistance / updateLocationRequest->velocity;
-
-                        // Some sensors are sticky and take longer than others to activate
-                        //UINT correctiveTime = TrackGetCorrectiveTime(trainSchedule->nextNode);
-
-                        trainSchedule->nextNodeExpectedArrivalTime = currentTime + timeTillNextNode;// + correctiveTime;
-                    }
-                }
-                else
-                {
-                    trainSchedule->nextNodeExpectedArrivalTime = 0;
-                }
-
-                if (currentTime % 10 == 0)
-                {
-                    // Hack to get rid of incrementing bug
-                    UCHAR trainSpeed;
-                    VERIFY(SUCCESSFUL(TrainGetSpeed(updateLocationRequest->train, &trainSpeed)));
-                    if (trainSpeed != 0)
-                    {
-                        ShowTrainLocation(updateLocationRequest->train, (STRING)trainSchedule->nextNode->name, (INT)trainSchedule->nextNodeDistance - (INT)updateLocationRequest->distancePastCurrentNode);
-                    }
-                }
-
-                if (trainSchedule->stopNode)
-                {
-                    UINT distanceToNode;
-                    VERIFY(SUCCESSFUL(TrackDistanceBetween(trainSchedule->nextNode, trainSchedule->stopNode, &distanceToNode)));
+                    UINT distanceToDestination;
+                    VERIFY(SUCCESSFUL(GetDistanceBetweenNodes(trainData->currentNode, trainSchedule->destinationNode, &distanceToDestination)));
+                    distanceToDestination -= trainData->distancePastCurrentNode;
 
                     UCHAR trainSpeed;
-                    VERIFY(SUCCESSFUL(TrainGetSpeed(updateLocationRequest->train, &trainSpeed)));
+                    VERIFY(SUCCESSFUL(TrainGetSpeed(trainId, &trainSpeed)));
 
                     // d = (vf^2 - vi^2) / (2a)
-                    INT deceleration = PhysicsSteadyStateDeceleration(updateLocationRequest->train, trainSpeed);
-                    INT stoppingDistance = (updateLocationRequest->velocity * updateLocationRequest->velocity) / (deceleration);
+                    INT stoppingDistance = (trainData->velocity * trainData->velocity) / (2 * PhysicsSteadyStateDeceleration(trainId, trainSpeed));
 
-                    INT actualDistanceToNode = distanceToNode + (trainSchedule->nextNodeDistance - updateLocationRequest->distancePastCurrentNode);
-                    Log("Looking to stop %d from %s", actualDistanceToNode, trainSchedule->stopNode->name);
+                    Log("Looking to stop %d from %s", distanceToDestination, trainSchedule->destinationNode->name);
 
-                    INT sensorDelay = 5;
-                    INT sensorDelayDistance = updateLocationRequest->velocity * sensorDelay;
+                    INT commandDelay = 10; // ticks
+                    INT commandDelayDistance = trainData->velocity * commandDelay;
 
-                    if (actualDistanceToNode < stoppingDistance + sensorDelayDistance)
+                    if (distanceToDestination < stoppingDistance + commandDelayDistance)
                     {
-                        Log("Stopping %d...", updateLocationRequest->train);
-                        VERIFY(SUCCESSFUL(TrainSetSpeed(updateLocationRequest->train, 0)));
-                        trainSchedule->stopNode = NULL;
+                        VERIFY(SUCCESSFUL(TrainSetSpeed(trainId, 0)));
+                        trainSchedule->destinationNode = NULL;
+
+                        Log("Sent stop command to train %d", trainId);
                     }
+
+                    trainSchedule->destinationNode = NULL;
                 }
 
-                if (trainSchedule->stopping)
-                {
-                    // d = (vf^2 - vi^2) / (2a) - implicit *2 in deceleration constants
-                    INT deceleration = PhysicsSteadyStateDeceleration(updateLocationRequest->train, trainSchedule->stopSpeed);
-                    INT stoppingDistance = (updateLocationRequest->velocity * updateLocationRequest->velocity) / (deceleration);
-
-                    if (trainSchedule->nextNodeDistance > stoppingDistance)
-                    {
-                        Log("Expected to stop %d from %s", (trainSchedule->nextNodeDistance - stoppingDistance), trainSchedule->nextNode->name);
-                    }
-                    else
-                    {
-                        TRACK_EDGE* nextEdge = TrackNextEdge(trainSchedule->nextNode);
-                        TRACK_NODE* nextNode = nextEdge->dest;
-                        UINT distanceToNextNode = (nextEdge->dist * 1000) + (trainSchedule->nextNodeDistance);
-
-                        while (distanceToNextNode < stoppingDistance ||
-                            (distanceToNextNode >= stoppingDistance && nextNode->type != NODE_SENSOR))
-                        {
-                            nextEdge = TrackNextEdge(nextNode);
-                            nextNode = nextEdge->dest;
-                            distanceToNextNode += (nextEdge->dist * 1000);
-                        }
-
-                        Log("Expected to stop %d from %s", (distanceToNextNode - stoppingDistance), nextNode->name);
-                    }
-
-                    trainSchedule->stopping = FALSE;
-                }
-
-                // TODO: What if the train is going in reverse? Longer distance between pickup and sensor
-                //       This doesn't really matter for a location update, but will matter for stopping distance
                 break;
             }
 
             case TrainStopRequest:
             {
                 SCHEDULER_TRAIN_STOP_REQUEST* stopRequest = &request.stopRequest;
-                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[stopRequest->train];
-                trainSchedule->stopping = TRUE;
-                VERIFY(SUCCESSFUL(TrainGetSpeed(stopRequest->train, &trainSchedule->stopSpeed)));
-                VERIFY(SUCCESSFUL(TrainSetSpeed(stopRequest->train, 0)));
+                UCHAR trainId = stopRequest->train;
+
+                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[trainId];
+
+                TRAIN_DATA* trainData;
+                VERIFY(SUCCESSFUL(GetTrainData(trainId, &trainData)));
+
+                if (trainSchedule != NULL && trainData != NULL && trainData->train == trainId)
+                {
+                    UCHAR trainSpeed;
+                    VERIFY(SUCCESSFUL(TrainGetSpeed(trainId, &trainSpeed)));
+
+                    // d = (vf^2 - vi^2) / (2a) - implicit *2a in deceleration constants
+                    INT deceleration = PhysicsSteadyStateDeceleration(trainId, trainSpeed);
+                    INT stoppingDistance = (trainData->velocity * trainData->velocity) / (deceleration);
+
+                    TRACK_NODE* nextNode;
+                    VERIFY(SUCCESSFUL(GetNextSensorNode(trainData->currentNode, &nextNode)));
+
+                    INT stopPosition = abs(trainData->distanceCurrentToNextNode - trainData->distancePastCurrentNode);
+
+                    VERIFY(SUCCESSFUL(TrainSetSpeed(trainId, 0)));
+
+                    while (stopPosition < stoppingDistance)
+                    {
+                        TRACK_NODE* iteraterNode;
+                        VERIFY(SUCCESSFUL(GetNextSensorNode(nextNode, &iteraterNode)));
+
+                        UINT distanceBetweenNodes;
+                        VERIFY(SUCCESSFUL(GetDistanceBetweenNodes(nextNode, iteraterNode, &distanceBetweenNodes)));
+
+                        stopPosition += (distanceBetweenNodes * 1000);
+
+                        nextNode = iteraterNode;
+                    }
+
+                    Log("Expected to stop %d before %s", (stopPosition - stoppingDistance), nextNode->name);
+                }
 
                 break;
             }
 
-            case TrainStopAtSensorRequest:
+            case TrainMoveToSensorRequest:
             {
-                SCHEDULER_TRAIN_STOP_AT_SENSOR_REQUEST* stopAtSensorRequest = &request.stopAtSensorRequest;
-                TRACK_NODE* stopNode = TrackFindSensor(&stopAtSensorRequest->sensor);
-                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[stopAtSensorRequest->train];
-                trainSchedule->stopNode = stopNode;
+                SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST* moveToSensorRequest = &request.moveToSensorRequest;
+
+                TRACK_NODE* destinationNode;
+                VERIFY(SUCCESSFUL(GetSensorNode(&moveToSensorRequest->sensor, &destinationNode)));
+
+                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[moveToSensorRequest->train];
+                trainSchedule->destinationNode = destinationNode;
 
                 break;
             }
@@ -274,24 +186,20 @@ SchedulerpTask
 }
 
 VOID
-SchedulerCreateTask
-    (
-        VOID
-    )
+SchedulerCreateTask()
 {
     VERIFY(SUCCESSFUL(Create(Priority22, SchedulerpTask)));
 }
 
 static
 INT
-SchedulerpSendRequest
-    (
+SchedulerpSendRequest (
         IN SCHEDULER_REQUEST* request
     )
 {
-    INT result = WhoIs(SCHEDULER_NAME);
+    INT result = WhoIs(SCHEDULER_SERVER_NAME);
 
-    if(SUCCESSFUL(result))
+    if (SUCCESSFUL(result))
     {
         INT schedulerId = result;
 
@@ -302,73 +210,35 @@ SchedulerpSendRequest
 }
 
 INT
-SchedulerTrainChangedNextNode
-    (
-        IN UCHAR train,
-        IN TRACK_NODE* currentNode,
-        IN TRACK_NODE* nextNode
+SchedulerUpdateTrainData (
+        IN UCHAR train
     )
 {
     SCHEDULER_REQUEST request;
-    request.type = TrainChangedNextNodeRequest;
-    request.changedNextNodeRequest.train = train;
-    request.changedNextNodeRequest.currentNode = currentNode;
-    request.changedNextNodeRequest.nextNode = nextNode;
-
-    return SchedulerpSendRequest(&request);
-}
-
-INT
-SchedulerTrainArrivedAtNextNode
-    (
-        IN UCHAR train,
-        IN INT arrivalTime
-    )
-{
-    SCHEDULER_REQUEST request;
-    request.type = TrainArrivedAtNextNodeRequest;
-    request.arrivedAtNextNodeRequest.train = train;
-    request.arrivedAtNextNodeRequest.arrivalTime = arrivalTime;
-
-    return SchedulerpSendRequest(&request);
-}
-
-INT
-SchedulerUpdateLocation
-    (
-        IN UCHAR train,
-        IN UINT distancePastCurrentNode,
-        IN UINT velocity
-    )
-{
-    SCHEDULER_REQUEST request;
-    request.type = TrainUpdateLocationRequest;
+    request.type = UpdateTrainDataRequest;
     request.updateLocationRequest.train = train;
-    request.updateLocationRequest.distancePastCurrentNode = distancePastCurrentNode;
-    request.updateLocationRequest.velocity = velocity;
 
     return SchedulerpSendRequest(&request);
 }
 
 INT
-SchedulerStopTrainAtSensor
-    (
+SchedulerMoveTrainToSensor (
         IN UCHAR train,
-        IN SENSOR sensor
+        IN SENSOR sensor,
+        IN UINT distancePastSensor
     )
 {
     SCHEDULER_REQUEST request;
-    request.type = TrainStopAtSensorRequest;
-    request.stopAtSensorRequest.train = train;
-    request.stopAtSensorRequest.sensor = sensor;
-    request.stopAtSensorRequest.distancePastSensor = 0;
+    request.type = TrainMoveToSensorRequest;
+    request.moveToSensorRequest.train = train;
+    request.moveToSensorRequest.sensor = sensor;
+    request.moveToSensorRequest.distancePastSensor = distancePastSensor;
 
     return SchedulerpSendRequest(&request);
 }
 
 INT
-SchedulerStopTrain
-    (
+SchedulerStopTrain (
         IN UCHAR train
     )
 {

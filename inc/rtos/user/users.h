@@ -7,7 +7,4 @@
  ************************************/
 
 VOID
-InitUserTasks
-    (
-        VOID
-    );
+InitUserTasks();

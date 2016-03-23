@@ -52,40 +52,28 @@ SystemCreateTask
 
 static
 INT
-SystemGetCurrentTaskId
-    (
-        VOID
-    )
+SystemGetCurrentTaskId()
 {
     return SchedulerGetCurrentTask()->taskId;
 }
 
 static
 INT
-SystemGetCurrentParentTaskId
-    (
-        VOID
-    )
+SystemGetCurrentParentTaskId()
 {
     return SchedulerGetCurrentTask()->parentTaskId;
 }
 
 static
 VOID
-SystemPassCurrentTask
-    (
-        VOID
-    )
+SystemPassCurrentTask()
 {
     // This is intentionally left blank - it is a NOP
 }
 
 static
 VOID
-SystemDestroyCurrentTask
-    (
-        VOID
-    )
+SystemDestroyCurrentTask()
 {
     TaskDestroy(SchedulerGetCurrentTask());
 }
@@ -100,12 +88,12 @@ SystemSendMessage
         IN PVOID reply,
         IN INT replyLength
     )
-{    
+{
     TASK_DESCRIPTOR* from = SchedulerGetCurrentTask();
     TASK_DESCRIPTOR* to;
     RT_STATUS status = TaskDescriptorGet(taskId, &to);
-    
-    if(RT_SUCCESS(status))
+
+    if (RT_SUCCESS(status))
     {
         status = IpcSend(from, to, message, messageLength, reply, replyLength);
     }
@@ -139,10 +127,10 @@ SystemReceiveMessage
     TASK_DESCRIPTOR* currentTask = SchedulerGetCurrentTask();
     INT bytesReceived;
 
-    VERIFY(RT_SUCCESS(IpcReceive(currentTask, 
-                                 senderId, 
-                                 buffer, 
-                                 bufferLength, 
+    VERIFY(RT_SUCCESS(IpcReceive(currentTask,
+                                 senderId,
+                                 buffer,
+                                 bufferLength,
                                  &bytesReceived)));
 
     return bytesReceived;
@@ -161,7 +149,7 @@ SystemReplyMessage
     TASK_DESCRIPTOR* to;
     RT_STATUS status = TaskDescriptorGet(taskId, &to);
 
-    if(RT_SUCCESS(status))
+    if (RT_SUCCESS(status))
     {
         status = IpcReply(from, to, reply, replyLength);
     }
@@ -234,10 +222,7 @@ SystemQueryPerformance
 }
 
 VOID
-SyscallInit
-    (
-        VOID
-    )
+SyscallInit()
 {
     g_systemCallTable[0] = (UINT) SystemCreateTask;
     g_systemCallTable[1] = (UINT) SystemGetCurrentTaskId;

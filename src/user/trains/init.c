@@ -2,36 +2,26 @@
 #include <rtos.h>
 #include <user/trains.h>
 
-#include "clock.h"
-#include "display.h"
-#include "input_parser.h"
 #include "location_server.h"
-#include "performance.h"
 #include "physics.h"
 #include "scheduler.h"
 #include "sensor_server.h"
 #include "switch_server.h"
+#include "track_server.h"
+#include "track_reserver.h"
 #include "train_server.h"
 
 VOID
-InitTrainTasks
-    (
-        VOID
-    )
+InitTrainTasks()
 {
     // Initialize libraries
     PhysicsInit();
-    TrackInit(TrackB);
-
-    // Setup the display
-    DisplayCreateTask();
-    ClockCreateTask();
-    PerformanceCreateTask();
-    InputParserCreateTask();
 
     // Setup the track
+    TrackServerCreate();
     TrainServerCreate();
     SwitchServerCreate();
+    TrackReserverCreate();
 
     // Initialize remaining tasks
     SchedulerCreateTask();

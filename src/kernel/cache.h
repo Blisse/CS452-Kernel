@@ -4,7 +4,4 @@
 
 extern
 VOID
-CacheInit
-    (
-        VOID
-    );
+CacheInit();

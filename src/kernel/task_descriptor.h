@@ -27,10 +27,7 @@ typedef struct _TASK_DESCRIPTOR {
 } TASK_DESCRIPTOR;
 
 RT_STATUS
-TaskDescriptorInit
-    (
-        VOID
-    );
+TaskDescriptorInit();
 
 RT_STATUS
 TaskDescriptorAllocate

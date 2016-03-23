@@ -9,10 +9,7 @@ static RT_CIRCULAR_BUFFER g_taskDescriptorPriorityQueueBuffer[NumPriority];
 static RT_PRIORITY_QUEUE g_taskDescriptorPriorityQueue;
 
 VOID
-SchedulerInit
-    (
-        VOID
-    )
+SchedulerInit()
 {
     g_currentTd = NULL;
 
@@ -43,17 +40,17 @@ SchedulerGetNextTask
 
     RT_STATUS status = RtPriorityQueuePeek(&g_taskDescriptorPriorityQueue, &nextTd, sizeof(nextTd));
 
-    if(NULL != g_currentTd && ReadyState == g_currentTd->state)
+    if (NULL != g_currentTd && ReadyState == g_currentTd->state)
     {
-        if(RT_SUCCESS(status) && nextTd->priority >= g_currentTd->priority)
+        if (RT_SUCCESS(status) && nextTd->priority >= g_currentTd->priority)
         {
             status = RtPriorityQueuePop(&g_taskDescriptorPriorityQueue, sizeof(nextTd));
 
-            if(RT_SUCCESS(status))
+            if (RT_SUCCESS(status))
             {
                 status = SchedulerAddTask(g_currentTd);
 
-                if(RT_SUCCESS(status))
+                if (RT_SUCCESS(status))
                 {
                     g_currentTd = nextTd;
                 }
@@ -65,11 +62,11 @@ SchedulerGetNextTask
             status = STATUS_SUCCESS;
         }
     }
-    else if(RT_SUCCESS(status))
+    else if (RT_SUCCESS(status))
     {
         status = RtPriorityQueuePop(&g_taskDescriptorPriorityQueue, sizeof(nextTd));
 
-        if(RT_SUCCESS(status))
+        if (RT_SUCCESS(status))
         {
             g_currentTd = nextTd;
         }

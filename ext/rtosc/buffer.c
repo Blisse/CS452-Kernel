@@ -24,11 +24,11 @@ RtCircularBufferPush
         IN UINT bytesToAdd
     )
 {
-    if(likely((buffer->size + bytesToAdd) <= buffer->capacity))
+    if (likely((buffer->size + bytesToAdd) <= buffer->capacity))
     {
         UINT newBack = (buffer->back + bytesToAdd) % buffer->capacity;
 
-        if(likely(newBack > buffer->back))
+        if (likely(newBack > buffer->back))
         {
             // Don't need to wrap around the buffer - perform a direct copy
             RtMemcpy(ptr_add(buffer->underlyingBuffer, buffer->back), sourceBuffer, bytesToAdd);
@@ -64,11 +64,11 @@ RtCircularBufferPeek
         IN UINT bytesToRemove
     )
 {
-    if(likely(bytesToRemove <= buffer->size))
+    if (likely(bytesToRemove <= buffer->size))
     {
         UINT newFront = (buffer->front + bytesToRemove) % buffer->capacity;
 
-        if(likely(newFront > buffer->front))
+        if (likely(newFront > buffer->front))
         {
             // Don't need to wrap around the buffer - perform a direct copy
             RtMemcpy(targetBuffer, ptr_add(buffer->underlyingBuffer, buffer->front), bytesToRemove);
@@ -100,7 +100,7 @@ RtCircularBufferPop
         IN UINT bytesToRemove
     )
 {
-    if(likely(bytesToRemove <= buffer->size))
+    if (likely(bytesToRemove <= buffer->size))
     {
         buffer->front = (buffer->front + bytesToRemove) % buffer->capacity;
         buffer->size = buffer->size - bytesToRemove;
@@ -123,7 +123,7 @@ RtCircularBufferPeekAndPop
 {
     RT_STATUS status = RtCircularBufferPeek(buffer, targetBuffer, bytesToRemove);
 
-    if(RT_SUCCESS(status))
+    if (RT_SUCCESS(status))
     {
         status = RtCircularBufferPop(buffer, bytesToRemove);
     }
@@ -140,7 +140,7 @@ RtCircularBufferElementAt
         IN UINT bytesToRemove
     )
 {
-    if(likely(bytesToRemove <= buffer->size))
+    if (likely(bytesToRemove <= buffer->size))
     {
         UINT indexPosition = (buffer->front + (bytesToRemove * index)) % buffer->capacity;
 

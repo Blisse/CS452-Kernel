@@ -12,10 +12,7 @@
 #define RETURN_VALUE_OFFSET 8
 
 VOID
-TaskInit
-    (
-        VOID
-    )
+TaskInit()
 {
     VERIFY(RT_SUCCESS(StackInit()));
     VERIFY(RT_SUCCESS(TaskDescriptorInit()));
@@ -71,11 +68,11 @@ TaskCreate
 
         status = TaskDescriptorAllocate(&newTd);
 
-        if(RT_SUCCESS(status))
+        if (RT_SUCCESS(status))
         {
             status = StackAllocate(&newTd->stack);
 
-            if(RT_SUCCESS(status))
+            if (RT_SUCCESS(status))
             {
                 newTd->parentTaskId = NULL == parent ? 0 : parent->taskId;
                 newTd->state = ReadyState;
@@ -86,7 +83,7 @@ TaskCreate
 
                 status = SchedulerAddTask(newTd);
 
-                if(RT_SUCCESS(status))
+                if (RT_SUCCESS(status))
                 {
                     *td = newTd;
                 }

@@ -1,11 +1,11 @@
 #include "switch_server.h"
 
-#include "display.h"
 #include "location_server.h"
 #include <rtosc/assert.h>
 #include <rtkernel.h>
 #include <rtos.h>
 #include <user/trains.h>
+#include <user/io.h>
 
 #define SWITCH_SERVER_NAME "switch"
 
@@ -16,7 +16,7 @@
 
 typedef enum _SWITCH_REQUEST_TYPE
 {
-    SetDirectionRequest = 0, 
+    SetDirectionRequest = 0,
     GetDirectionRequest
 } SWITCH_REQUEST_TYPE;
 
@@ -35,7 +35,7 @@ SwitchpToIndex
         IN UCHAR sw
     )
 {
-    if(1 <= sw && sw <= 18)
+    if (1 <= sw && sw <= 18)
     {
         return sw - 1;
     }
@@ -53,7 +53,7 @@ SwitchpFromIndex
         IN UINT index
     )
 {
-    if(0 <= index && index <= 17)
+    if (0 <= index && index <= 17)
     {
         return index + 1;
     }
@@ -97,19 +97,13 @@ SwitchpDirection
         IN SWITCH_DIRECTION direction
     )
 {
-    // Need to send bytes in a weird order.
-    // Send the direction first, then the switch
-    if(SwitchCurved == direction)
+    if (SwitchCurved == direction)
     {
-        return SwitchpSendTwoByteCommand(device,
-                                         SWITCH_COMMAND_DIRECTION_CURVED,
-                                         sw);
+        return SwitchpSendTwoByteCommand(device, SWITCH_COMMAND_DIRECTION_CURVED, sw);
     }
     else
     {
-        return SwitchpSendTwoByteCommand(device,
-                                         SWITCH_COMMAND_DIRECTION_STRAIGHT,
-                                         sw);
+        return SwitchpSendTwoByteCommand(device, SWITCH_COMMAND_DIRECTION_STRAIGHT, sw);
     }
 }
 
@@ -125,10 +119,7 @@ SwitchpDisableSolenoid
 
 static
 VOID
-SwitchpTask
-    (
-        VOID
-    )
+SwitchpTask()
 {
     SWITCH_DIRECTION directions[NUM_SWITCHES];
 
@@ -149,10 +140,9 @@ SwitchpTask
         ShowSwitchDirection(i, sw, SwitchCurved);
     }
 
-    // Remember to turn off the solenoid!
     VERIFY(SUCCESSFUL(SwitchpDisableSolenoid(&com1)));
 
-    while(1)
+    while (1)
     {
         INT sender;
         SWITCH_REQUEST request;
@@ -166,10 +156,11 @@ SwitchpTask
                 VERIFY(SUCCESSFUL(SwitchpDirection(&com1, request.sw, request.direction)));
                 VERIFY(SUCCESSFUL(SwitchpDisableSolenoid(&com1)));
 
+                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
+
                 UINT switchIndex = SwitchpToIndex(request.sw);
                 directions[switchIndex] = request.direction;
 
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
                 VERIFY(SUCCESSFUL(LocationServerSwitchUpdated()));
                 ShowSwitchDirection(switchIndex, request.sw, request.direction);
                 break;
@@ -182,21 +173,12 @@ SwitchpTask
                 VERIFY(SUCCESSFUL(Reply(sender, &direction, sizeof(direction))));
                 break;
             }
-
-            default:
-            {
-                ASSERT(FALSE);
-                break;
-            }
         }
     }
 }
 
 VOID
-SwitchServerCreate
-    (
-        VOID
-    )
+SwitchServerCreate()
 {
     VERIFY(SUCCESSFUL(Create(Priority19, SwitchpTask)));
 }
@@ -215,7 +197,7 @@ SwitchSetDirection
     {
         result = WhoIs(SWITCH_SERVER_NAME);
 
-        if(SUCCESSFUL(result))
+        if (SUCCESSFUL(result))
         {
             INT switchServerId = result;
             SWITCH_REQUEST request = { SetDirectionRequest, (UCHAR) sw, direction };
@@ -234,7 +216,7 @@ SwitchSetDirection
 INT
 SwitchGetDirection
     (
-        IN INT sw, 
+        IN INT sw,
         OUT SWITCH_DIRECTION* direction
     )
 {
@@ -245,7 +227,7 @@ SwitchGetDirection
     {
         result = WhoIs(SWITCH_SERVER_NAME);
 
-        if(SUCCESSFUL(result))
+        if (SUCCESSFUL(result))
         {
             INT switchServerId = result;
             SWITCH_REQUEST request = { GetDirectionRequest, (UCHAR) sw };

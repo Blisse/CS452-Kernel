@@ -14,7 +14,7 @@ assert
         STRING file
     )
 {
-    if(expr)
+    if (expr)
     {
         return;
     }
@@ -25,5 +25,5 @@ assert
     printf("Assert triggered on line %d of file %s\r\n", line, file);
 #endif
 
-    while(1) { }
+    while (1) { }
 }

@@ -4,7 +4,4 @@
 
 extern
 VOID
-TrapInstallHandler
-    (
-        VOID
-    );
+TrapInstallHandler();

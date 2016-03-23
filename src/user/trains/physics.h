@@ -3,10 +3,7 @@
 #include <rt.h>
 
 VOID
-PhysicsInit
-    (
-        VOID
-    );
+PhysicsInit();
 
 UINT
 PhysicsSteadyStateVelocity

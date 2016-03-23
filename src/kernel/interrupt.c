@@ -33,10 +33,7 @@
 
 extern
 VOID
-InterruptInstallHandler
-    (
-        VOID
-    );
+InterruptInstallHandler();
 
 static TASK_DESCRIPTOR* g_eventHandlers[NumEvent];
 static volatile BOOLEAN g_clearToSend;
@@ -76,7 +73,7 @@ InterruptpDisable
             ASSERT(FALSE);
             break;
     }
-} 
+}
 
 static
 inline
@@ -149,40 +146,37 @@ InterruptpHandleEvent
 }
 
 VOID
-InterruptHandler
-    (
-        VOID
-    )
+InterruptHandler()
 {
-    if(*VIC_STATUS(VIC1_BASE) & TC2IO_MASK)
+    if (*VIC_STATUS(VIC1_BASE) & TC2IO_MASK)
     {
         InterruptpHandleEvent(ClockEvent);
     }
-    else if(*VIC_STATUS(VIC2_BASE) & UART2_MASK)
+    else if (*VIC_STATUS(VIC2_BASE) & UART2_MASK)
     {
         UINT uart2Status = *UART_INTR((UINT*) UART2_BASE);
 
-        if(uart2Status & TIS_MASK)
+        if (uart2Status & TIS_MASK)
         {
             InterruptpHandleEvent(UartCom2TransmitEvent);
         }
 
-        if(uart2Status & RIS_MASK)
+        if (uart2Status & RIS_MASK)
         {
             InterruptpHandleEvent(UartCom2ReceiveEvent);
         }
     }
-    else if(*VIC_STATUS(VIC2_BASE) & UART1_MASK)
+    else if (*VIC_STATUS(VIC2_BASE) & UART1_MASK)
     {
         UINT uart1Status = *UART_INTR((UINT*) UART1_BASE);
 
-        if(uart1Status & TIS_MASK)
+        if (uart1Status & TIS_MASK)
         {
             g_transmitReady = TRUE;
             InterruptpDisable(UartCom1TransmitEvent);
         }
 
-        if(uart1Status & MIS_MASK)
+        if (uart1Status & MIS_MASK)
         {
             // Acknowledge the interrupt
             *UART_INTR((UINT*) UART1_BASE) = TRUE;
@@ -191,12 +185,12 @@ InterruptHandler
             g_clearToSend = UART_CTS((UINT*) UART1_BASE);
         }
 
-        if(uart1Status & RIS_MASK)
+        if (uart1Status & RIS_MASK)
         {
             InterruptpHandleEvent(UartCom1ReceiveEvent);
         }
 
-        if(g_clearToSend && g_transmitReady)
+        if (g_clearToSend && g_transmitReady)
         {
             InterruptpSignalEvent(UartCom1TransmitEvent);
             g_transmitReady = FALSE;
@@ -230,9 +224,9 @@ inline
 VOID
 InterruptpSetupUart
     (
-        IN UINT* uartBase, 
+        IN UINT* uartBase,
         IN UINT vicMask,
-        IN UINT baudRate, 
+        IN UINT baudRate,
         IN BOOLEAN needsTwoStopBits
     )
 {
@@ -245,7 +239,7 @@ InterruptpSetupUart
     // Disable FIFO and parity bits
     *UART_LCRH(uartBase) &= ~(FEN_MASK | PEN_MASK);
 
-    if(needsTwoStopBits)
+    if (needsTwoStopBits)
     {
         *UART_LCRH(uartBase) |= STP2_MASK;
     }
@@ -260,14 +254,11 @@ InterruptpSetupUart
 }
 
 VOID
-InterruptInit
-    (
-        VOID
-    )
+InterruptInit()
 {
     UINT i;
 
-    for(i = 0; i < NumEvent; i++)
+    for (i = 0; i < NumEvent; i++)
     {
         g_eventHandlers[i] = NULL;
     }
@@ -282,10 +273,7 @@ InterruptInit
 }
 
 VOID
-InterruptDisableAll
-    (
-        VOID
-    )
+InterruptDisableAll()
 {
     // Disable the interrupt vectors
     *VIC_INTERRUPT_DISABLE(VIC1_BASE) = 0xFFFFFFFF;
@@ -327,7 +315,7 @@ InterruptAwaitEvent
         IN EVENT event
     )
 {
-    if(InterruptpIsValidEvent(event) &&
+    if (InterruptpIsValidEvent(event) &&
        InterruptpIsEventAvailable(event))
     {
         g_eventHandlers[event] = td;

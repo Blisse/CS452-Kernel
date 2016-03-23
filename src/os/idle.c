@@ -7,19 +7,13 @@ static volatile BOOLEAN g_running;
 
 static
 VOID
-IdlepTask
-    (
-        VOID
-    )
+IdlepTask()
 {
-    while(g_running) {  }
+    while (g_running) {  }
 }
 
 VOID
-IdleCreateTask
-    (
-        VOID
-    )
+IdleCreateTask()
 {
     g_running = TRUE;
 
@@ -27,10 +21,7 @@ IdleCreateTask
 }
 
 VOID
-IdleQuit
-    (
-        VOID
-    )
+IdleQuit()
 {
     g_running = FALSE;
 }

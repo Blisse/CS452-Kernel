@@ -18,7 +18,7 @@ typedef struct _IO_OPEN_REQUEST
 
 typedef enum _IO_SERVER_REQUEST_TYPE
 {
-    RegisterRequest = 0, 
+    RegisterRequest = 0,
     OpenRequest
 } IO_SERVER_REQUEST_TYPE;
 
@@ -35,16 +35,13 @@ typedef struct _IO_SERVER_REQUEST
 
 static
 VOID
-IopTask
-    (
-        VOID
-    )
+IopTask()
 {
     IO_OPEN_FUNC openFunctions[NumDeviceType] = { NULL };
 
     VERIFY(SUCCESSFUL(RegisterAs(IO_SERVER_NAME)));
 
-    while(1)
+    while (1)
     {
         IO_SERVER_REQUEST request;
         INT sender;
@@ -68,7 +65,7 @@ IopTask
 
                 ASSERT(NULL != open);
 
-                if(SUCCESSFUL(open(request.openRequest.channel, &device)))
+                if (SUCCESSFUL(open(request.openRequest.channel, &device)))
                 {
                     VERIFY(SUCCESSFUL(Reply(sender, &device, sizeof(device))));
                 }
@@ -90,10 +87,7 @@ IopTask
 }
 
 VOID
-IoCreateTask
-    (
-        VOID
-    )
+IoCreateTask()
 {
     VERIFY(SUCCESSFUL(Create(Priority28, IopTask)));
 }
@@ -101,13 +95,13 @@ IoCreateTask
 INT
 IoRegisterDriver
     (
-        IN IO_DEVICE_TYPE type, 
+        IN IO_DEVICE_TYPE type,
         IN IO_OPEN_FUNC openFunc
     )
 {
     INT result = WhoIs(IO_SERVER_NAME);
 
-    if(SUCCESSFUL(result))
+    if (SUCCESSFUL(result))
     {
         INT ioServerId = result;
         IO_SERVER_REQUEST request;
@@ -116,27 +110,27 @@ IoRegisterDriver
         request.registerRequest.type = type;
         request.registerRequest.open = openFunc;
 
-        result = Send(ioServerId, 
-                      &request, 
-                      sizeof(request), 
-                      NULL, 
+        result = Send(ioServerId,
+                      &request,
+                      sizeof(request),
+                      NULL,
                       0);
     }
-    
+
     return result;
 }
 
 INT
 Open
     (
-        IN IO_DEVICE_TYPE type, 
-        IN IO_CHANNEL channel, 
+        IN IO_DEVICE_TYPE type,
+        IN IO_CHANNEL channel,
         OUT IO_DEVICE* device
     )
 {
     INT result = WhoIs(IO_SERVER_NAME);
 
-    if(SUCCESSFUL(result))
+    if (SUCCESSFUL(result))
     {
         INT ioServerId = result;
         IO_SERVER_REQUEST request;
@@ -145,12 +139,12 @@ Open
         request.openRequest.type = type;
         request.openRequest.channel = channel;
 
-        result = Send(ioServerId, 
-                      &request, 
-                      sizeof(request), 
-                      device, 
+        result = Send(ioServerId,
+                      &request,
+                      sizeof(request),
+                      device,
                       sizeof(*device));
     }
-    
+
     return result;
 }

@@ -6,13 +6,11 @@
 #include <rtosc/stdlib.h>
 #include <rtosc/string.h>
 #include <user/trains.h>
-
-#include "display.h"
+#include <user/io.h>
 
 static
 BOOLEAN
-InputParserpGetSwitchDirection
-    (
+InputParserpGetSwitchDirection (
         IN CHAR c,
         OUT SWITCH_DIRECTION* direction
     )
@@ -36,23 +34,13 @@ InputParserpGetSwitchDirection
 
 static
 VOID
-InputParserpParseCommand
-    (
+InputParserpParseCommand (
         IN STRING buffer,
         IN INT bufferLength
     )
 {
-    CHAR arg1Buffer[12];
-    CHAR arg2Buffer[12];
-    CHAR arg3Buffer[12];
-
-    INT arg1;
-    INT arg2;
-    INT arg3;
-
     CHAR token[12];
     INT read = RtStrConsumeToken(&buffer, token, sizeof(token));
-
     if (read == 0)
     {
         return;
@@ -60,68 +48,109 @@ InputParserpParseCommand
 
     if (RtStrEqual(token, "tr"))
     {
+        CHAR arg1Buffer[12];
+        INT arg1;
+
         read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
         if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
+            CHAR arg2Buffer[12];
+            INT arg2;
+
             read = RtStrConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
             if (read && RT_SUCCESS(RtAtoi(arg2Buffer, &arg2)))
             {
                 if (RtStrIsWhitespace(buffer))
                 {
-                    TrainSetSpeed(arg1, arg2);
+                    if (!SUCCESSFUL(TrainSetSpeed(arg1, arg2)))
+                    {
+                        Log("Failed to set train %d speed %d", arg1, arg2);
+                    }
                 }
             }
         }
     }
     else if (RtStrEqual(token, "sw"))
     {
+        CHAR arg1Buffer[12];
+        INT arg1;
+
         read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
         if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
-            SWITCH_DIRECTION direction = SwitchCurved;
+            CHAR arg2Buffer[12];
+            SWITCH_DIRECTION direction;
+
             read = RtStrConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
             if (read == 1 && InputParserpGetSwitchDirection(arg2Buffer[0], &direction))
             {
                 if (RtStrIsWhitespace(buffer))
                 {
-                    SwitchSetDirection(arg1, direction);
+                    if (!SUCCESSFUL(SwitchSetDirection(arg1, direction)))
+                    {
+                        Log("Failed to switch %d to %c", arg1, arg2Buffer[0]);
+                    }
                 }
             }
         }
     }
     else if (RtStrEqual(token, "rv"))
     {
+        CHAR arg1Buffer[12];
+        INT arg1;
+
         read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
         if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
             if (RtStrIsWhitespace(buffer))
             {
-                TrainReverse(arg1);
+                if (!SUCCESSFUL(TrainReverse(arg1)))
+                {
+                   Log("Failed to reverse train %d", arg1);
+                }
             }
         }
     }
-    else if (RtStrEqual(token, "stop"))
+    else if (RtStrEqual(token, "goto"))
     {
+        CHAR arg1Buffer[12];
+        INT arg1;
+
         read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
         if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
         {
+            CHAR arg2Buffer[12];
+            CHAR arg2;
+
             read = RtStrConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
-            if (read == 1)
+            if (read == 1 && (arg2 = arg2Buffer[0]))
             {
+                CHAR arg3Buffer[12];
+                INT arg3;
+
                 read = RtStrConsumeToken(&buffer, arg3Buffer, sizeof(arg3Buffer));
                 if (read && RT_SUCCESS(RtAtoi(arg3Buffer, &arg3)))
                 {
-                    if (RtStrIsWhitespace(buffer))
+                    CHAR arg4Buffer[12];
+                    INT arg4;
+
+                    read = RtStrConsumeToken(&buffer, arg4Buffer, sizeof(arg4Buffer));
+                    if (read && RT_SUCCESS(RtAtoi(arg4Buffer, &arg4)))
                     {
-                        SENSOR sensor = {arg2Buffer[0], arg3 };
-                        SchedulerStopTrainAtSensor(arg1, sensor);
+                        if (RtStrIsWhitespace(buffer))
+                        {
+                            SENSOR sensor = { arg2, arg3 };
+                            SchedulerMoveTrainToSensor(arg1, sensor, arg4);
+                        }
                     }
                 }
             }
         }
     }
-    else if (RtStrEqual(token, "stop-now"))
+    else if (RtStrEqual(token, "stop"))
     {
+        CHAR arg1Buffer[12];
+        INT arg1;
 
         read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
         if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
@@ -140,10 +169,7 @@ InputParserpParseCommand
 
 static
 VOID
-InputParserpTask
-    (
-        VOID
-    )
+InputParserpTask()
 {
     IO_DEVICE com2Device;
     VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom2, &com2Device)));
@@ -189,10 +215,7 @@ InputParserpTask
 }
 
 VOID
-InputParserCreateTask
-    (
-        VOID
-    )
+InputParserCreateTask()
 {
     VERIFY(SUCCESSFUL(Create(Priority9, InputParserpTask)));
 }

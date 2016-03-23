@@ -6,11 +6,7 @@
 #include "task.h"
 
 INT
-main
-    (
-        VOID
-    )
-{
+main() {
     TASK_DESCRIPTOR lowPriorityTask1;
     TASK_DESCRIPTOR lowPriorityTask2;
     TASK_DESCRIPTOR highPriorityTask1;

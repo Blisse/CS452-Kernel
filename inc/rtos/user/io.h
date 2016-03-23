@@ -3,62 +3,55 @@
 #include <rt.h>
 #include <user/trains.h>
 
-VOID
-DisplayCreateTask
-    (
-        VOID
-    );
+/************************************
+ *           INIT TASK              *
+ ************************************/
 
 VOID
-ShowKeyboardChar
-    (
+InitIoTasks();
+
+VOID
+ShowKeyboardChar (
         IN CHAR c
     );
 
 VOID
-ShowClockTime
-    (
+ShowClockTime (
         IN INT clockTicks
     );
 
 VOID
-ShowIdleTime
-    (
+ShowIdleTime (
         IN INT idlePercentage
     );
 
 VOID
-Log
-    (
+Log (
         IN STRING message,
         ...
     );
 
 VOID
-ShowSwitchDirection
-    (
+ShowSwitchDirection (
         IN INT idx,
         IN INT number,
         IN CHAR direction
     );
 
 VOID
-ShowSensorStatus
-    (
+ShowSensorStatus (
         IN SENSOR_DATA data
     );
 
 VOID
-ShowTrainArrival
-    (
+ShowTrainArrival (
         IN UCHAR train,
         IN STRING node,
         IN INT diff
     );
 
 VOID
-ShowTrainLocation
-    (
+ShowTrainLocation (
         IN UCHAR train,
         IN STRING node,
         IN INT distanceToNode

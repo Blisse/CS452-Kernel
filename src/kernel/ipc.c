@@ -7,7 +7,7 @@
 
 #define MAILBOX_SIZE NUM_TASKS
 
-typedef struct _PENDING_MESSAGE 
+typedef struct _PENDING_MESSAGE
 {
     TASK_DESCRIPTOR* from;
     PVOID message;
@@ -41,14 +41,14 @@ IpcDrainMailbox
         IN TASK_DESCRIPTOR* td
     )
 {
-    while(!RtCircularBufferIsEmpty(&td->mailbox))
+    while (!RtCircularBufferIsEmpty(&td->mailbox))
     {
         PENDING_MESSAGE pendingMessage;
         RT_STATUS status = RtCircularBufferPeekAndPop(&td->mailbox,
                                                         &pendingMessage,
                                                         sizeof(pendingMessage));
 
-        if(RT_SUCCESS(status))
+        if (RT_SUCCESS(status))
         {
             TASK_DESCRIPTOR* from = pendingMessage.from;
 
@@ -63,23 +63,23 @@ IpcDrainMailbox
 RT_STATUS
 IpcSend
     (
-        IN TASK_DESCRIPTOR* from, 
-        IN TASK_DESCRIPTOR* to, 
-        IN PVOID message, 
-        IN INT messageLength, 
-        IN PVOID replyBuffer, 
+        IN TASK_DESCRIPTOR* from,
+        IN TASK_DESCRIPTOR* to,
+        IN PVOID message,
+        IN INT messageLength,
+        IN PVOID replyBuffer,
         IN INT replyBufferLength
     )
 {
     RT_STATUS status;
 
-    if(to->state == SendBlockedState)
+    if (to->state == SendBlockedState)
     {
         PENDING_RECEIVE pendingReceive;
         INT length;
 
         TaskRetrieveAsyncParameter(to, &pendingReceive, sizeof(pendingReceive));
-        
+
         // Figure out how many bytes we actually want to copy
         // TODO: We should probably do something if there are excess bytes
         length = min(messageLength, pendingReceive.bufferLength);
@@ -107,7 +107,7 @@ IpcSend
                                       sizeof(pendingMessage));
     }
 
-    if(RT_SUCCESS(status))
+    if (RT_SUCCESS(status))
     {
         PENDING_RECEIVE pendingReceive = { NULL, replyBuffer, replyBufferLength };
 
@@ -120,16 +120,16 @@ IpcSend
 RT_STATUS
 IpcReceive
     (
-        IN TASK_DESCRIPTOR* td, 
+        IN TASK_DESCRIPTOR* td,
         IN INT* sendingTaskId,
-        IN PVOID buffer, 
-        IN INT bufferLength, 
+        IN PVOID buffer,
+        IN INT bufferLength,
         OUT INT* bytesReceived
     )
 {
     RT_STATUS status;
 
-    if(!RtCircularBufferIsEmpty(&td->mailbox))
+    if (!RtCircularBufferIsEmpty(&td->mailbox))
     {
         PENDING_MESSAGE pendingMessage;
 
@@ -137,14 +137,14 @@ IpcReceive
                                             &pendingMessage,
                                             sizeof(pendingMessage));
 
-        if(RT_SUCCESS(status))
+        if (RT_SUCCESS(status))
         {
             // Figure out how many bytes we actually want to copy
             // TODO: We should probably do something if there are excess bytes
             INT length = min(bufferLength, pendingMessage.messageLength);
 
             // Perform the copy
-            RtMemcpy(buffer, 
+            RtMemcpy(buffer,
                      pendingMessage.message,
                      length);
 
@@ -173,15 +173,15 @@ IpcReceive
 RT_STATUS
 IpcReply
     (
-        IN TASK_DESCRIPTOR* from, 
-        IN TASK_DESCRIPTOR* to, 
-        IN PVOID message, 
+        IN TASK_DESCRIPTOR* from,
+        IN TASK_DESCRIPTOR* to,
+        IN PVOID message,
         IN INT messageLength
     )
 {
     RT_STATUS status;
 
-    if(to->state == ReplyBlockedState)
+    if (to->state == ReplyBlockedState)
     {
         PENDING_RECEIVE pendingReceive;
         INT length;

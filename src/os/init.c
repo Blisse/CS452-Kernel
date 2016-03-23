@@ -14,10 +14,7 @@
 #include "uart.h"
 
 VOID
-InitOsTasks
-    (
-        VOID
-    )
+InitOsTasks()
 {
     // Initialize RTOS
     IdleCreateTask();

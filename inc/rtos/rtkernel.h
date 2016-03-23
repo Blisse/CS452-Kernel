@@ -63,31 +63,19 @@ Create
 
 extern
 INT
-MyTid
-    (
-        VOID
-    );
+MyTid();
 
 extern
 INT
-MyParentTid
-    (
-        VOID
-    );
+MyParentTid();
 
 extern
 VOID
-Pass
-    (
-        VOID
-    );
+Pass();
 
 extern
 VOID
-Exit
-    (
-        VOID
-    );
+Exit();
 
 /************************************
  *          IPC API                 *
