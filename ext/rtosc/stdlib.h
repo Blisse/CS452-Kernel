@@ -18,3 +18,10 @@ RtAtoi
         IN STRING src,
         OUT INT* num
     );
+
+RT_STATUS
+RtAtoui
+    (
+        IN STRING src,
+        OUT UINT* num
+    );

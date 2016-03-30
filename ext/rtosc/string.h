@@ -3,28 +3,24 @@
 #include <rt.h>
 
 INT
-RtStrCmp
-    (
+RtStrCmp (
         STRING str1,
         STRING str2
     );
 
 BOOLEAN
-RtStrEqual
-    (
+RtStrEqual (
         STRING str1,
         STRING str2
     );
 
 UINT
-RtStrLen
-    (
+RtStrLen (
         STRING str
     );
 
 INT
-RtStrPrintFormattedVa
-    (
+RtStrPrintFormattedVa (
         OUT STRING ret,
         IN INT retLength,
         IN STRING fmt,
@@ -32,8 +28,7 @@ RtStrPrintFormattedVa
     );
 
 INT
-RtStrPrintFormatted
-    (
+RtStrPrintFormatted (
         OUT STRING ret,
         IN INT retLength,
         IN STRING fmt,
@@ -41,31 +36,34 @@ RtStrPrintFormatted
     );
 
 INT
-RtStrConsumeToken
-    (
+RtStrConsumeToken (
         IN CHAR** str,
         OUT CHAR* buffer,
         IN INT bufferLength
     );
 
 BOOLEAN
-RtStrIsWhitespace
-    (
+RtStrIsWhitespace (
         IN STRING str
     );
 
+INT
+RtStrScanFormatted (
+        IN STRING parse,
+        IN STRING fmt,
+        ...
+    );
+
 VOID
-RtMemcpy
-    (
+RtMemcpy (
         PVOID dest,
         PVOID src,
         UINT bytes
     );
 
 VOID
-RtMemset
-    (
+RtMemset (
         PVOID dest,
-        UINT size, 
+        UINT size,
         CHAR value
     );

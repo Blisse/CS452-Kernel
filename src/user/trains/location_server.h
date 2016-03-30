@@ -18,3 +18,8 @@ INT
 LocationServerTrainDirectionReverse(
         IN UCHAR train
     );
+
+INT
+LocationServerLookForTrain(
+        IN UCHAR train
+    );

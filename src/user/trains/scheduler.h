@@ -2,11 +2,12 @@
 
 #include <rt.h>
 #include <track/track_node.h>
+#include <user/trains.h>
 
 VOID
 SchedulerCreateTask();
 
 INT
-SchedulerUpdateTrainData (
-        IN UCHAR train
+SchedulerUpdateTrainData(
+        IN TRAIN_DATA* trainData
     );

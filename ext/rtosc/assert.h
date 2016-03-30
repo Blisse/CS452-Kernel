@@ -12,14 +12,23 @@ assert
 
 #define T_ASSERT(expr) assert(expr, __LINE__, __FILE__)
 
-#ifdef NDEBUG
+#ifdef NLOCAL
 
-#define ASSERT(expr)
-#define VERIFY(expr) (expr)
+    #ifdef NDEBUG
+
+    #define ASSERT(expr)
+    #define VERIFY(expr) (expr)
+
+    #else
+
+    #define ASSERT(expr) assert(expr, __LINE__, __FILE__)
+    #define VERIFY(expr) ASSERT(expr)
+
+    #endif
 
 #else
 
-#define ASSERT(expr) assert(expr, __LINE__, __FILE__)
-#define VERIFY(expr) ASSERT(expr)
+    #define ASSERT(expr)
+    #define VERIFY(expr) (expr)
 
 #endif

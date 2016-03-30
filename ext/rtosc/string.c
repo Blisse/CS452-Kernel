@@ -9,8 +9,7 @@
 //       I previously wrote, but just figured I'd put a note.
 
 INT
-RtStrCmp
-    (
+RtStrCmp (
         STRING str1,
         STRING str2
     )
@@ -48,8 +47,7 @@ RtStrCmp
 }
 
 BOOLEAN
-RtStrEqual
-    (
+RtStrEqual (
         STRING str1,
         STRING str2
     )
@@ -58,8 +56,7 @@ RtStrEqual
 }
 
 UINT
-RtStrLen
-    (
+RtStrLen (
         STRING str
     )
 {
@@ -73,8 +70,7 @@ RtStrLen
     return iter - str;
 }
 
-typedef struct _RT_STR_FORMAT_PARAMS
-{
+typedef struct _RT_STR_FORMAT_PARAMS {
     CHAR lz;
     CHAR sign;
     INT width;
@@ -82,16 +78,14 @@ typedef struct _RT_STR_FORMAT_PARAMS
     STRING bf;
 } RT_STR_FORMAT_PARAMS;
 
-typedef struct _RT_STR_FORMAT_OUTPUT
-{
+typedef struct _RT_STR_FORMAT_OUTPUT {
     STRING destination;
     INT capacity;
     INT length;
 } RT_STR_FORMAT_OUTPUT;
 
 VOID
-RtStrpFormatParamsInit
-    (
+RtStrpFormatParamsInit (
         RT_STR_FORMAT_PARAMS* params,
         STRING bf
     )
@@ -104,8 +98,7 @@ RtStrpFormatParamsInit
 }
 
 VOID
-RtStrpFormatOutputInit
-    (
+RtStrpFormatOutputInit (
         RT_STR_FORMAT_OUTPUT* output,
         STRING destination,
         INT capacity
@@ -119,8 +112,7 @@ RtStrpFormatOutputInit
 static
 inline
 VOID
-RtStrpPutChar
-    (
+RtStrpPutChar (
         RT_STR_FORMAT_OUTPUT* output,
         CHAR c
     )
@@ -135,8 +127,7 @@ RtStrpPutChar
 static
 inline
 VOID
-RtStrpPutBf
-    (
+RtStrpPutBf (
         RT_STR_FORMAT_OUTPUT* output,
         RT_STR_FORMAT_PARAMS* params
     )
@@ -180,8 +171,7 @@ RtStrpPutBf
 
 static
 VOID
-RtStrpPrintFormattedOutput
-    (
+RtStrpPrintFormattedOutput (
         IN STRING fmt,
         RT_STR_FORMAT_OUTPUT* output,
         OPTIONAL IN VA_LIST va
@@ -247,8 +237,7 @@ RtStrpPrintFormattedOutput
 }
 
 INT
-RtStrpPrintFormatted
-    (
+RtStrpPrintFormatted (
         OUT STRING ret,
         IN INT retLength,
         IN STRING fmt,
@@ -271,8 +260,7 @@ RtStrpPrintFormatted
 }
 
 INT
-RtStrPrintFormattedVa
-    (
+RtStrPrintFormattedVa (
         OUT STRING ret,
         IN INT retLength,
         IN STRING fmt,
@@ -283,8 +271,7 @@ RtStrPrintFormattedVa
 }
 
 INT
-RtStrPrintFormatted
-    (
+RtStrPrintFormatted (
         OUT STRING ret,
         IN INT retLength,
         IN STRING fmt,
@@ -302,8 +289,7 @@ RtStrPrintFormatted
 }
 
 INT
-RtStrConsumeToken
-    (
+RtStrConsumeToken (
         IN CHAR** str,
         OUT CHAR* buffer,
         IN INT bufferLength
@@ -334,8 +320,7 @@ RtStrConsumeToken
 }
 
 BOOLEAN
-RtStrIsWhitespace
-    (
+RtStrIsWhitespace (
         IN STRING str
     )
 {
@@ -350,13 +335,100 @@ RtStrIsWhitespace
     return TRUE;
 }
 
+INT
+RtStrpScanFormatted (
+        IN STRING parse,
+        IN STRING fmt,
+        OPTIONAL IN VA_LIST va
+    )
+{
+    INT status = 0;
+
+    CHAR c;
+    while ((c = *(fmt++)))
+    {
+        CHAR token[80];
+        RtMemset(token, sizeof(token), 0);
+
+        INT read = 0;
+
+        if (c == '%')
+        {
+            c = *(fmt++);
+
+            read = RtStrConsumeToken(&parse, token, sizeof(token));
+
+            if (read <= 0)
+            {
+                return -1;
+            }
+
+            switch (c) {
+                case 'c':
+                {
+                    if (read == 1)
+                    {
+                        CHAR* c = VA_ARG(va, CHAR*);
+                        *c = token[0];
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                    break;
+                }
+                case 's':
+                {
+                    CHAR* s = VA_ARG(va, CHAR*);
+                    for (UINT i = 0; i < read; i++)
+                    {
+                        *(s++) = token[i];
+                    }
+                    break;
+                }
+                case 'u':
+                {
+                    UINT* n = VA_ARG(va, UINT*);
+                    VERIFY(RT_SUCCESS(RtAtoui(token, n)));
+                    break;
+                }
+                case 'd':
+                {
+                    INT* n = VA_ARG(va, INT*);
+                    VERIFY(RT_SUCCESS(RtAtoi(token, n)));
+                    break;
+                }
+            }
+        }
+
+        status += read;
+    }
+
+    return status;
+}
+
+INT
+RtStrScanFormatted (
+        IN STRING parse,
+        IN STRING fmt,
+        ...
+    )
+{
+    VA_LIST va;
+    VA_START(va, fmt);
+    INT status = RtStrpScanFormatted(parse, fmt, va);
+    VA_END(va);
+
+    return status;
+}
+
 static
 inline
 VOID
 RtMemcpypUnaligned
     (
-        PVOID dest, 
-        PVOID src, 
+        PVOID dest,
+        PVOID src,
         UINT bytes
     )
 {
@@ -375,8 +447,8 @@ inline
 VOID
 RtMemcpypAligned
     (
-        PVOID dest, 
-        PVOID src, 
+        PVOID dest,
+        PVOID src,
         UINT bytes
     )
 {
@@ -416,7 +488,7 @@ VOID
 RtMemset
     (
         PVOID dest,
-        UINT size, 
+        UINT size,
         CHAR value
     )
 {

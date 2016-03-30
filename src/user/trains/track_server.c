@@ -3,6 +3,7 @@
 #include <rtkernel.h>
 #include <rtos.h>
 #include <rtosc/assert.h>
+#include <rtosc/math.h>
 #include <track/track_data.h>
 #include <user/io.h>
 
@@ -120,7 +121,7 @@ TrackServerpCalculateDistanceBetweenNodes(
 
     if (nextNode == nodeB)
     {
-        *nodeDistance = distance * 1000; // distance is in millimeters, need to convert to micrometers
+        *nodeDistance = mmToUm(distance);
         return TRUE;
     }
 

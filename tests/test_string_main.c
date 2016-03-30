@@ -289,6 +289,70 @@ void test_string_format_leading() {
     T_ASSERT(buffer[4] == '\0');
 }
 
+void test_string_scan_format() {
+    INT read;
+
+    INT d;
+    read = RtStrScanFormatted("1", "%d", &d);
+    T_ASSERT(read == 1);
+    T_ASSERT(d == 1);
+
+    read = RtStrScanFormatted("-1", "%d", &d);
+    T_ASSERT(read == 2);
+    T_ASSERT(d == -1);
+
+    read = RtStrScanFormatted("10", "%d", &d);
+    T_ASSERT(read == 2);
+    T_ASSERT(d == 10);
+
+    read = RtStrScanFormatted("101", "%d", &d);
+    T_ASSERT(read == 3);
+    T_ASSERT(d == 101);
+
+    UINT u;
+    read = RtStrScanFormatted("1", "%u", &u);
+    T_ASSERT(read == 1);
+    T_ASSERT(u == 1);
+
+    read = RtStrScanFormatted("10", "%u", &u);
+    T_ASSERT(read == 2);
+    T_ASSERT(u == 10);
+
+    CHAR str[80];
+    read = RtStrScanFormatted("hello", "%s", str);
+    T_ASSERT(read == 5);
+    T_ASSERT(str[0] == 'h');
+    T_ASSERT(str[1] == 'e');
+    T_ASSERT(str[2] == 'l');
+    T_ASSERT(str[3] == 'l');
+    T_ASSERT(str[4] == 'o');
+
+    CHAR c;
+    read = RtStrScanFormatted("S", "%c", &c);
+    T_ASSERT(read == 1);
+    T_ASSERT(c == 'S');
+
+    read = RtStrScanFormatted("", "%s", str);
+    T_ASSERT(read == -1);
+
+    INT a;
+    INT b;
+    read = RtStrScanFormatted("1 2", "%d %d", &a, &b);
+    T_ASSERT(read == 2);
+    T_ASSERT(a == 1);
+    T_ASSERT(b == 2);
+
+    read = RtStrScanFormatted("10 C 20", "%d %c %d", &a, &c, &b);
+    T_ASSERT(read == 5);
+    T_ASSERT(a == 10);
+    T_ASSERT(b == 20);
+    T_ASSERT(c == 'C');
+
+    read = RtStrScanFormatted("100 D 999", "%d %c %c %d", &a, &c, &c, &b);
+    T_ASSERT(read == -1);
+}
+
+
 int main(int argc, char* argv[]) {
 
     test_string_cmp();
@@ -300,6 +364,7 @@ int main(int argc, char* argv[]) {
     test_string_format_string();
     test_string_format_hex();
     test_string_format_leading();
+    test_string_scan_format();
 
     return STATUS_SUCCESS;
 }

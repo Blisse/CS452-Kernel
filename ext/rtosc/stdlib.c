@@ -96,3 +96,30 @@ RtAtoi
     *num = sign * val;
     return STATUS_SUCCESS;
 }
+
+
+RT_STATUS
+RtAtoui
+    (
+        IN STRING src,
+        OUT UINT* num
+    )
+{
+    UINT val = 0;
+    while (*src)
+    {
+        if ('0' <= *src && *src <= '9')
+        {
+            val *= 10;
+            val += (*src - '0');
+            src++;
+        }
+        else
+        {
+            return STATUS_FAILURE;
+        }
+    }
+
+    *num = val;
+    return STATUS_SUCCESS;
+}

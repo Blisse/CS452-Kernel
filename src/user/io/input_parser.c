@@ -48,114 +48,95 @@ InputParserpParseCommand (
 
     if (RtStrEqual(token, "tr"))
     {
-        CHAR arg1Buffer[12];
-        INT arg1;
+        INT trainId;
+        INT trainSpeed;
 
-        read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
-        if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
+        read = RtStrScanFormatted(buffer, "%d %d", &trainId, &trainSpeed);
+
+        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
         {
-            CHAR arg2Buffer[12];
-            INT arg2;
-
-            read = RtStrConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
-            if (read && RT_SUCCESS(RtAtoi(arg2Buffer, &arg2)))
+            if (!SUCCESSFUL(TrainSetSpeed(trainId, trainSpeed)))
             {
-                if (RtStrIsWhitespace(buffer))
-                {
-                    if (!SUCCESSFUL(TrainSetSpeed(arg1, arg2)))
-                    {
-                        Log("Failed to set train %d speed %d", arg1, arg2);
-                    }
-                }
+                Log("Failed to set train %d speed %d", trainId, trainSpeed);
             }
         }
     }
     else if (RtStrEqual(token, "sw"))
     {
-        CHAR arg1Buffer[12];
-        INT arg1;
+        INT switchId;
+        CHAR switchDirection;
 
-        read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
-        if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
+        read = RtStrScanFormatted(buffer, "%d %c", &switchId, &switchDirection);
+
+        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
         {
-            CHAR arg2Buffer[12];
             SWITCH_DIRECTION direction;
+            InputParserpGetSwitchDirection(switchDirection, &direction);
 
-            read = RtStrConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
-            if (read == 1 && InputParserpGetSwitchDirection(arg2Buffer[0], &direction))
+            if (!SUCCESSFUL(SwitchSetDirection(switchId, direction)))
             {
-                if (RtStrIsWhitespace(buffer))
-                {
-                    if (!SUCCESSFUL(SwitchSetDirection(arg1, direction)))
-                    {
-                        Log("Failed to switch %d to %c", arg1, arg2Buffer[0]);
-                    }
-                }
+                Log("Failed to switch %d to %c", switchId, switchDirection);
             }
         }
     }
     else if (RtStrEqual(token, "rv"))
     {
-        CHAR arg1Buffer[12];
-        INT arg1;
+        INT trainId;
 
-        read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
-        if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
+        read = RtStrScanFormatted(buffer, "%d", &trainId);
+
+        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
         {
-            if (RtStrIsWhitespace(buffer))
+            if (!SUCCESSFUL(TrainReverse(trainId)))
             {
-                if (!SUCCESSFUL(TrainReverse(arg1)))
-                {
-                   Log("Failed to reverse train %d", arg1);
-                }
+               Log("Failed to reverse train %d", trainId);
             }
         }
     }
     else if (RtStrEqual(token, "goto"))
     {
-        CHAR arg1Buffer[12];
-        INT arg1;
+        INT trainId;
+        CHAR sensorModule;
+        INT sensorNumber;
+        INT distanceFromSensor;
 
-        read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
-        if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
+        read = RtStrScanFormatted(buffer, "%d %c %d %d", &trainId, &sensorModule, &sensorNumber, &distanceFromSensor);
+
+        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
         {
-            CHAR arg2Buffer[12];
-            CHAR arg2;
-
-            read = RtStrConsumeToken(&buffer, arg2Buffer, sizeof(arg2Buffer));
-            if (read == 1 && (arg2 = arg2Buffer[0]))
+            SENSOR sensor = { sensorModule, sensorNumber };
+            if (!SUCCESSFUL(MoveTrainToSensor(trainId, sensor, distanceFromSensor)))
             {
-                CHAR arg3Buffer[12];
-                INT arg3;
-
-                read = RtStrConsumeToken(&buffer, arg3Buffer, sizeof(arg3Buffer));
-                if (read && RT_SUCCESS(RtAtoi(arg3Buffer, &arg3)))
-                {
-                    CHAR arg4Buffer[12];
-                    INT arg4;
-
-                    read = RtStrConsumeToken(&buffer, arg4Buffer, sizeof(arg4Buffer));
-                    if (read && RT_SUCCESS(RtAtoi(arg4Buffer, &arg4)))
-                    {
-                        if (RtStrIsWhitespace(buffer))
-                        {
-                            SENSOR sensor = { arg2, arg3 };
-                            SchedulerMoveTrainToSensor(arg1, sensor, arg4);
-                        }
-                    }
-                }
+                Log("Failed to send train %d to sensor %c%d - %d", trainId, sensorModule, sensorNumber, distanceFromSensor);
             }
         }
     }
     else if (RtStrEqual(token, "stop"))
     {
-        CHAR arg1Buffer[12];
-        INT arg1;
+        INT trainId;
 
-        read = RtStrConsumeToken(&buffer, arg1Buffer, sizeof(arg1Buffer));
-        if (read && RT_SUCCESS(RtAtoi(arg1Buffer, &arg1)))
+        read = RtStrScanFormatted(buffer, "%d", &trainId);
+
+        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
         {
-            SchedulerStopTrain(arg1);
+            if (!SUCCESSFUL(StopTrain(trainId)))
+            {
+               Log("Failed to stop train %d", trainId);
+            }
+        }
+    }
+    else if (RtStrEqual(token, "start"))
+    {
+        INT trainId;
+
+        read = RtStrScanFormatted(buffer, "%d", &trainId);
+
+        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
+        {
+            if (!SUCCESSFUL(StartTrain(trainId)))
+            {
+               Log("Failed to start train %d", trainId);
+            }
         }
     }
     else if (RtStrEqual(token, "q"))

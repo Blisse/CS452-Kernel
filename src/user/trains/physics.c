@@ -11,6 +11,8 @@ VOID
 PhysicsInit()
 {
     RtMemset(g_steadyStateVelocities, sizeof(g_steadyStateVelocities), 0);
+    RtMemset(g_steadyStateAcceleration, sizeof(g_steadyStateAcceleration), 0);
+    RtMemset(g_steadyStateDeceleration, sizeof(g_steadyStateDeceleration), 0);
 
     for (UINT i = 0; i < MAX_TRAINS + 1; i++)
     {
@@ -25,8 +27,6 @@ PhysicsInit()
         g_steadyStateVelocities[i][14] = 6900;
     }
 
-    RtMemset(g_steadyStateAcceleration, sizeof(g_steadyStateAcceleration), 0);
-
     for (UINT i = 0; i < MAX_TRAINS + 1; i++)
     {
         g_steadyStateAcceleration[i][5] = 40;
@@ -40,8 +40,6 @@ PhysicsInit()
         g_steadyStateAcceleration[i][13] = 40;
         g_steadyStateAcceleration[i][14] = 40;
     }
-
-    RtMemset(g_steadyStateDeceleration, sizeof(g_steadyStateDeceleration), 0);
 
     for (UINT i = 0; i < MAX_TRAINS + 1; i++)
     {

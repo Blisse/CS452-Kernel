@@ -6,7 +6,7 @@
  *          TASK API                *
  ************************************/
 
-#define NUM_TASKS 64
+#define NUM_TASKS 80
 
 // All priorities are a power of 2 so that
 // the scheduler can operate in O(1)

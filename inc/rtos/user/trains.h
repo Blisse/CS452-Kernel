@@ -33,7 +33,7 @@ typedef struct _TRAIN_DATA {
     INT nextNodeExpectedArrivalTick;
 
     UINT lastTick;
-    UINT accelerateUntilTick;
+    INT targetVelocity;
 } TRAIN_DATA;
 
 INT
@@ -57,25 +57,6 @@ INT
 GetTrainData (
         IN UCHAR train,
         OUT TRAIN_DATA** data
-    );
-
-
-
-/************************************
- *           TRACK API              *
- ************************************/
-
-INT
-ReserveTrackNode (
-        IN TRACK_NODE* trackNode,
-        IN UINT trainId,
-        IN UINT reserveUntilTick
-    );
-
-INT
-ReleaseTrackNode (
-        IN TRACK_NODE* trackNode,
-        IN UINT trainId
     );
 
 /************************************
@@ -130,14 +111,19 @@ SensorAwait (
  ************************************/
 
 INT
-SchedulerMoveTrainToSensor (
+MoveTrainToSensor (
         IN UCHAR train,
         IN SENSOR sensor,
         IN UINT distancePastSensor
     );
 
 INT
-SchedulerStopTrain (
+StopTrain (
+        IN UCHAR train
+    );
+
+INT
+StartTrain (
         IN UCHAR train
     );
 

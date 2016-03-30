@@ -29,4 +29,8 @@ struct track_node {
   int num;              /* sensor or switch number */
   TRACK_NODE* reverse;  /* same location, but opposite direction */
   TRACK_EDGE edge[2];
+
+  // ONLY USED FOR PATH FINDING
+  int path_distance;
+  TRACK_NODE* path_parent;
 };

@@ -26,3 +26,9 @@ GetNextSensorNode(
     IN TRACK_NODE* currentNode,
     OUT TRACK_NODE** nextSensorNode
     );
+
+INT
+GetIndexOfNode (
+    IN TRACK_NODE* node,
+    OUT UINT* index
+    );
