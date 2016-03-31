@@ -298,7 +298,7 @@ RtStrConsumeToken (
     CHAR* p = *str;
     CHAR c;
     // ignore leading space
-    while ((c = *p++) && isspace(c))
+    while ((c = *p++) && (c == '\0' || isspace(c)))
     {
     }
 

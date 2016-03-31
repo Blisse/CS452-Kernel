@@ -2,6 +2,8 @@
 #include <rtosc/assert.h>
 #include <rtosc/stdlib.h>
 
+#include <stdio.h>
+
 void test_string_cmp() {
     T_ASSERT(RtStrCmp("", "") == 0);
     T_ASSERT(RtStrCmp("1", "1") == 0);
@@ -289,11 +291,39 @@ void test_string_format_leading() {
     T_ASSERT(buffer[4] == '\0');
 }
 
+void test_string_consume() {
+    char* input = "this is 6";
+    char* p = input;
+    char token[12];
+
+    INT read = 0;
+
+    read = RtStrConsumeToken(&p, token, sizeof(token));
+    T_ASSERT(read == 4);
+    T_ASSERT(token[0] == 't');
+    T_ASSERT(token[1] == 'h');
+    T_ASSERT(token[2] == 'i');
+    T_ASSERT(token[3] == 's');
+    T_ASSERT(token[4] == '\0');
+
+    read = RtStrConsumeToken(&p, token, sizeof(token));
+    T_ASSERT(read == 2);
+    T_ASSERT(token[0] == 'i');
+    T_ASSERT(token[1] == 's');
+    T_ASSERT(token[2] == '\0');
+
+    read = RtStrConsumeToken(&p, token, sizeof(token));
+    T_ASSERT(read == 1);
+    T_ASSERT(token[0] == '6');
+    T_ASSERT(token[1] == '\0');
+}
+
 void test_string_scan_format() {
     INT read;
 
     INT d;
     read = RtStrScanFormatted("1", "%d", &d);
+
     T_ASSERT(read == 1);
     T_ASSERT(d == 1);
 
@@ -364,6 +394,7 @@ int main(int argc, char* argv[]) {
     test_string_format_string();
     test_string_format_hex();
     test_string_format_leading();
+    test_string_consume();
     test_string_scan_format();
 
     return STATUS_SUCCESS;
