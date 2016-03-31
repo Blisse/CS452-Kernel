@@ -15,6 +15,17 @@
 #include "track_server.h"
 
 #define SCHEDULER_SERVER_NAME "scheduler_server"
+#define SCHEDULER_WORKER_NAME "scheduler_worker"
+
+typedef enum _UPDATE_SCHEDULER_WORKER_TYPE {
+    UpdateSchedulerBySensor = 0,
+    UpdateSchedulerByTick,
+} UPDATE_SCHEDULER_WORKER_TYPE;
+
+typedef struct _UPDATE_SCHEDULER_WORKER_REQUEST {
+    UPDATE_SCHEDULER_WORKER_TYPE type;
+    TRAIN_DATA changedTrainData;
+} UPDATE_SCHEDULER_WORKER_REQUEST;
 
 typedef enum _SCHEDULER_REQUEST_TYPE {
     UpdateTrainDataRequest = 0,
@@ -24,7 +35,7 @@ typedef enum _SCHEDULER_REQUEST_TYPE {
 } SCHEDULER_REQUEST_TYPE;
 
 typedef struct _SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST {
-    TRAIN_DATA* trainData;
+    UPDATE_SCHEDULER_WORKER_REQUEST workerRequest;
 } SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST;
 
 typedef struct _SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST {
@@ -58,10 +69,58 @@ typedef struct _TRAIN_SCHEDULE {
 } TRAIN_SCHEDULE;
 
 static
+INT
+SchedulerpSendRequest (
+        IN SCHEDULER_REQUEST* request
+    )
+{
+    INT result = WhoIs(SCHEDULER_SERVER_NAME);
+
+    if (SUCCESSFUL(result))
+    {
+        INT schedulerId = result;
+        result = Send(schedulerId, request, sizeof(*request), NULL, 0);
+    }
+
+    return result;
+}
+
+static
+INT
+SchedulerpUpdateTrainData (
+        IN UPDATE_SCHEDULER_WORKER_REQUEST* workerRequest
+    )
+{
+    SCHEDULER_REQUEST request;
+    request.type = UpdateTrainDataRequest;
+    request.updateLocationRequest.workerRequest = *workerRequest;
+
+    return SchedulerpSendRequest(&request);
+}
+
+static
+VOID
+SchedulerpUpdateNotifierTask()
+{
+    VERIFY(SUCCESSFUL(RegisterAs(SCHEDULER_WORKER_NAME)));
+
+    while (1)
+    {
+        INT senderId;
+        UPDATE_SCHEDULER_WORKER_REQUEST request;
+        VERIFY(SUCCESSFUL(Receive(&senderId, &request, sizeof(request))));
+        VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+        VERIFY(SUCCESSFUL(SchedulerpUpdateTrainData(&request)));
+    }
+}
+
+static
 VOID
 SchedulerpTask()
 {
     VERIFY(SUCCESSFUL(RegisterAs(SCHEDULER_SERVER_NAME)));
+
+    VERIFY(SUCCESSFUL(Create(Priority22, SchedulerpUpdateNotifierTask)));
 
     TRAIN_SCHEDULE trainSchedules[MAX_TRAINS];
     RtMemset(trainSchedules, sizeof(trainSchedules), 0);
@@ -73,9 +132,6 @@ SchedulerpTask()
 
         VERIFY(SUCCESSFUL(Receive(&senderId, &request, sizeof(request))));
 
-        // Reply immediately to unblock tasks and ensure there are no deadlocks
-        VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
-
         switch(request.type)
         {
             case UpdateTrainDataRequest:
@@ -83,13 +139,19 @@ SchedulerpTask()
                 INT currentTime = Time();
                 ASSERT(SUCCESSFUL(currentTime));
 
-                TRAIN_DATA trainData = *request.updateLocationRequest.trainData;
+                TRAIN_DATA trainData = request.updateLocationRequest.workerRequest.changedTrainData;
                 INT trainId = trainData.train;
 
                 Log("Train %d (v: %d, a: %d)", trainId, trainData.velocity, trainData.acceleration);
 
-                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[trainId];
+                if (request.updateLocationRequest.workerRequest.type == UpdateSchedulerBySensor)
+                {
 
+                }
+
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+
+                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[trainId];
                 if (trainSchedule->destinationNode != NULL)
                 {
                     UINT distanceToDestination;
@@ -123,8 +185,9 @@ SchedulerpTask()
 
             case TrainStopRequest:
             {
-                SCHEDULER_TRAIN_STOP_REQUEST* stopRequest = &request.stopRequest;
-                UCHAR trainId = stopRequest->train;
+                UCHAR trainId = request.stopRequest.train;
+
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
                 TRAIN_SCHEDULE* trainSchedule = &trainSchedules[trainId];
 
@@ -170,19 +233,25 @@ SchedulerpTask()
 
             case TrainStartRequest:
             {
-                VERIFY(SUCCESSFUL(TrainSetSpeed(request.startRequest.train, request.startRequest.speed)));
-                VERIFY(SUCCESSFUL(LocationServerLookForTrain(request.startRequest.train)));
+                SCHEDULER_TRAIN_START_REQUEST startRequest = request.startRequest;
+
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+
+                VERIFY(SUCCESSFUL(TrainSetSpeed(startRequest.train, startRequest.speed)));
+                VERIFY(SUCCESSFUL(LocationServerLookForTrain(startRequest.train)));
                 break;
             }
 
             case TrainMoveToSensorRequest:
             {
-                SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST* moveToSensorRequest = &request.moveToSensorRequest;
+                SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST moveToSensorRequest = request.moveToSensorRequest;
+
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
                 TRACK_NODE* destinationNode;
-                VERIFY(SUCCESSFUL(GetSensorNode(&moveToSensorRequest->sensor, &destinationNode)));
+                VERIFY(SUCCESSFUL(GetSensorNode(&moveToSensorRequest.sensor, &destinationNode)));
 
-                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[moveToSensorRequest->train];
+                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[moveToSensorRequest.train];
                 trainSchedule->destinationNode = destinationNode;
 
                 break;
@@ -195,35 +264,6 @@ VOID
 SchedulerCreateTask()
 {
     VERIFY(SUCCESSFUL(Create(Priority22, SchedulerpTask)));
-}
-
-static
-INT
-SchedulerpSendRequest (
-        IN SCHEDULER_REQUEST* request
-    )
-{
-    INT result = WhoIs(SCHEDULER_SERVER_NAME);
-
-    if (SUCCESSFUL(result))
-    {
-        INT schedulerId = result;
-        result = Send(schedulerId, request, sizeof(*request), NULL, 0);
-    }
-
-    return result;
-}
-
-INT
-SchedulerUpdateTrainData (
-        IN TRAIN_DATA* trainData
-    )
-{
-    SCHEDULER_REQUEST request;
-    request.type = UpdateTrainDataRequest;
-    request.updateLocationRequest.trainData = trainData;
-
-    return SchedulerpSendRequest(&request);
 }
 
 INT
@@ -264,4 +304,37 @@ StartTrain (
     request.startRequest.train = train;
 
     return SchedulerpSendRequest(&request);
+}
+
+static
+INT
+SchedulerpSendWorkerRequest (
+        IN UPDATE_SCHEDULER_WORKER_REQUEST* request
+    )
+{
+    INT result = WhoIs(SCHEDULER_WORKER_NAME);
+    if (SUCCESSFUL(result))
+    {
+        INT schedulerWorkerId = result;
+        result = Send(schedulerWorkerId, request, sizeof(*request), NULL, 0);
+    }
+    return result;
+}
+
+INT
+UpdateOnSensorNode(
+        IN TRAIN_DATA* trainData
+    )
+{
+    UPDATE_SCHEDULER_WORKER_REQUEST request = { UpdateSchedulerBySensor, *trainData };
+    return SchedulerpSendWorkerRequest(&request);
+}
+
+INT
+UpdateOnTick(
+        IN TRAIN_DATA* trainData
+    )
+{
+    UPDATE_SCHEDULER_WORKER_REQUEST request = { UpdateSchedulerByTick, *trainData };
+    return SchedulerpSendWorkerRequest(&request);
 }

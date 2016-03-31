@@ -24,7 +24,7 @@ InitTrainTasks()
     TrackReserverCreate();
 
     // Initialize remaining tasks
-    SchedulerCreateTask();
     SensorServerCreateTask();
     LocationServerCreateTask();
+    SchedulerCreateTask();
 }

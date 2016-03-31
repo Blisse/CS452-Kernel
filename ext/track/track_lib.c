@@ -21,6 +21,7 @@ TrackNodesIndexOf(
     return -1;
 }
 
+static
 VOID
 PathVisitNode(
         IN TRACK_NODE* node,

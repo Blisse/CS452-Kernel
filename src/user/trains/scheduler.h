@@ -8,6 +8,11 @@ VOID
 SchedulerCreateTask();
 
 INT
-SchedulerUpdateTrainData(
+UpdateOnSensorNode(
+        IN TRAIN_DATA* trainData
+    );
+
+INT
+UpdateOnTick(
         IN TRAIN_DATA* trainData
     );

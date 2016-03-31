@@ -73,10 +73,6 @@ typedef struct _LOCATION_SERVER_REQUEST {
     };
 } LOCATION_SERVER_REQUEST;
 
-typedef struct _SCHEDULER_NOTIFIER_REQUEST {
-    UINT changedTrain;
-} SCHEDULER_NOTIFIER_REQUEST;
-
 static
 VOID
 LocationServerpSensorNotifierTask()
@@ -117,24 +113,6 @@ LocationServerpTickNotifierTask()
     {
         VERIFY(SUCCESSFUL(Delay(LOCATION_SERVER_NOTIFIER_UPDATE_INTERVAL)));
         VERIFY(SUCCESSFUL(Send(locationServerId, &request, sizeof(request), NULL, 0)));
-    }
-}
-
-static
-VOID
-LocationServerpSchedulerNotifierTask()
-{
-    INT locationServerId = MyParentTid();
-    ASSERT(SUCCESSFUL(locationServerId));
-
-    while (1)
-    {
-        INT senderId;
-        TRAIN_DATA changedTrainData;
-        VERIFY(SUCCESSFUL(Receive(&senderId, &changedTrainData, sizeof(changedTrainData))));
-        VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
-        ASSERT(senderId == locationServerId);
-        VERIFY(SUCCESSFUL(SchedulerUpdateTrainData(&changedTrainData)));
     }
 }
 
@@ -202,10 +180,6 @@ LocationServerpTask()
     VERIFY(SUCCESSFUL(RegisterAs(LOCATION_SERVER_NAME)));
 
     VERIFY(SUCCESSFUL(Create(Priority23, LocationServerpSensorNotifierTask)));
-
-    INT schedulerNotifierTaskId = Create(Priority22, LocationServerpSchedulerNotifierTask);
-    ASSERT(SUCCESSFUL(schedulerNotifierTaskId));
-
     VERIFY(SUCCESSFUL(Create(Priority21, LocationServerpTickNotifierTask)));
 
     INT sensorLatencies[NUM_SENSORS];
@@ -271,15 +245,15 @@ LocationServerpTask()
                         VERIFY(SUCCESSFUL(GetDistanceBetweenNodes(trainData->currentNode, nextSensorNode, &distanceBetweenSensorNodes)));
 
                         trainData->currentNode = nextSensorNode;
-                        trainData->velocity = movingWeightedAverage(velocity(distanceBetweenSensorNodes, ticksBetweenSensors), trainData->velocity, LOCATION_SERVER_ALPHA);
                         trainData->distanceCurrentToNextNode = distanceBetweenSensorNodes;
+                        trainData->velocity = movingWeightedAverage(velocity(distanceBetweenSensorNodes, ticksBetweenSensors), trainData->velocity, LOCATION_SERVER_ALPHA);
                         trainData->distancePastCurrentNode = trainData->velocity * LOCATION_SERVER_AVERAGE_SENSOR_LATENCY;
                         trainData->currentNodeArrivalTick = currentTick;
 
                         UINT distanceToTravel = trainData->distanceCurrentToNextNode - trainData->distancePastCurrentNode;
                         trainData->nextNodeExpectedArrivalTick = currentTick + timeToTravelDistance(distanceToTravel, trainData->velocity);
 
-                        VERIFY(SUCCESSFUL(Send(schedulerNotifierTaskId, trainData, sizeof(*trainData), NULL, 0)));
+                        VERIFY(SUCCESSFUL(UpdateOnSensorNode(trainData)));
                     }
                 }
                 else
@@ -387,7 +361,7 @@ LocationServerpTask()
                     }
                     else
                     {
-                        UINT distanceToTravel = trainData->distanceCurrentToNextNode - trainData->distancePastCurrentNode;
+                        INT distanceToTravel = trainData->distanceCurrentToNextNode - trainData->distancePastCurrentNode;
                         if (distanceToTravel > 0)
                         {
                             trainData->nextNodeExpectedArrivalTick = currentTick + timeToTravelDistance(distanceToTravel, trainData->velocity);
@@ -396,7 +370,7 @@ LocationServerpTask()
 
                     trainData->lastTick = currentTick;
 
-                    VERIFY(SUCCESSFUL(Send(schedulerNotifierTaskId, trainData, sizeof(*trainData), NULL, 0)));
+                    VERIFY(SUCCESSFUL(UpdateOnTick(trainData)));
 
                     ShowTrainLocation(trainData->train, trainData->currentNode, trainData->distancePastCurrentNode);
                 }
