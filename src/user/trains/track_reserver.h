@@ -10,8 +10,7 @@ TrackReserverCreate();
 INT
 ReserveTrack (
         IN TRACK_NODE* trackNode,
-        IN UINT trainId,
-        IN UINT reserveUntilTick
+        IN UINT trainId
     );
 
 INT

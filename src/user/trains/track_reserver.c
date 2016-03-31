@@ -14,13 +14,11 @@
 typedef enum _TRACK_RESERVER_REQUEST_TYPE {
     ReserveRequest = 0,
     ReleaseRequest,
-    ClearReservationRequest,
 } TRACK_RESERVER_REQUEST_TYPE;
 
 typedef struct _TRACK_RESERVER_RESERVE_REQUEST {
     TRACK_NODE* reservedNode;
     UINT trainId;
-    UINT reserveUntilTick;
 } TRACK_RESERVER_RESERVE_REQUEST;
 
 typedef struct _TRACK_RESERVER_RELEASE_REQUEST {
@@ -37,17 +35,11 @@ typedef struct _TRACK_RESERVER_REQUEST {
     };
 } TRACK_RESERVER_REQUEST;
 
-typedef struct _TRACK_RESERVATION {
-    TRACK_NODE* reservedNode;
-    UINT trainId;
-    UINT reserveUntilTick;
-} TRACK_RESERVATION;
-
 VOID
 TrackReserverpTask()
 {
-    TRACK_RESERVATION trackReservations[TRACK_MAX];
-    RtMemset(trackReservations, sizeof(trackReservations), 0);
+    INT trackReservationByIndex[TRACK_MAX/2];
+    RtMemset(trackReservationByIndex, sizeof(trackReservationByIndex), -1);
 
     VERIFY(SUCCESSFUL(RegisterAs(TRACK_RESERVER_NAME)));
 
@@ -61,17 +53,21 @@ TrackReserverpTask()
 
         switch (request->type)
         {
-            case ClearReservationRequest:
-            {
-
-                break;
-            }
-
             case ReserveRequest:
             {
                 TRACK_RESERVER_RESERVE_REQUEST* reserveRequest = &request->reserveRequest;
                 UINT index;
                 VERIFY(SUCCESSFUL(GetIndexOfNode(reserveRequest->reservedNode, &index)));
+
+                if (trackReservationByIndex[index/2] == -1)
+                {
+                    trackReservationByIndex[index/2] = reserveRequest->trainId;
+                }
+                else
+                {
+                    success = FALSE;
+                }
+
                 break;
             }
 
@@ -80,6 +76,16 @@ TrackReserverpTask()
                 TRACK_RESERVER_RELEASE_REQUEST* releaseRequest = &request->releaseRequest;
                 UINT index;
                 VERIFY(SUCCESSFUL(GetIndexOfNode(releaseRequest->reservedNode, &index)));
+
+                if (trackReservationByIndex[index/2] == releaseRequest->trainId)
+                {
+                    trackReservationByIndex[index/2] = -1;
+                }
+                else
+                {
+                    success = FALSE;
+                }
+
                 break;
             }
         }
@@ -116,8 +122,7 @@ TrackReserverpSendRequest(
 INT
 ReserveTrack (
         IN TRACK_NODE* trackNode,
-        IN UINT trainId,
-        IN UINT reserveUntilTick
+        IN UINT trainId
     )
 {
     TRACK_RESERVER_REQUEST request;
@@ -125,7 +130,6 @@ ReserveTrack (
     request.type = ReserveRequest;
     request.reserveRequest.reservedNode = trackNode;
     request.reserveRequest.trainId = trainId;
-    request.reserveRequest.reserveUntilTick = reserveUntilTick;
 
     return TrackReserverpSendRequest(&request);
 }
