@@ -7,7 +7,7 @@ LocationServerCreateTask();
 
 INT
 LocationServerUpdateTrainSpeed(
-        IN UCHAR train,
+        IN UCHAR trainId,
         IN UCHAR speed
     );
 
@@ -16,10 +16,10 @@ LocationServerSwitchUpdated();
 
 INT
 LocationServerTrainDirectionReverse(
-        IN UCHAR train
+        IN UCHAR trainId
     );
 
 INT
 LocationServerLookForTrain(
-        IN UCHAR train
+        IN UCHAR trainId
     );

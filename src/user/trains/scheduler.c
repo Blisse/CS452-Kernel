@@ -140,16 +140,16 @@ SchedulerpTask()
                 ASSERT(SUCCESSFUL(currentTime));
 
                 TRAIN_DATA trainData = request.updateLocationRequest.workerRequest.changedTrainData;
-                INT trainId = trainData.train;
+                INT trainId = trainData.trainId;
 
                 Log("Train %d (v: %d, a: %d)", trainId, trainData.velocity, trainData.acceleration);
+
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
                 if (request.updateLocationRequest.workerRequest.type == UpdateSchedulerBySensor)
                 {
 
                 }
-
-                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
                 TRAIN_SCHEDULE* trainSchedule = &trainSchedules[trainId];
                 if (trainSchedule->destinationNode != NULL)
@@ -194,7 +194,7 @@ SchedulerpTask()
                 TRAIN_DATA* trainData;
                 VERIFY(SUCCESSFUL(GetTrainData(trainId, &trainData)));
 
-                if (trainSchedule != NULL && trainData != NULL && trainData->train == trainId)
+                if (trainSchedule != NULL && trainData != NULL && trainData->trainId == trainId)
                 {
                     UCHAR trainSpeed;
                     VERIFY(SUCCESSFUL(TrainGetSpeed(trainId, &trainSpeed)));

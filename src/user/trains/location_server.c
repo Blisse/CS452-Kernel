@@ -40,12 +40,12 @@ typedef enum _LOCATION_SERVER_REQUEST_TYPE {
 } LOCATION_SERVER_REQUEST_TYPE;
 
 typedef struct _TRAIN_SPEED_UPDATE {
-    UCHAR train;
-    UCHAR speed;
+    UCHAR trainId;
+    UCHAR trainSpeed;
 } TRAIN_SPEED_UPDATE;
 
 typedef struct _TRAIN_DIRECTION_REVERSE {
-    UCHAR train;
+    UCHAR trainId;
 } TRAIN_DIRECTION_REVERSE;
 
 typedef struct _SENSOR_UPDATE {
@@ -53,12 +53,12 @@ typedef struct _SENSOR_UPDATE {
 } SENSOR_UPDATE;
 
 typedef struct _TRAIN_DATA_REQUEST {
-    UCHAR train;
+    UCHAR trainId;
 } TRAIN_DATA_REQUEST;
 
 typedef struct _TRAIN_LOOK_REQUEST {
-    UCHAR train;
-    UCHAR speed;
+    UCHAR trainId;
+    UCHAR trainSpeed;
 } TRAIN_LOOK_REQUEST;
 
 typedef struct _LOCATION_SERVER_REQUEST {
@@ -121,14 +121,14 @@ TRAIN_DATA*
 LocationServerpFindTrainById (
         IN TRAIN_DATA* trains,
         IN UINT numTrains,
-        IN UCHAR train
+        IN UCHAR trainId
     )
 {
     for (UINT i = 0; i < numTrains; i++)
     {
         TRAIN_DATA* trainData = &trains[i];
 
-        if (train == trainData->train)
+        if (trainId == trainData->trainId)
         {
             return trainData;
         }
@@ -221,7 +221,7 @@ LocationServerpTask()
 
                     VERIFY(RT_SUCCESS(RtCircularBufferPeekAndPop(&lostTrains, trainData, sizeof(*trainData))));
 
-                    Log("Found train %d", trainData->train);
+                    Log("Found train %d", trainData->trainId);
                 }
 
                 if (trainData != NULL)
@@ -235,7 +235,7 @@ LocationServerpTask()
                         INT ticksBetweenSensors = currentTick - trainData->nextNodeExpectedArrivalTick;
                         if (trainData->nextNodeExpectedArrivalTick != 0)
                         {
-                            ShowTrainArrival(trainData->train, sensorNode, ticksBetweenSensors);
+                            ShowTrainArrival(trainData->trainId, sensorNode, ticksBetweenSensors);
                         }
 
                         TRACK_NODE* nextSensorNode;
@@ -269,23 +269,23 @@ LocationServerpTask()
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
                 TRAIN_SPEED_UPDATE speedUpdate = request.speedUpdate;
-                TRAIN_DATA* trainData = LocationServerpFindTrainById(trackedTrains, trackedTrainsSize, speedUpdate.train);
+                TRAIN_DATA* trainData = LocationServerpFindTrainById(trackedTrains, trackedTrainsSize, speedUpdate.trainId);
 
                 if (trainData != NULL)
                 {
                     UCHAR currentTrainSpeed;
-                    VERIFY(SUCCESSFUL(TrainGetSpeed(speedUpdate.train, &currentTrainSpeed)));
+                    VERIFY(SUCCESSFUL(TrainGetSpeed(speedUpdate.trainId, &currentTrainSpeed)));
 
-                    if (speedUpdate.speed > currentTrainSpeed)
+                    if (speedUpdate.trainSpeed > currentTrainSpeed)
                     {
-                        trainData->acceleration = PhysicsSteadyStateAcceleration(speedUpdate.train, speedUpdate.speed);
+                        trainData->acceleration = PhysicsSteadyStateAcceleration(speedUpdate.trainId, speedUpdate.trainSpeed);
                     }
                     else
                     {
-                        trainData->acceleration = PhysicsSteadyStateDeceleration(speedUpdate.train, speedUpdate.speed);
+                        trainData->acceleration = PhysicsSteadyStateDeceleration(speedUpdate.trainId, speedUpdate.trainSpeed);
                     }
 
-                   trainData->targetVelocity = PhysicsSteadyStateVelocity(speedUpdate.train, speedUpdate.speed);
+                   trainData->targetVelocity = PhysicsSteadyStateVelocity(speedUpdate.trainId, speedUpdate.trainSpeed);
                 }
 
                 break;
@@ -308,7 +308,7 @@ LocationServerpTask()
             case TrainDataRequest:
             {
                 TRAIN_DATA_REQUEST* trainDataRequest = &request.trainDataRequest;
-                TRAIN_DATA* trainData = LocationServerpFindTrainById(trackedTrains, trackedTrainsSize, trainDataRequest->train);
+                TRAIN_DATA* trainData = LocationServerpFindTrainById(trackedTrains, trackedTrainsSize, trainDataRequest->trainId);
                 VERIFY(SUCCESSFUL(Reply(senderId, &trainData, sizeof(trainData))));
 
                 break;
@@ -320,12 +320,12 @@ LocationServerpTask()
 
                 TRAIN_LOOK_REQUEST* lookForTrainRequest = &request.lookForTrainRequest;
 
-                UCHAR trainId = lookForTrainRequest->train;
-                UCHAR trainSpeed = lookForTrainRequest->speed;
+                UCHAR trainId = lookForTrainRequest->trainId;
+                UCHAR trainSpeed = lookForTrainRequest->trainSpeed;
 
                 TRAIN_DATA new_train;
 
-                new_train.train = trainId;
+                new_train.trainId = trainId;
                 new_train.velocity = 0;
                 new_train.acceleration = PhysicsSteadyStateAcceleration(trainId, trainSpeed);
                 new_train.currentNode = NULL;
@@ -338,7 +338,7 @@ LocationServerpTask()
 
                 VERIFY(RT_SUCCESS(RtCircularBufferPush(&lostTrains, &new_train, sizeof(new_train))));
 
-                Log("Searching for train %d", new_train.train);
+                Log("Searching for train %d", new_train.trainId);
 
                 break;
             }
@@ -372,7 +372,7 @@ LocationServerpTask()
 
                     VERIFY(SUCCESSFUL(UpdateOnTick(trainData)));
 
-                    ShowTrainLocation(trainData->train, trainData->currentNode, trainData->distancePastCurrentNode);
+                    ShowTrainLocation(trainData->trainId, trainData->currentNode, trainData->distancePastCurrentNode);
                 }
 
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
@@ -405,14 +405,14 @@ LocationServerpSendReplyRequest(
 
 INT
 LocationServerUpdateTrainSpeed(
-        IN UCHAR train,
-        IN UCHAR speed
+        IN UCHAR trainId,
+        IN UCHAR trainSpeed
     )
 {
     LOCATION_SERVER_REQUEST request;
     request.type = TrainSpeedUpdateRequest;
-    request.speedUpdate.train = train;
-    request.speedUpdate.speed = speed;
+    request.speedUpdate.trainId = trainId;
+    request.speedUpdate.trainSpeed = trainSpeed;
 
     return LocationServerpSendReplyRequest(&request, NULL, 0);
 }
@@ -427,37 +427,37 @@ LocationServerSwitchUpdated()
 
 INT
 LocationServerTrainDirectionReverse(
-        IN UCHAR train
+        IN UCHAR trainId
     )
 {
     LOCATION_SERVER_REQUEST request;
     request.type = TrainDirectionReverseRequest;
-    request.directionReverse.train = train;
+    request.directionReverse.trainId = trainId;
 
     return LocationServerpSendReplyRequest(&request, NULL, 0);
 }
 
 INT
 LocationServerLookForTrain(
-        IN UCHAR train
+        IN UCHAR trainId
     )
 {
     LOCATION_SERVER_REQUEST request;
     request.type = TrainFindRequest;
-    request.lookForTrainRequest.train = train;
+    request.lookForTrainRequest.trainId = trainId;
 
     return LocationServerpSendReplyRequest(&request, NULL, 0);
 }
 
 INT
 GetTrainData (
-        IN UCHAR train,
+        IN UCHAR trainId,
         OUT TRAIN_DATA** data
     )
 {
     LOCATION_SERVER_REQUEST request;
     request.type = TrainDataRequest;
-    request.trainDataRequest.train = train;
+    request.trainDataRequest.trainId = trainId;
 
     return LocationServerpSendReplyRequest(&request, data, sizeof(*data));
 }

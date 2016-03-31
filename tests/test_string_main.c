@@ -2,8 +2,6 @@
 #include <rtosc/assert.h>
 #include <rtosc/stdlib.h>
 
-#include <stdio.h>
-
 void test_string_cmp() {
     T_ASSERT(RtStrCmp("", "") == 0);
     T_ASSERT(RtStrCmp("1", "1") == 0);

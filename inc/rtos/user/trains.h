@@ -20,7 +20,9 @@ typedef enum _TRACK {
 #define MAX_SPEED 14
 
 typedef struct _TRAIN_DATA {
-    UCHAR train;
+    UCHAR trainId; // id
+    UCHAR trainSpeed; // 0-14
+
     INT velocity; // in micrometers / tick
     INT acceleration; // in micrometers / tick^2
 
