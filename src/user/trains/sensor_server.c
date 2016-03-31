@@ -16,7 +16,7 @@
 
 typedef enum _SENSOR_SERVER_REQUEST_TYPE {
     SubscribeRequest = 0,
-    DataRequest
+    DataRequest,
 } SENSOR_SERVER_REQUEST_TYPE;
 
 typedef struct _SENSOR_SERVER_REQUEST {

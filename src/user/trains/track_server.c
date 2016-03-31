@@ -48,6 +48,7 @@ typedef struct _TRACK_SERVER_REQUEST {
     };
 } TRACK_SERVER_REQUEST;
 
+static
 inline
 TRACK_EDGE*
 TrackServerpGetNextEdge(
@@ -72,6 +73,7 @@ TrackServerpGetNextEdge(
     return &node->edge[DIR_AHEAD];
 }
 
+static
 inline
 TRACK_NODE*
 TrackServerpGetNextNode(
@@ -81,6 +83,7 @@ TrackServerpGetNextNode(
     return TrackServerpGetNextEdge(node)->dest;
 }
 
+static
 BOOLEAN
 TrackServerpGetNextSensorNode(
         IN TRACK_NODE* currentNode,
@@ -89,11 +92,13 @@ TrackServerpGetNextSensorNode(
 {
     TRACK_NODE* nextNode = TrackServerpGetNextNode(currentNode);
 
-    while (nextNode->type != NODE_SENSOR && nextNode->type != NODE_EXIT) {
+    while (nextNode->type != NODE_SENSOR && nextNode->type != NODE_EXIT)
+    {
         nextNode = TrackServerpGetNextNode(nextNode);
     }
 
-    if (nextNode->type == NODE_SENSOR) {
+    if (nextNode->type == NODE_SENSOR)
+    {
         *nextSensorNode = nextNode;
         return TRUE;
     }
@@ -152,18 +157,18 @@ TrackServerpTask()
 
         BOOLEAN requestSuccess = TRUE;
 
-        switch (request->type) {
-
+        switch (request->type)
+        {
             case GetDistanceBetweenNodesRequest:
             {
                 UINT nodeDistance;
                 requestSuccess = TrackServerpCalculateDistanceBetweenNodes(
                     request->distanceBetweenNodesRequest.nodeA,
                     request->distanceBetweenNodesRequest.nodeB,
-                    &nodeDistance
-                );
+                    &nodeDistance);
 
-                if (requestSuccess) {
+                if (requestSuccess)
+                {
                     *(request->distanceBetweenNodesRequest.nodeDistance) = nodeDistance;
                 }
 
@@ -185,7 +190,8 @@ TrackServerpTask()
                 TRACK_NODE* nextSensorNode;
                 requestSuccess = TrackServerpGetNextSensorNode(request->nextSensorNodeRequest.currentNode, &nextSensorNode);
 
-                if (requestSuccess) {
+                if (requestSuccess)
+                {
                     *(request->nextSensorNodeRequest.nextSensorNode) = nextSensorNode;
                 }
 
