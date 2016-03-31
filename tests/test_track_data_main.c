@@ -9,10 +9,14 @@ void trackb_lib_find_path() {
     RT_CIRCULAR_BUFFER pathBuffer;
     RtCircularBufferInit(&pathBuffer, underlyingPathBuffer, sizeof(underlyingPathBuffer));
 
-    for (UINT i = 1; i < 140; i++) // trackb only has 140 nodes
+    // trackb only has 140 nodes
+    for (UINT i = 1; i < 140; i++)
     {
-        T_ASSERT(FindPath(nodes, sizeof(nodes) / sizeof(nodes[0]), &nodes[0], &nodes[i], &pathBuffer) == TRUE);
-        T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&pathBuffer, RtCircularBufferSize(&pathBuffer))));
+        for (UINT j = 1; j < 140; j++)
+        {
+            T_ASSERT(FindPath(nodes, sizeof(nodes) / sizeof(nodes[0]), &nodes[i], &nodes[j], &pathBuffer) == TRUE);
+            T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&pathBuffer, RtCircularBufferSize(&pathBuffer))));
+        }
     }
 }
 
@@ -26,8 +30,11 @@ void tracka_lib_find_path() {
 
     for (UINT i = 1; i < TRACK_MAX; i++)
     {
-        T_ASSERT(FindPath(nodes, sizeof(nodes) / sizeof(nodes[0]), &nodes[0], &nodes[i], &pathBuffer) == TRUE);
-        T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&pathBuffer, RtCircularBufferSize(&pathBuffer))));
+        for (UINT j = 1; j < TRACK_MAX; j++)
+        {
+            T_ASSERT(FindPath(nodes, sizeof(nodes) / sizeof(nodes[0]), &nodes[i], &nodes[j], &pathBuffer) == TRUE);
+            T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&pathBuffer, RtCircularBufferSize(&pathBuffer))));
+        }
     }
 }
 

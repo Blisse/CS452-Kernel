@@ -36,3 +36,9 @@ INT timeToTravelDistance(
         IN INT distance,
         IN INT velocity
     );
+
+INT distanceToAccelerate (
+        IN INT initialVelocity,
+        IN INT finalVelocity,
+        IN INT acceleration
+    );

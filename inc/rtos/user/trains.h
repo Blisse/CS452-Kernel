@@ -114,19 +114,19 @@ SensorAwait (
 
 INT
 MoveTrainToSensor (
-        IN UCHAR train,
+        IN UCHAR trainId,
         IN SENSOR sensor,
         IN UINT distancePastSensor
     );
 
 INT
 StopTrain (
-        IN UCHAR train
+        IN UCHAR trainId
     );
 
 INT
 StartTrain (
-        IN UCHAR train
+        IN UCHAR trainId
     );
 
 /************************************

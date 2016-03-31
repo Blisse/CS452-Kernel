@@ -45,3 +45,12 @@ INT timeToTravelDistance(
 {
     return (distance / velocity);
 }
+
+INT distanceToAccelerate (
+        IN INT initialVelocity,
+        IN INT finalVelocity,
+        IN INT acceleration
+    )
+{
+    return ((finalVelocity * finalVelocity) - (initialVelocity * initialVelocity) / acceleration);
+}

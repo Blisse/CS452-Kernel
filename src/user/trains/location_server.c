@@ -182,9 +182,6 @@ LocationServerpTask()
     VERIFY(SUCCESSFUL(Create(Priority23, LocationServerpSensorNotifierTask)));
     VERIFY(SUCCESSFUL(Create(Priority21, LocationServerpTickNotifierTask)));
 
-    INT sensorLatencies[NUM_SENSORS];
-    RtMemset(sensorLatencies, sizeof(sensorLatencies), 0);
-
     TRAIN_DATA underlyingLostTrainsBuffer[MAX_TRACKABLE_TRAINS];
     RT_CIRCULAR_BUFFER lostTrains;
     RtCircularBufferInit(&lostTrains, underlyingLostTrainsBuffer, sizeof(underlyingLostTrainsBuffer));
@@ -273,19 +270,17 @@ LocationServerpTask()
 
                 if (trainData != NULL)
                 {
-                    UCHAR currentTrainSpeed;
-                    VERIFY(SUCCESSFUL(TrainGetSpeed(speedUpdate.trainId, &currentTrainSpeed)));
-
-                    if (speedUpdate.trainSpeed > currentTrainSpeed)
+                    if (speedUpdate.trainSpeed > trainData->trainSpeed)
                     {
                         trainData->acceleration = PhysicsSteadyStateAcceleration(speedUpdate.trainId, speedUpdate.trainSpeed);
                     }
-                    else
+                    else if (speedUpdate.trainSpeed < trainData->trainSpeed)
                     {
                         trainData->acceleration = PhysicsSteadyStateDeceleration(speedUpdate.trainId, speedUpdate.trainSpeed);
                     }
 
-                   trainData->targetVelocity = PhysicsSteadyStateVelocity(speedUpdate.trainId, speedUpdate.trainSpeed);
+                    trainData->targetVelocity = PhysicsSteadyStateVelocity(speedUpdate.trainId, speedUpdate.trainSpeed);
+                    trainData->trainSpeed = speedUpdate.trainSpeed;
                 }
 
                 break;
@@ -326,6 +321,7 @@ LocationServerpTask()
                 TRAIN_DATA new_train;
 
                 new_train.trainId = trainId;
+                new_train.trainSpeed = trainSpeed;
                 new_train.velocity = 0;
                 new_train.acceleration = PhysicsSteadyStateAcceleration(trainId, trainSpeed);
                 new_train.currentNode = NULL;
@@ -439,12 +435,14 @@ LocationServerTrainDirectionReverse(
 
 INT
 LocationServerLookForTrain(
-        IN UCHAR trainId
+        IN UCHAR trainId,
+        IN UCHAR trainSpeed
     )
 {
     LOCATION_SERVER_REQUEST request;
     request.type = TrainFindRequest;
     request.lookForTrainRequest.trainId = trainId;
+    request.lookForTrainRequest.trainSpeed = trainSpeed;
 
     return LocationServerpSendReplyRequest(&request, NULL, 0);
 }

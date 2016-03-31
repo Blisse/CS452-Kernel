@@ -83,14 +83,14 @@ typedef struct _DISPLAY_REQUEST {
 
 } DISPLAY_REQUEST;
 
-#define CURSOR_CMD_X 13
+#define CURSOR_CMD_X 20
 #define CURSOR_CMD_Y 2
 
-#define CURSOR_CLOCK_X 4
+#define CURSOR_CLOCK_X 12
 #define CURSOR_CLOCK_Y 2
 
 #define CURSOR_IDLE_X 4
-#define CURSOR_IDLE_Y 4
+#define CURSOR_IDLE_Y 2
 
 #define CURSOR_LOG_X 25
 #define CURSOR_LOG_Y 13

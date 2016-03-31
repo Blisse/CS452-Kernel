@@ -21,5 +21,6 @@ LocationServerTrainDirectionReverse(
 
 INT
 LocationServerLookForTrain(
-        IN UCHAR trainId
+        IN UCHAR trainId,
+        IN UCHAR trainSpeed
     );

@@ -39,19 +39,23 @@ typedef struct _SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST {
 } SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST;
 
 typedef struct _SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST {
-    UCHAR train;
+    UCHAR trainId;
     SENSOR sensor;
     UINT distancePastSensor;
 } SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST;
 
 typedef struct _SCHEDULER_TRAIN_STOP_REQUEST {
-    UCHAR train;
+    UCHAR trainId;
 } SCHEDULER_TRAIN_STOP_REQUEST;
 
 typedef struct _SCHEDULER_TRAIN_START_REQUEST {
-    UCHAR train;
-    UCHAR speed;
+    UCHAR trainId;
 } SCHEDULER_TRAIN_START_REQUEST;
+
+typedef struct _SCHEDULER_TRAIN_SPEED_REQUEST {
+    UCHAR trainId;
+    UCHAR trainSpeed;
+} SCHEDULER_TRAIN_SPEED_REQUEST;
 
 typedef struct _SCHEDULER_REQUEST {
     SCHEDULER_REQUEST_TYPE type;
@@ -140,15 +144,27 @@ SchedulerpTask()
                 ASSERT(SUCCESSFUL(currentTime));
 
                 TRAIN_DATA trainData = request.updateLocationRequest.workerRequest.changedTrainData;
+                UPDATE_SCHEDULER_WORKER_TYPE updateType = request.updateLocationRequest.workerRequest.type;
                 INT trainId = trainData.trainId;
 
                 Log("Train %d (v: %d, a: %d)", trainId, trainData.velocity, trainData.acceleration);
 
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
-                if (request.updateLocationRequest.workerRequest.type == UpdateSchedulerBySensor)
+                switch (updateType)
                 {
+                    case UpdateSchedulerBySensor: // accurate
+                    {
+                        // update train speed
+                        // reserve 2x stopping distance of track
+                        // calculate path to destination
+                        break;
+                    }
 
+                    case UpdateSchedulerByTick: // potentially inaccurate
+                    {
+                        break;
+                    }
                 }
 
                 TRAIN_SCHEDULE* trainSchedule = &trainSchedules[trainId];
@@ -158,18 +174,11 @@ SchedulerpTask()
                     VERIFY(SUCCESSFUL(GetDistanceBetweenNodes(trainData.currentNode, trainSchedule->destinationNode, &distanceToDestination)));
                     distanceToDestination -= trainData.distancePastCurrentNode;
 
-                    UCHAR trainSpeed;
-                    VERIFY(SUCCESSFUL(TrainGetSpeed(trainId, &trainSpeed)));
-
-                    // d = (vf^2 - vi^2) / (2a)
-                    INT stoppingDistance = (trainData.velocity * trainData.velocity) / PhysicsSteadyStateDeceleration(trainId, trainSpeed);
+                    INT stoppingDistance = distanceToAccelerate(trainData.velocity, 0, PhysicsSteadyStateDeceleration(trainId, trainData.trainSpeed));
 
                     Log("Stop in %d, so send stop command %d cm from %s", umToCm(stoppingDistance), umToCm(distanceToDestination), trainSchedule->destinationNode->name);
 
-                    INT commandDelay = 5; // ticks
-                    INT commandDelayDistance = trainData.velocity * commandDelay;
-
-                    if (distanceToDestination < stoppingDistance + commandDelayDistance)
+                    if (distanceToDestination < stoppingDistance)
                     {
                         VERIFY(SUCCESSFUL(TrainSetSpeed(trainId, 0)));
                         trainSchedule->destinationNode = NULL;
@@ -185,7 +194,7 @@ SchedulerpTask()
 
             case TrainStopRequest:
             {
-                UCHAR trainId = request.stopRequest.train;
+                UCHAR trainId = request.stopRequest.trainId;
 
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
@@ -196,12 +205,7 @@ SchedulerpTask()
 
                 if (trainSchedule != NULL && trainData != NULL && trainData->trainId == trainId)
                 {
-                    UCHAR trainSpeed;
-                    VERIFY(SUCCESSFUL(TrainGetSpeed(trainId, &trainSpeed)));
-
-                    // d = (vf^2 - vi^2) / (2a) - implicit *2a in deceleration constants
-                    INT deceleration = PhysicsSteadyStateDeceleration(trainId, trainSpeed);
-                    UINT stoppingDistance = (0 - (trainData->velocity * trainData->velocity) / deceleration) * -1;
+                    UINT stoppingDistance = distanceToAccelerate(trainData->velocity, 0, PhysicsSteadyStateDeceleration(trainId, trainData->trainSpeed));
 
                     TRACK_NODE* nextNode;
                     VERIFY(SUCCESSFUL(GetNextSensorNode(trainData->currentNode, &nextNode)));
@@ -237,8 +241,9 @@ SchedulerpTask()
 
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
-                VERIFY(SUCCESSFUL(TrainSetSpeed(startRequest.train, startRequest.speed)));
-                VERIFY(SUCCESSFUL(LocationServerLookForTrain(startRequest.train)));
+                const INT defaultTrainSpeed = 9;
+                VERIFY(SUCCESSFUL(TrainSetSpeed(startRequest.trainId, defaultTrainSpeed)));
+                VERIFY(SUCCESSFUL(LocationServerLookForTrain(startRequest.trainId, defaultTrainSpeed)));
                 break;
             }
 
@@ -251,7 +256,7 @@ SchedulerpTask()
                 TRACK_NODE* destinationNode;
                 VERIFY(SUCCESSFUL(GetSensorNode(&moveToSensorRequest.sensor, &destinationNode)));
 
-                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[moveToSensorRequest.train];
+                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[moveToSensorRequest.trainId];
                 trainSchedule->destinationNode = destinationNode;
 
                 break;
@@ -268,14 +273,14 @@ SchedulerCreateTask()
 
 INT
 MoveTrainToSensor (
-        IN UCHAR train,
+        IN UCHAR trainId,
         IN SENSOR sensor,
         IN UINT distancePastSensor
     )
 {
     SCHEDULER_REQUEST request;
     request.type = TrainMoveToSensorRequest;
-    request.moveToSensorRequest.train = train;
+    request.moveToSensorRequest.trainId = trainId;
     request.moveToSensorRequest.sensor = sensor;
     request.moveToSensorRequest.distancePastSensor = distancePastSensor;
 
@@ -284,24 +289,24 @@ MoveTrainToSensor (
 
 INT
 StopTrain (
-        IN UCHAR train
+        IN UCHAR trainId
     )
 {
     SCHEDULER_REQUEST request;
     request.type = TrainStopRequest;
-    request.stopRequest.train = train;
+    request.stopRequest.trainId = trainId;
 
     return SchedulerpSendRequest(&request);
 }
 
 INT
 StartTrain (
-        IN UCHAR train
+        IN UCHAR trainId
     )
 {
     SCHEDULER_REQUEST request;
     request.type = TrainStartRequest;
-    request.startRequest.train = train;
+    request.startRequest.trainId = trainId;
 
     return SchedulerpSendRequest(&request);
 }
