@@ -189,7 +189,7 @@ LocationServerpTask()
     TRAIN_DATA trackedTrains[MAX_TRACKABLE_TRAINS];
     UINT trackedTrainsSize = 0;
 
-    INT sensorCorrections[NUM_SENSORS];
+    INT sensorCorrections[MAX_TRAINS][NUM_SENSORS];
     RtMemset(sensorCorrections, sizeof(sensorCorrections), 0);
 
     while (1)
@@ -232,8 +232,6 @@ LocationServerpTask()
                     }
                     else
                     {
-                        INT ticksBetweenSensors = currentTick - trainData->currentNodeArrivalTick;
-
                         if (trainData->nextNodeExpectedArrivalTick != 0)
                         {
                             INT actualArrivalTimeDifference = currentTick - trainData->nextNodeExpectedArrivalTick;
@@ -242,12 +240,14 @@ LocationServerpTask()
                             if (trainData->acceleration == 0)
                             {
                                 UINT sensorIndex = ((sensor->module - 'A') * 16) + (sensor->number - 1);
-                                sensorCorrections[sensorIndex] += actualArrivalTimeDifference;
+                                sensorCorrections[trainData->trainId][sensorIndex] += actualArrivalTimeDifference;
                             }
                         }
                         else
                         {
                         }
+
+                        INT ticksBetweenSensors = currentTick - trainData->currentNodeArrivalTick;
 
                         TRACK_NODE* nextSensorNode;
                         VERIFY(SUCCESSFUL(GetNextSensorNode(trainData->currentNode, &nextSensorNode)));
@@ -380,7 +380,7 @@ LocationServerpTask()
                             UINT sensorIndex;
                             VERIFY(SUCCESSFUL(GetIndexOfNode(nextSensorNode, &sensorIndex)));
 
-                            trainData->nextNodeExpectedArrivalTick = currentTick + timeToTravelDistance(distanceToTravel, trainData->velocity) + sensorCorrections[sensorIndex];
+                            trainData->nextNodeExpectedArrivalTick = currentTick + timeToTravelDistance(distanceToTravel, trainData->velocity) + sensorCorrections[trainData->trainId][sensorIndex];
                         }
                     }
 
