@@ -187,7 +187,7 @@ TrackServerpTask()
 
             case GetNextSensorNodeRequest:
             {
-                TRACK_NODE* nextSensorNode;
+                TRACK_NODE* nextSensorNode = NULL;
                 requestSuccess = TrackServerpGetNextSensorNode(request->nextSensorNodeRequest.currentNode, &nextSensorNode);
 
                 if (requestSuccess)

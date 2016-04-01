@@ -53,7 +53,7 @@ InputParserpParseCommand (
 
         read = RtStrScanFormatted(buffer, "%d %d", &trainId, &trainSpeed);
 
-        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
+        if (SUCCESSFUL(read))
         {
             if (!SUCCESSFUL(TrainSetSpeed(trainId, trainSpeed)))
             {
@@ -68,9 +68,9 @@ InputParserpParseCommand (
 
         read = RtStrScanFormatted(buffer, "%d %c", &switchId, &switchDirection);
 
-        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
+        if (SUCCESSFUL(read))
         {
-            SWITCH_DIRECTION direction;
+            SWITCH_DIRECTION direction = SwitchCurved;
             InputParserpGetSwitchDirection(switchDirection, &direction);
 
             if (!SUCCESSFUL(SwitchSetDirection(switchId, direction)))
@@ -85,7 +85,7 @@ InputParserpParseCommand (
 
         read = RtStrScanFormatted(buffer, "%d", &trainId);
 
-        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
+        if (SUCCESSFUL(read))
         {
             if (!SUCCESSFUL(TrainReverse(trainId)))
             {
@@ -102,7 +102,7 @@ InputParserpParseCommand (
 
         read = RtStrScanFormatted(buffer, "%d %c %d %d", &trainId, &sensorModule, &sensorNumber, &distanceFromSensor);
 
-        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
+        if (SUCCESSFUL(read))
         {
             SENSOR sensor = { sensorModule, sensorNumber };
             if (!SUCCESSFUL(MoveTrainToSensor(trainId, sensor, distanceFromSensor)))
@@ -117,7 +117,7 @@ InputParserpParseCommand (
 
         read = RtStrScanFormatted(buffer, "%d", &trainId);
 
-        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
+        if (SUCCESSFUL(read))
         {
             if (!SUCCESSFUL(StopTrain(trainId)))
             {
@@ -131,7 +131,7 @@ InputParserpParseCommand (
 
         read = RtStrScanFormatted(buffer, "%d", &trainId);
 
-        if (SUCCESSFUL(read) && RtStrIsWhitespace(buffer))
+        if (SUCCESSFUL(read))
         {
             if (!SUCCESSFUL(StartTrain(trainId)))
             {

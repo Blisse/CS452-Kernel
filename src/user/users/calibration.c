@@ -1,10 +1,10 @@
 #include "calibration.h"
 
-#include <bwio/bwio.h>
 #include <rtkernel.h>
 #include <rtos.h>
 #include <rtosc/assert.h>
 #include <user/trains.h>
+#include <user/io.h>
 
 #define TRAIN_NUMBER 63
 
@@ -12,8 +12,8 @@ static
 VOID
 CalibrationpSteadyStateVelocityTask()
 {
-    // Setup the track
-    // This currently assumes track B
+    VERIFY(SUCCESSFUL(Delay(1000)));
+
     VERIFY(SUCCESSFUL(SwitchSetDirection(15, SwitchStraight)));
     VERIFY(SUCCESSFUL(SwitchSetDirection(14, SwitchStraight)));
     VERIFY(SUCCESSFUL(SwitchSetDirection(9, SwitchStraight)));
@@ -21,13 +21,7 @@ CalibrationpSteadyStateVelocityTask()
     VERIFY(SUCCESSFUL(SwitchSetDirection(7, SwitchStraight)));
     VERIFY(SUCCESSFUL(SwitchSetDirection(6, SwitchStraight)));
 
-    // Wait for the track to set up
-    VERIFY(SUCCESSFUL(Delay(100)));
-
-    // Have the train go
-    UINT startTime = 0;
-    UINT currentSpeed = 14;
-    VERIFY(SUCCESSFUL(TrainSetSpeed(TRAIN_NUMBER, currentSpeed)));
+    UINT startTime = Time();
 
     while (1)
     {
@@ -43,29 +37,9 @@ CalibrationpSteadyStateVelocityTask()
                 continue;
             }
 
-            SENSOR sensor = data->sensor;
-
-            if ('C' == sensor.module && 13 == sensor.number)
-            {
-                startTime = Time();
-            }
-            else if ('E' == sensor.module && 7 == sensor.number)
-            {
-                UINT totalTime = Time() - startTime;
-                bwprintf(BWCOM2, "%d\r\n", totalTime);
-
-                if (currentSpeed == 5)
-                {
-                    bwprintf(BWCOM2, "\r\n");
-                    currentSpeed = 14;
-                }
-                else
-                {
-                    currentSpeed = currentSpeed - 1;
-                }
-
-                VERIFY(SUCCESSFUL(TrainSetSpeed(TRAIN_NUMBER, currentSpeed)));
-            }
+            UINT currentTime = Time();
+            // Log("%c%2d|%d ", data->sensor.module, data->sensor.number, currentTime - startTime);
+            startTime = currentTime;
         }
     }
 }

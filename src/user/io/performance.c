@@ -5,7 +5,7 @@
 #include <rtos.h>
 #include <user/io.h>
 
-#define NUM_PERFORMANCE_TASKS 30
+#define NUM_PERFORMANCE_TASKS 60
 #define IDLE_TASK_ID 1
 
 VOID

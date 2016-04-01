@@ -2,6 +2,7 @@
 
 #include <rt.h>
 #include <track/track_node.h>
+#include <rtosc/buffer.h>
 
 typedef enum _TRACK {
     TRACK_A = 0,
@@ -37,12 +38,6 @@ typedef struct _TRAIN_DATA {
     UINT lastTick;
     INT targetVelocity;
 } TRAIN_DATA;
-
-INT
-TrainGetSpeed (
-        IN INT train,
-        OUT UCHAR* speed
-    );
 
 INT
 TrainSetSpeed (
@@ -127,6 +122,12 @@ StopTrain (
 INT
 StartTrain (
         IN UCHAR trainId
+    );
+
+INT
+SetTrainSpeed (
+        IN UCHAR trainId,
+        IN UCHAR trainSpeed
     );
 
 /************************************

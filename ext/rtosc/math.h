@@ -21,7 +21,7 @@ inline
 INT movingWeightedAverage(
         IN INT newValue,
         IN INT oldValue,
-        IN INT newWeight
+        IN INT weight
     );
 
 inline

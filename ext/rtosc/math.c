@@ -23,10 +23,10 @@ INT velocity(
 INT movingWeightedAverage(
         IN INT newValue,
         IN INT oldValue,
-        IN INT newWeight
+        IN INT weight
     )
 {
-    return (((newWeight * newValue) + ((100 - newWeight) * newValue)) / 100);
+    return ((weight * newValue) + ((100 - weight) * oldValue)) / 100;
 }
 
 INT timeToAccelerate (

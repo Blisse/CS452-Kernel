@@ -5,9 +5,13 @@
 #include <user/trains.h>
 #include <rtkernel.h>
 
+#include "calibration.h"
+
 VOID
 InitUserTasks()
 {
     VERIFY(SUCCESSFUL(Create(LowestUserPriority, InitIoTasks)));
     VERIFY(SUCCESSFUL(Create(LowestUserPriority, InitTrainTasks)));
+
+    CalibrationCreateTask();
 }

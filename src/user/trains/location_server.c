@@ -180,7 +180,7 @@ LocationServerpTask()
     VERIFY(SUCCESSFUL(RegisterAs(LOCATION_SERVER_NAME)));
 
     VERIFY(SUCCESSFUL(Create(Priority23, LocationServerpSensorNotifierTask)));
-    VERIFY(SUCCESSFUL(Create(Priority21, LocationServerpTickNotifierTask)));
+    VERIFY(SUCCESSFUL(Create(Priority22, LocationServerpTickNotifierTask)));
 
     TRAIN_DATA underlyingLostTrainsBuffer[MAX_TRACKABLE_TRAINS];
     RT_CIRCULAR_BUFFER lostTrains;
@@ -188,6 +188,9 @@ LocationServerpTask()
 
     TRAIN_DATA trackedTrains[MAX_TRACKABLE_TRAINS];
     UINT trackedTrainsSize = 0;
+
+    INT sensorCorrections[NUM_SENSORS];
+    RtMemset(sensorCorrections, sizeof(sensorCorrections), 0);
 
     while (1)
     {
@@ -229,10 +232,21 @@ LocationServerpTask()
                     }
                     else
                     {
-                        INT ticksBetweenSensors = currentTick - trainData->nextNodeExpectedArrivalTick;
+                        INT ticksBetweenSensors = currentTick - trainData->currentNodeArrivalTick;
+
                         if (trainData->nextNodeExpectedArrivalTick != 0)
                         {
-                            ShowTrainArrival(trainData->trainId, sensorNode, ticksBetweenSensors);
+                            INT actualArrivalTimeDifference = currentTick - trainData->nextNodeExpectedArrivalTick;
+                            Log("%d| %s by %d ticks", trainData->trainId, sensorNode->name, actualArrivalTimeDifference);
+
+                            if (trainData->acceleration == 0)
+                            {
+                                UINT sensorIndex = ((sensor->module - 'A') * 16) + (sensor->number - 1);
+                                sensorCorrections[sensorIndex] += actualArrivalTimeDifference;
+                            }
+                        }
+                        else
+                        {
                         }
 
                         TRACK_NODE* nextSensorNode;
@@ -273,13 +287,14 @@ LocationServerpTask()
                     if (speedUpdate.trainSpeed > trainData->trainSpeed)
                     {
                         trainData->acceleration = PhysicsSteadyStateAcceleration(speedUpdate.trainId, speedUpdate.trainSpeed);
+                        trainData->targetVelocity = PhysicsSteadyStateVelocity(speedUpdate.trainId, speedUpdate.trainSpeed);
                     }
                     else if (speedUpdate.trainSpeed < trainData->trainSpeed)
                     {
                         trainData->acceleration = PhysicsSteadyStateDeceleration(speedUpdate.trainId, speedUpdate.trainSpeed);
+                        trainData->targetVelocity = PhysicsSteadyStateVelocity(speedUpdate.trainId, speedUpdate.trainSpeed) * -1;
                     }
 
-                    trainData->targetVelocity = PhysicsSteadyStateVelocity(speedUpdate.trainId, speedUpdate.trainSpeed);
                     trainData->trainSpeed = speedUpdate.trainSpeed;
                 }
 
@@ -318,23 +333,23 @@ LocationServerpTask()
                 UCHAR trainId = lookForTrainRequest->trainId;
                 UCHAR trainSpeed = lookForTrainRequest->trainSpeed;
 
-                TRAIN_DATA new_train;
+                TRAIN_DATA newTrain;
 
-                new_train.trainId = trainId;
-                new_train.trainSpeed = trainSpeed;
-                new_train.velocity = 0;
-                new_train.acceleration = PhysicsSteadyStateAcceleration(trainId, trainSpeed);
-                new_train.currentNode = NULL;
-                new_train.distancePastCurrentNode = 0;
-                new_train.distanceCurrentToNextNode = 0;
-                new_train.currentNodeArrivalTick = 0;
-                new_train.nextNodeExpectedArrivalTick = 0;
-                new_train.lastTick = currentTick;
-                new_train.targetVelocity = PhysicsSteadyStateVelocity(trainId, trainSpeed);
+                newTrain.trainId = trainId;
+                newTrain.trainSpeed = trainSpeed;
+                newTrain.velocity = 0;
+                newTrain.acceleration = PhysicsSteadyStateAcceleration(trainId, trainSpeed);
+                newTrain.currentNode = NULL;
+                newTrain.distancePastCurrentNode = 0;
+                newTrain.distanceCurrentToNextNode = 0;
+                newTrain.currentNodeArrivalTick = 0;
+                newTrain.nextNodeExpectedArrivalTick = 0;
+                newTrain.lastTick = currentTick;
+                newTrain.targetVelocity = PhysicsSteadyStateVelocity(trainId, trainSpeed);
 
-                VERIFY(RT_SUCCESS(RtCircularBufferPush(&lostTrains, &new_train, sizeof(new_train))));
+                VERIFY(RT_SUCCESS(RtCircularBufferPush(&lostTrains, &newTrain, sizeof(newTrain))));
 
-                Log("Searching for train %d", new_train.trainId);
+                Log("Searching for train %d", newTrain.trainId);
 
                 break;
             }
@@ -346,7 +361,6 @@ LocationServerpTask()
                     TRAIN_DATA* trainData = &trackedTrains[i];
 
                     UINT elapsedTicks = currentTick - trainData->lastTick;
-
                     trainData->distancePastCurrentNode += elapsedTicks * trainData->velocity;
                     trainData->velocity += elapsedTicks * trainData->acceleration;
 
@@ -360,15 +374,28 @@ LocationServerpTask()
                         INT distanceToTravel = trainData->distanceCurrentToNextNode - trainData->distancePastCurrentNode;
                         if (distanceToTravel > 0)
                         {
-                            trainData->nextNodeExpectedArrivalTick = currentTick + timeToTravelDistance(distanceToTravel, trainData->velocity);
+                            TRACK_NODE* nextSensorNode;
+                            VERIFY(SUCCESSFUL(GetNextSensorNode(trainData->currentNode, &nextSensorNode)));
+
+                            UINT sensorIndex;
+                            VERIFY(SUCCESSFUL(GetIndexOfNode(nextSensorNode, &sensorIndex)));
+
+                            trainData->nextNodeExpectedArrivalTick = currentTick + timeToTravelDistance(distanceToTravel, trainData->velocity) + sensorCorrections[sensorIndex];
                         }
+                    }
+
+                    if (trainData->targetVelocity > 0 && trainData->velocity > abs(trainData->targetVelocity))
+                    {
+                        trainData->acceleration = 0;
+                    }
+                    else if (trainData->targetVelocity < 0 && trainData->velocity < abs(trainData->targetVelocity))
+                    {
+                        trainData->acceleration = 0;
                     }
 
                     trainData->lastTick = currentTick;
 
                     VERIFY(SUCCESSFUL(UpdateOnTick(trainData)));
-
-                    ShowTrainLocation(trainData->trainId, trainData->currentNode, trainData->distancePastCurrentNode);
                 }
 
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));

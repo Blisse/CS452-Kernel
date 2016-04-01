@@ -30,8 +30,9 @@ typedef struct _UPDATE_SCHEDULER_WORKER_REQUEST {
 typedef enum _SCHEDULER_REQUEST_TYPE {
     UpdateTrainDataRequest = 0,
     TrainMoveToSensorRequest,
-    TrainStopRequest,
-    TrainStartRequest,
+    StopTrainRequest,
+    StartTrainRequest,
+    SetTrainSpeedRequest,
 } SCHEDULER_REQUEST_TYPE;
 
 typedef struct _SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST {
@@ -65,11 +66,14 @@ typedef struct _SCHEDULER_REQUEST {
         SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST moveToSensorRequest;
         SCHEDULER_TRAIN_STOP_REQUEST stopRequest;
         SCHEDULER_TRAIN_START_REQUEST startRequest;
+        SCHEDULER_TRAIN_SPEED_REQUEST speedRequest;
     };
 } SCHEDULER_REQUEST;
 
 typedef struct _TRAIN_SCHEDULE {
+    RT_CIRCULAR_BUFFER lookaheadBuffer;
     TRACK_NODE* destinationNode;
+    INT nextSpeed;
 } TRAIN_SCHEDULE;
 
 static
@@ -124,10 +128,17 @@ SchedulerpTask()
 {
     VERIFY(SUCCESSFUL(RegisterAs(SCHEDULER_SERVER_NAME)));
 
-    VERIFY(SUCCESSFUL(Create(Priority22, SchedulerpUpdateNotifierTask)));
+    VERIFY(SUCCESSFUL(Create(Priority10, SchedulerpUpdateNotifierTask)));
 
+    TRACK_NODE* lookaheadBuffers[MAX_TRAINS][TRACK_MAX];
     TRAIN_SCHEDULE trainSchedules[MAX_TRAINS];
     RtMemset(trainSchedules, sizeof(trainSchedules), 0);
+
+    for (UINT i = 0; i < MAX_TRAINS; i++)
+    {
+        RtCircularBufferInit(&trainSchedules[i].lookaheadBuffer, lookaheadBuffers[i], sizeof(lookaheadBuffers[i]));
+        trainSchedules[i].nextSpeed = -1;
+    }
 
     while (1)
     {
@@ -140,14 +151,9 @@ SchedulerpTask()
         {
             case UpdateTrainDataRequest:
             {
-                INT currentTime = Time();
-                ASSERT(SUCCESSFUL(currentTime));
-
                 TRAIN_DATA trainData = request.updateLocationRequest.workerRequest.changedTrainData;
                 UPDATE_SCHEDULER_WORKER_TYPE updateType = request.updateLocationRequest.workerRequest.type;
                 INT trainId = trainData.trainId;
-
-                Log("Train %d (v: %d, a: %d)", trainId, trainData.velocity, trainData.acceleration);
 
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
@@ -155,9 +161,7 @@ SchedulerpTask()
                 {
                     case UpdateSchedulerBySensor: // accurate
                     {
-                        // update train speed
-                        // reserve 2x stopping distance of track
-                        // calculate path to destination
+                        Log("%d| v:%d, a:%d", trainId, trainData.velocity, trainData.acceleration);
                         break;
                     }
 
@@ -170,6 +174,33 @@ SchedulerpTask()
                 TRAIN_SCHEDULE* trainSchedule = &trainSchedules[trainId];
                 if (trainSchedule->destinationNode != NULL)
                 {
+                    switch (updateType)
+                    {
+                        case UpdateSchedulerBySensor: // accurate
+                        {
+                            // update train speed at this node
+                            Log("%d| v:%d, a:%d", trainId, trainData.velocity, trainData.acceleration);
+
+                            if (trainSchedule->nextSpeed != -1)
+                            {
+                                VERIFY(SUCCESSFUL(TrainSetSpeed(trainId, trainSchedule->nextSpeed)));
+                                trainSchedule->nextSpeed = -1;
+                            }
+
+                            // reserve 2x stopping distance of track
+
+                            // calculate path to destination
+                            break;
+                        }
+
+                        case UpdateSchedulerByTick: // potentially inaccurate
+                        {
+
+                            break;
+                        }
+                    }
+
+                    // stop train at the destination
                     UINT distanceToDestination;
                     VERIFY(SUCCESSFUL(GetDistanceBetweenNodes(trainData.currentNode, trainSchedule->destinationNode, &distanceToDestination)));
                     distanceToDestination -= trainData.distancePastCurrentNode;
@@ -182,17 +213,18 @@ SchedulerpTask()
                     {
                         VERIFY(SUCCESSFUL(TrainSetSpeed(trainId, 0)));
                         trainSchedule->destinationNode = NULL;
+                        trainSchedule->nextSpeed = -1;
 
                         Log("Sent stop command to train %d", trainId);
-
-                        trainSchedule->destinationNode = NULL;
                     }
                 }
+
+                // Log("Train %d at %s %3d cm", trainData.trainId, trainData.currentNode->name, trainData.distancePastCurrentNode);
 
                 break;
             }
 
-            case TrainStopRequest:
+            case StopTrainRequest:
             {
                 UCHAR trainId = request.stopRequest.trainId;
 
@@ -212,7 +244,7 @@ SchedulerpTask()
 
                     INT stopPosition = abs(trainData->distanceCurrentToNextNode - trainData->distancePastCurrentNode);
 
-                    Log("dcn %d dpc %d", trainData->distanceCurrentToNextNode, trainData->distancePastCurrentNode);
+                    // Log("dcn %d dpc %d", trainData->distanceCurrentToNextNode, trainData->distancePastCurrentNode);
 
                     VERIFY(SUCCESSFUL(TrainSetSpeed(trainId, 0)));
 
@@ -235,15 +267,27 @@ SchedulerpTask()
                 break;
             }
 
-            case TrainStartRequest:
+            case StartTrainRequest:
             {
                 SCHEDULER_TRAIN_START_REQUEST startRequest = request.startRequest;
 
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
-                const INT defaultTrainSpeed = 9;
+                const INT defaultTrainSpeed = 13;
                 VERIFY(SUCCESSFUL(TrainSetSpeed(startRequest.trainId, defaultTrainSpeed)));
                 VERIFY(SUCCESSFUL(LocationServerLookForTrain(startRequest.trainId, defaultTrainSpeed)));
+                break;
+            }
+
+            case SetTrainSpeedRequest:
+            {
+                SCHEDULER_TRAIN_SPEED_REQUEST speedRequest = request.speedRequest;
+
+                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[speedRequest.trainId];
+                if (trainSchedule != NULL)
+                {
+                    trainSchedule->nextSpeed = speedRequest.trainSpeed;
+                }
                 break;
             }
 
@@ -268,7 +312,7 @@ SchedulerpTask()
 VOID
 SchedulerCreateTask()
 {
-    VERIFY(SUCCESSFUL(Create(Priority22, SchedulerpTask)));
+    VERIFY(SUCCESSFUL(Create(Priority21, SchedulerpTask)));
 }
 
 INT
@@ -293,7 +337,7 @@ StopTrain (
     )
 {
     SCHEDULER_REQUEST request;
-    request.type = TrainStopRequest;
+    request.type = StopTrainRequest;
     request.stopRequest.trainId = trainId;
 
     return SchedulerpSendRequest(&request);
@@ -305,8 +349,22 @@ StartTrain (
     )
 {
     SCHEDULER_REQUEST request;
-    request.type = TrainStartRequest;
+    request.type = StartTrainRequest;
     request.startRequest.trainId = trainId;
+
+    return SchedulerpSendRequest(&request);
+}
+
+INT
+SetTrainSpeed (
+        IN UCHAR trainId,
+        IN UCHAR trainSpeed
+    )
+{
+    SCHEDULER_REQUEST request;
+    request.type = SetTrainSpeedRequest;
+    request.speedRequest.trainId = trainId;
+    request.speedRequest.trainSpeed = trainSpeed;
 
     return SchedulerpSendRequest(&request);
 }
@@ -331,7 +389,9 @@ UpdateOnSensorNode(
         IN TRAIN_DATA* trainData
     )
 {
-    UPDATE_SCHEDULER_WORKER_REQUEST request = { UpdateSchedulerBySensor, *trainData };
+    UPDATE_SCHEDULER_WORKER_REQUEST request;
+    request.type = UpdateSchedulerBySensor;
+    request.changedTrainData = *trainData;
     return SchedulerpSendWorkerRequest(&request);
 }
 
@@ -340,6 +400,8 @@ UpdateOnTick(
         IN TRAIN_DATA* trainData
     )
 {
-    UPDATE_SCHEDULER_WORKER_REQUEST request = { UpdateSchedulerByTick, *trainData };
+    UPDATE_SCHEDULER_WORKER_REQUEST request;
+    request.type = UpdateSchedulerByTick;
+    request.changedTrainData = *trainData;
     return SchedulerpSendWorkerRequest(&request);
 }

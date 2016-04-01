@@ -27,18 +27,27 @@ PhysicsInit()
         g_steadyStateVelocities[i][14] = 6900;
     }
 
+    g_steadyStateVelocities[69][8] = 3510;
+    g_steadyStateVelocities[69][8] = 3950;
+    g_steadyStateVelocities[69][9] = 4400;
+    g_steadyStateVelocities[69][10] = 4900;
+    g_steadyStateVelocities[69][11] = 5475;
+    g_steadyStateVelocities[69][12] = 6000;
+    g_steadyStateVelocities[69][13] = 6465;
+    g_steadyStateVelocities[69][14] = 6475;
+
     for (UINT i = 0; i < MAX_TRAINS + 1; i++)
     {
-        g_steadyStateAcceleration[i][5] = 40;
-        g_steadyStateAcceleration[i][6] = 40;
-        g_steadyStateAcceleration[i][7] = 40;
-        g_steadyStateAcceleration[i][8] = 40;
-        g_steadyStateAcceleration[i][9] = 40;
-        g_steadyStateAcceleration[i][10] = 40;
-        g_steadyStateAcceleration[i][11] = 40;
-        g_steadyStateAcceleration[i][12] = 40;
-        g_steadyStateAcceleration[i][13] = 40;
-        g_steadyStateAcceleration[i][14] = 40;
+        g_steadyStateAcceleration[i][5] = 10;
+        g_steadyStateAcceleration[i][6] = 10;
+        g_steadyStateAcceleration[i][7] = 10;
+        g_steadyStateAcceleration[i][8] = 10;
+        g_steadyStateAcceleration[i][9] = 10;
+        g_steadyStateAcceleration[i][10] = 10;
+        g_steadyStateAcceleration[i][11] = 10;
+        g_steadyStateAcceleration[i][12] = 10;
+        g_steadyStateAcceleration[i][13] = 10;
+        g_steadyStateAcceleration[i][14] = 10;
     }
 
     for (UINT i = 0; i < MAX_TRAINS + 1; i++)

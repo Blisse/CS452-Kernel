@@ -1,7 +1,6 @@
 set(SRC_USER
     ${SRC_USER}
     ${CMAKE_CURRENT_SOURCE_DIR}/init.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/calibration.c
     ${CMAKE_CURRENT_SOURCE_DIR}/location_server.c
     ${CMAKE_CURRENT_SOURCE_DIR}/physics.c
     ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.c
