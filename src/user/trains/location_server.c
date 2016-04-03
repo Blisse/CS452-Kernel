@@ -211,6 +211,7 @@ LocationServerpTask()
 
                 TRACK_NODE* sensorNode;
                 VERIFY(SUCCESSFUL(GetSensorNode(sensor, &sensorNode)));
+                UINT sensorIndex = ((sensor->module - 'A') * 16) + (sensor->number - 1);
 
                 TRAIN_DATA* trainData = LocationServerpFindTrainByNextSensor(trackedTrains, trackedTrainsSize, sensorNode, 2);
 
@@ -235,13 +236,13 @@ LocationServerpTask()
                         if (trainData->nextNodeExpectedArrivalTick != 0)
                         {
                             INT actualArrivalTimeDifference = currentTick - trainData->nextNodeExpectedArrivalTick;
-                            Log("%d| %s by %d ticks", trainData->trainId, sensorNode->name, actualArrivalTimeDifference);
 
                             if (trainData->acceleration == 0)
                             {
-                                UINT sensorIndex = ((sensor->module - 'A') * 16) + (sensor->number - 1);
                                 sensorCorrections[trainData->trainId][sensorIndex] += actualArrivalTimeDifference;
                             }
+
+                            Log("%d| %s by %d ticks", trainData->trainId, sensorNode->name, actualArrivalTimeDifference);
                         }
                         else
                         {
@@ -262,7 +263,7 @@ LocationServerpTask()
                         trainData->currentNodeArrivalTick = currentTick;
 
                         UINT distanceToTravel = trainData->distanceCurrentToNextNode - trainData->distancePastCurrentNode;
-                        trainData->nextNodeExpectedArrivalTick = currentTick + timeToTravelDistance(distanceToTravel, trainData->velocity);
+                        trainData->nextNodeExpectedArrivalTick = currentTick + timeToTravelDistance(distanceToTravel, trainData->velocity) + sensorCorrections[trainData->trainId][sensorIndex];
 
                         VERIFY(SUCCESSFUL(UpdateOnSensorNode(trainData)));
                     }
@@ -377,8 +378,7 @@ LocationServerpTask()
                             TRACK_NODE* nextSensorNode;
                             VERIFY(SUCCESSFUL(GetNextSensorNode(trainData->currentNode, &nextSensorNode)));
 
-                            UINT sensorIndex;
-                            VERIFY(SUCCESSFUL(GetIndexOfNode(nextSensorNode, &sensorIndex)));
+                            UINT sensorIndex = nextSensorNode->node_index;
 
                             trainData->nextNodeExpectedArrivalTick = currentTick + timeToTravelDistance(distanceToTravel, trainData->velocity) + sensorCorrections[trainData->trainId][sensorIndex];
                         }
