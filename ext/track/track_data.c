@@ -10,6 +10,15 @@ static void *memset(void *s, int c, unsigned int n) {
 
 void init_tracka(TRACK_NODE* track) {
   memset(track, 0, TRACK_MAX*sizeof(TRACK_NODE));
+
+  int i;
+  for (i = 0; i < TRACK_MAX; i++)
+  {
+      track[i].node_index = i;
+      track[i].path_distance = -1;
+      track[i].path_parent = 0;
+  }
+
   track[0].name = "A1";
   track[0].type = NODE_SENSOR;
   track[0].num = 0;
@@ -1194,6 +1203,15 @@ void init_tracka(TRACK_NODE* track) {
 
 void init_trackb(TRACK_NODE* track) {
   memset(track, 0, TRACK_MAX*sizeof(TRACK_NODE));
+
+  int i;
+  for (i = 0; i < TRACK_MAX; i++)
+  {
+      track[i].node_index = i;
+      track[i].path_distance = -1;
+      track[i].path_parent = 0;
+  }
+
   track[0].name = "A1";
   track[0].type = NODE_SENSOR;
   track[0].num = 0;

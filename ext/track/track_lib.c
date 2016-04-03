@@ -73,23 +73,12 @@ FindPath(
         IN RT_CIRCULAR_BUFFER* path
     )
 {
-    INT startNodeIndex = TrackNodesIndexOf(nodes, nodesLength, startNode);
-    ASSERT(startNodeIndex != -1);
-    UNREFERENCED_PARAMETER(startNodeIndex);
-
-    INT destinationNodeIndex = TrackNodesIndexOf(nodes, nodesLength, startNode);
-    ASSERT(destinationNodeIndex != -1);
-    UNREFERENCED_PARAMETER(destinationNodeIndex);
+    ASSERT(&nodes[startNode->node_index] == startNode);
+    ASSERT(&nodes[destinationNode->node_index] == destinationNode);
 
     TRACK_NODE* underlyingQueueBuffer[TRACK_MAX];
     RT_CIRCULAR_BUFFER pathQueue;
     RtCircularBufferInit(&pathQueue, underlyingQueueBuffer, sizeof(underlyingQueueBuffer));
-
-    for (UINT i = 0; i < nodesLength; i++)
-    {
-        nodes[i].path_distance = -1;
-        nodes[i].path_parent = NULL;
-    }
 
     startNode->path_distance = 0;
     VERIFY(RT_SUCCESS(RtCircularBufferPush(&pathQueue, &startNode, sizeof(startNode))));

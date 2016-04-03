@@ -33,4 +33,6 @@ struct track_node {
   // ONLY USED FOR PATH FINDING
   int path_distance;
   TRACK_NODE* path_parent;
+
+  int node_index;
 };
