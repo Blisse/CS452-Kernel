@@ -13,7 +13,9 @@
 
 typedef enum _TRACK_RESERVER_REQUEST_TYPE {
     ReserveRequest = 0,
+    ReserveMultipleRequest,
     ReleaseRequest,
+    ReleaseAllRequest,
 } TRACK_RESERVER_REQUEST_TYPE;
 
 typedef struct _TRACK_RESERVER_RESERVE_REQUEST {
@@ -21,22 +23,28 @@ typedef struct _TRACK_RESERVER_RESERVE_REQUEST {
     UINT trainId;
 } TRACK_RESERVER_RESERVE_REQUEST;
 
+typedef struct TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST {
+    RT_CIRCULAR_BUFFER* reservedNodes;
+    UINT trainId;
+} TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST;
+
 typedef struct _TRACK_RESERVER_RELEASE_REQUEST {
     TRACK_NODE* reservedNode;
     UINT trainId;
 } TRACK_RESERVER_RELEASE_REQUEST;
 
-typedef struct TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST {
-    RT_CIRCULAR_BUFFER* reservedNodes;
+typedef struct _TRACK_RESERVER_RELEASE_ALL_REQUEST {
     UINT trainId;
-} TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST;
+} TRACK_RESERVER_RELEASE_ALL_REQUEST;
 
 typedef struct _TRACK_RESERVER_REQUEST {
     TRACK_RESERVER_REQUEST_TYPE type;
 
     union {
         TRACK_RESERVER_RESERVE_REQUEST reserveRequest;
+        TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST reserveMultipleRequest;
         TRACK_RESERVER_RELEASE_REQUEST releaseRequest;
+        TRACK_RESERVER_RELEASE_ALL_REQUEST releaseAllRequest;
     };
 } TRACK_RESERVER_REQUEST;
 
@@ -61,12 +69,60 @@ TrackReserverpTask()
             case ReserveRequest:
             {
                 TRACK_RESERVER_RESERVE_REQUEST* reserveRequest = &request->reserveRequest;
-                UINT index;
-                VERIFY(SUCCESSFUL(GetIndexOfNode(reserveRequest->reservedNode, &index)));
 
-                if (trackReservationByIndex[index/2] == -1)
+                UINT forwardAndReverseIndex = reserveRequest->reservedNode->node_index / 2;
+
+                if (trackReservationByIndex[forwardAndReverseIndex] == -1)
                 {
-                    trackReservationByIndex[index/2] = reserveRequest->trainId;
+                    trackReservationByIndex[forwardAndReverseIndex] = reserveRequest->trainId;
+                }
+                else if (trackReservationByIndex[forwardAndReverseIndex] != reserveRequest->trainId)
+                {
+                    success = FALSE;
+                }
+
+                break;
+            }
+
+            case ReserveMultipleRequest:
+            {
+                TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST* reserveMultipleRequest = &request->reserveMultipleRequest;
+
+                for (UINT i = 0; i < sizeof(reserveMultipleRequest->reservedNodes) / sizeof(TRACK_NODE*); i++)
+                {
+                    TRACK_NODE* trackNode;
+                    VERIFY(RT_SUCCESS(RtCircularBufferElementAt(reserveMultipleRequest->reservedNodes, i, &trackNode, sizeof(trackNode))));
+
+                    UINT forwardAndReverseIndex = trackNode->node_index / 2;
+                    if (trackReservationByIndex[forwardAndReverseIndex] != -1
+                        && trackReservationByIndex[forwardAndReverseIndex] != reserveMultipleRequest->trainId)
+                    {
+                        success = FALSE;
+                    }
+                }
+
+                if (success)
+                {
+                    for (UINT i = 0; i < sizeof(reserveMultipleRequest->reservedNodes) / sizeof(TRACK_NODE*); i++)
+                    {
+                        TRACK_NODE* trackNode;
+                        VERIFY(RT_SUCCESS(RtCircularBufferElementAt(reserveMultipleRequest->reservedNodes, i, &trackNode, sizeof(trackNode))));
+                        UINT forwardAndReverseIndex = trackNode->node_index / 2;
+                        trackReservationByIndex[forwardAndReverseIndex] = reserveMultipleRequest->trainId;
+                    }
+                }
+                break;
+            }
+
+            case ReleaseRequest:
+            {
+                TRACK_RESERVER_RELEASE_REQUEST* releaseRequest = &request->releaseRequest;
+
+                UINT forwardAndReverseIndex = releaseRequest->reservedNode->node_index / 2;
+
+                if (trackReservationByIndex[forwardAndReverseIndex] == releaseRequest->trainId)
+                {
+                    trackReservationByIndex[forwardAndReverseIndex] = -1;
                 }
                 else
                 {
@@ -76,19 +132,16 @@ TrackReserverpTask()
                 break;
             }
 
-            case ReleaseRequest:
+            case ReleaseAllRequest:
             {
-                TRACK_RESERVER_RELEASE_REQUEST* releaseRequest = &request->releaseRequest;
-                UINT index;
-                VERIFY(SUCCESSFUL(GetIndexOfNode(releaseRequest->reservedNode, &index)));
+                TRACK_RESERVER_RELEASE_ALL_REQUEST* releaseAllRequest = &request->releaseAllRequest;
 
-                if (trackReservationByIndex[index/2] == releaseRequest->trainId)
+                for (UINT i = 0; i < sizeof(trackReservationByIndex)/sizeof(trackReservationByIndex[0]); i++)
                 {
-                    trackReservationByIndex[index/2] = -1;
-                }
-                else
-                {
-                    success = FALSE;
+                    if (trackReservationByIndex[i] == releaseAllRequest->trainId)
+                    {
+                        trackReservationByIndex[i] = -1;
+                    }
                 }
 
                 break;
@@ -140,6 +193,21 @@ ReserveTrack (
 }
 
 INT
+ReserveTrackMultiple (
+        IN RT_CIRCULAR_BUFFER* trackNodes,
+        IN UINT trainId
+    )
+{
+    TRACK_RESERVER_REQUEST request;
+
+    request.type = ReserveMultipleRequest;
+    request.reserveMultipleRequest.reservedNodes = trackNodes;
+    request.reserveMultipleRequest.trainId = trainId;
+
+    return TrackReserverpSendRequest(&request);
+}
+
+INT
 ReleaseTrack (
         IN TRACK_NODE* trackNode,
         IN UINT trainId
@@ -150,6 +218,19 @@ ReleaseTrack (
     request.type = ReleaseRequest;
     request.releaseRequest.reservedNode = trackNode;
     request.releaseRequest.trainId = trainId;
+
+    return TrackReserverpSendRequest(&request);
+}
+
+INT
+ReleaseAllTrack (
+        IN UINT trainId
+    )
+{
+    TRACK_RESERVER_REQUEST request;
+
+    request.type = ReleaseAllRequest;
+    request.releaseAllRequest.trainId = trainId;
 
     return TrackReserverpSendRequest(&request);
 }
