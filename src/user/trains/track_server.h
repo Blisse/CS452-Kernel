@@ -10,25 +10,39 @@ TrackServerCreate();
 
 INT
 GetDistanceBetweenNodes(
-    IN TRACK_NODE* nodeA,
-    IN TRACK_NODE* nodeB,
-    OUT UINT* distance
+        IN TRACK_NODE* nodeA,
+        IN TRACK_NODE* nodeB,
+        OUT UINT* distance
     );
 
 INT
 GetSensorNode(
-    IN SENSOR* sensor,
-    OUT TRACK_NODE** sensorNode
+        IN SENSOR* sensor,
+        OUT TRACK_NODE** sensorNode
     );
 
 INT
 GetNextSensorNode(
-    IN TRACK_NODE* currentNode,
-    OUT TRACK_NODE** nextSensorNode
+        IN TRACK_NODE* currentNode,
+        OUT TRACK_NODE** nextSensorNode
     );
 
 INT
-GetIndexOfNode (
-    IN TRACK_NODE* node,
-    OUT UINT* index
+GetNextNode(
+        IN TRACK_NODE* currentNode,
+        OUT TRACK_NODE** nextNode
+    );
+
+INT
+GetPathToDestination(
+        IN TRACK_NODE* currentNode,
+        IN TRACK_NODE* destinationNode,
+        IN RT_CIRCULAR_BUFFER* path
+    );
+
+INT
+GetNextNodesWithinDistance(
+        IN TRACK_NODE* currentNode,
+        IN UINT distance,
+        OUT RT_CIRCULAR_BUFFER* path
     );
