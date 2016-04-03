@@ -1,7 +1,7 @@
 #include <track/track_lib.h>
 #include <rtosc/assert.h>
 
-void trackb_lib_find_path() {
+void test_trackb_lib_find_path() {
     TRACK_NODE nodes[TRACK_MAX];
     init_trackb(nodes);
 
@@ -12,15 +12,21 @@ void trackb_lib_find_path() {
     // trackb only has 140 nodes
     for (UINT i = 1; i < 140; i++)
     {
-        for (UINT j = 1; j < 140; j++)
+        for (UINT j = 10; j < 140; j++)
         {
-            T_ASSERT(FindPath(nodes, sizeof(nodes) / sizeof(nodes[0]), &nodes[i], &nodes[j], &pathBuffer) == TRUE);
-            T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&pathBuffer, RtCircularBufferSize(&pathBuffer))));
+            if (FindPath(nodes, sizeof(nodes) / sizeof(nodes[0]), &nodes[i], &nodes[j], &pathBuffer))
+            {
+                T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&pathBuffer, sizeof(RtCircularBufferSize(&pathBuffer)))));
+            }
+            else
+            {
+                T_ASSERT(RtCircularBufferSize(&pathBuffer) == 0);
+            }
         }
     }
 }
 
-void tracka_lib_find_path() {
+void test_tracka_lib_find_path() {
     TRACK_NODE nodes[TRACK_MAX];
     init_tracka(nodes);
 
@@ -32,16 +38,22 @@ void tracka_lib_find_path() {
     {
         for (UINT j = 1; j < TRACK_MAX; j++)
         {
-            T_ASSERT(FindPath(nodes, sizeof(nodes) / sizeof(nodes[0]), &nodes[i], &nodes[j], &pathBuffer) == TRUE);
-            T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&pathBuffer, RtCircularBufferSize(&pathBuffer))));
+            if (FindPath(nodes, sizeof(nodes) / sizeof(nodes[0]), &nodes[i], &nodes[j], &pathBuffer))
+            {
+                T_ASSERT(RT_SUCCESS(RtCircularBufferPop(&pathBuffer, sizeof(RtCircularBufferSize(&pathBuffer)))));
+            }
+            else
+            {
+                T_ASSERT(RtCircularBufferSize(&pathBuffer) == 0);
+            }
         }
     }
 }
 
 int main(int argc, char const *argv[])
 {
-    tracka_lib_find_path();
-    trackb_lib_find_path();
+    test_trackb_lib_find_path();
+    test_tracka_lib_find_path();
 
     return 0;
 }
