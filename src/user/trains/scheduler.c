@@ -12,6 +12,7 @@
 
 #include "physics.h"
 #include "location_server.h"
+#include "track_reserver.h"
 #include "track_server.h"
 
 #define SCHEDULER_SERVER_NAME "scheduler_server"
@@ -157,49 +158,58 @@ SchedulerpTask()
 
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
+                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[trainId];
+
+                if (trainSchedule == NULL)
+                {
+                    break;
+                }
+
                 switch (updateType)
                 {
                     case UpdateSchedulerBySensor: // accurate
                     {
+                        // update train speed at this node
                         Log("%d| v:%d, a:%d", trainId, trainData.velocity, trainData.acceleration);
+
+                        if (trainSchedule->nextSpeed != -1)
+                        {
+                            VERIFY(SUCCESSFUL(TrainSetSpeed(trainId, trainSchedule->nextSpeed)));
+                            trainSchedule->nextSpeed = -1;
+                        }
+
+                        // calculate path to destination
+
+
+                        // reserve 2x stopping distance of track
+
+                        VERIFY(SUCCESSFUL(ReleaseAllTrack(trainId)));
+                        VERIFY(RT_SUCCESS(RtCircularBufferPop(&trainSchedule->lookaheadBuffer, RtCircularBufferSize(&trainSchedule->lookaheadBuffer))));
+
+                        UINT stoppingDistance = distanceToAccelerate(trainData.velocity, 0, PhysicsSteadyStateDeceleration(trainId, trainData.trainSpeed)) * 2;
+                        stoppingDistance += trainData.distancePastCurrentNode;
+                        VERIFY(RT_SUCCESS(GetNextNodesWithinDistance(trainData.currentNode, stoppingDistance, &trainSchedule->lookaheadBuffer)));
+
+                        // // TODO: Temporary - print out track lookahead
+                        // Log("Lookahead %d | lookahead size %d", trainData.trainId, node->name);
+                        // for (UINT i = 0; i < (RtCircularBufferSize(&trainSchedule->lookaheadBuffer)/sizeof(TRACK_NODE*)); i++)
+                        // {
+                        //     TRACK_NODE* node;
+                        //     VERIFY(RT_SUCCESS(RtCircularBufferElementAt(&trainSchedule->lookaheadBuffer, i, &node, sizeof(node))));
+                        // }
+
                         break;
                     }
 
                     case UpdateSchedulerByTick: // potentially inaccurate
                     {
+
                         break;
                     }
                 }
 
-                TRAIN_SCHEDULE* trainSchedule = &trainSchedules[trainId];
                 if (trainSchedule->destinationNode != NULL)
                 {
-                    switch (updateType)
-                    {
-                        case UpdateSchedulerBySensor: // accurate
-                        {
-                            // update train speed at this node
-                            Log("%d| v:%d, a:%d", trainId, trainData.velocity, trainData.acceleration);
-
-                            if (trainSchedule->nextSpeed != -1)
-                            {
-                                VERIFY(SUCCESSFUL(TrainSetSpeed(trainId, trainSchedule->nextSpeed)));
-                                trainSchedule->nextSpeed = -1;
-                            }
-
-                            // reserve 2x stopping distance of track
-
-                            // calculate path to destination
-                            break;
-                        }
-
-                        case UpdateSchedulerByTick: // potentially inaccurate
-                        {
-
-                            break;
-                        }
-                    }
-
                     // stop train at the destination
                     UINT distanceToDestination;
                     VERIFY(SUCCESSFUL(GetDistanceBetweenNodes(trainData.currentNode, trainSchedule->destinationNode, &distanceToDestination)));
@@ -242,9 +252,7 @@ SchedulerpTask()
                     TRACK_NODE* nextNode;
                     VERIFY(SUCCESSFUL(GetNextSensorNode(trainData->currentNode, &nextNode)));
 
-                    INT stopPosition = abs(trainData->distanceCurrentToNextNode - trainData->distancePastCurrentNode);
-
-                    // Log("dcn %d dpc %d", trainData->distanceCurrentToNextNode, trainData->distancePastCurrentNode);
+                    INT stopPosition = trainData->distanceCurrentToNextNode - trainData->distancePastCurrentNode;
 
                     VERIFY(SUCCESSFUL(TrainSetSpeed(trainId, 0)));
 
@@ -261,7 +269,7 @@ SchedulerpTask()
                         nextNode = iteraterNode;
                     }
 
-                    Log("Expected to stop %d cm before %s", umToCm(stopPosition - stoppingDistance), nextNode->name);
+                    Log("Expected to stop %d cm after %s", umToCm(stopPosition - stoppingDistance), nextNode->name);
                 }
 
                 break;
@@ -273,7 +281,7 @@ SchedulerpTask()
 
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
-                const INT defaultTrainSpeed = 13;
+                const INT defaultTrainSpeed = 11;
                 VERIFY(SUCCESSFUL(TrainSetSpeed(startRequest.trainId, defaultTrainSpeed)));
                 VERIFY(SUCCESSFUL(LocationServerLookForTrain(startRequest.trainId, defaultTrainSpeed)));
                 break;

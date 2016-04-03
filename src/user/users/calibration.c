@@ -12,7 +12,11 @@ static
 VOID
 CalibrationpSteadyStateVelocityTask()
 {
-    VERIFY(SUCCESSFUL(Delay(1000)));
+    Log("Waiting for servers to initialize (10s)");
+    VERIFY(SUCCESSFUL(Delay(500)));
+    Log("Waiting for servers to initialize (5s)");
+    VERIFY(SUCCESSFUL(Delay(500)));
+    Log("Initializing calibration sequence");
 
     VERIFY(SUCCESSFUL(SwitchSetDirection(15, SwitchStraight)));
     VERIFY(SUCCESSFUL(SwitchSetDirection(14, SwitchStraight)));
