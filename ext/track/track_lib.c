@@ -3,25 +3,6 @@
 #include <rtosc/assert.h>
 
 static
-INT
-TrackNodesIndexOf(
-        IN TRACK_NODE* nodes,
-        IN UINT nodesLength,
-        IN TRACK_NODE* node
-    )
-{
-    for (UINT i = 0; i < nodesLength; i++)
-    {
-        if (&nodes[i] == node)
-        {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-static
 VOID
 PathVisitNode(
         IN TRACK_NODE* node,
@@ -48,7 +29,7 @@ GetPathToDestination(
     RT_CIRCULAR_BUFFER foundPath;
     RtCircularBufferInit(&foundPath, underlyingPathBuffer, sizeof(underlyingPathBuffer));
 
-    INT pathSize = destinationNode->path_distance + 1;
+    INT pathSize = destinationNode->path_distance;
 
     while (destinationNode != NULL)
     {
@@ -98,18 +79,26 @@ FindPath(
         {
             PathVisitNode(currentNode->edge[DIR_STRAIGHT].dest, currentNode, &pathQueue);
             PathVisitNode(currentNode->edge[DIR_CURVED].dest, currentNode, &pathQueue);
-            PathVisitNode(currentNode->reverse, currentNode, &pathQueue);
+            // PathVisitNode(currentNode->reverse, currentNode, &pathQueue);
         }
         else if (currentNode->type == NODE_EXIT)
         {
-            PathVisitNode(currentNode->reverse, currentNode, &pathQueue);
+            // PathVisitNode(currentNode->reverse, currentNode, &pathQueue);
         }
         else
         {
             PathVisitNode(currentNode->edge[DIR_AHEAD].dest, currentNode, &pathQueue);
-            PathVisitNode(currentNode->reverse, currentNode, &pathQueue);
+            // PathVisitNode(currentNode->reverse, currentNode, &pathQueue);
         }
     }
 
     return FALSE;
+}
+
+UINT
+FindPathDistance(
+        IN RT_CIRCULAR_BUFFER* path
+    )
+{
+    return 0;
 }
