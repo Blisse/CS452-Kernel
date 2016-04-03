@@ -27,7 +27,7 @@ PhysicsInit()
         g_steadyStateVelocities[i][14] = 6900;
     }
 
-    g_steadyStateVelocities[69][8] = 3510;
+    g_steadyStateVelocities[69][7] = 3510;
     g_steadyStateVelocities[69][8] = 3950;
     g_steadyStateVelocities[69][9] = 4400;
     g_steadyStateVelocities[69][10] = 4900;
@@ -35,6 +35,15 @@ PhysicsInit()
     g_steadyStateVelocities[69][12] = 6000;
     g_steadyStateVelocities[69][13] = 6465;
     g_steadyStateVelocities[69][14] = 6475;
+
+    g_steadyStateVelocities[71][7] = 1680;
+    g_steadyStateVelocities[71][8] = 2115;
+    g_steadyStateVelocities[71][9] = 2635;
+    g_steadyStateVelocities[71][10] = 3220;
+    g_steadyStateVelocities[71][11] = 3910;
+    g_steadyStateVelocities[71][12] = 4530;
+    g_steadyStateVelocities[71][13] = 4820;
+    g_steadyStateVelocities[71][14] = 5680;
 
     for (UINT i = 0; i < MAX_TRAINS + 1; i++)
     {
