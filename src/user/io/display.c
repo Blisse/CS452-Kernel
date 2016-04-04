@@ -40,7 +40,7 @@ typedef enum _DISPLAY_REQUEST_TYPE {
 } DISPLAY_REQUEST_TYPE;
 
 typedef struct _DISPLAY_LOG_REQUEST {
-    CHAR message[128];
+    CHAR message[100];
     INT length;
 } DISPLAY_LOG_REQUEST;
 
@@ -206,7 +206,7 @@ DisplaypLogRequest (
 
     for (UINT i = 0; i < logBufferSize; i++)
     {
-        CHAR buffer[128];
+        CHAR buffer[100];
         VERIFY(RT_SUCCESS(RtCircularBufferElementAt(logBuffer, i, buffer, sizeof(buffer))));
 
         CURSOR_POSITION cursor = { CURSOR_LOG_X, CURSOR_LOG_Y + i };
@@ -295,7 +295,7 @@ DisplaypTask()
     RT_CIRCULAR_BUFFER sensorDataBuffer;
     RtCircularBufferInit(&sensorDataBuffer, underlyingSensorDataBuffer, sizeof(underlyingSensorDataBuffer));
 
-    CHAR underlyingLogBuffer[1024];
+    CHAR underlyingLogBuffer[1200];
     RT_CIRCULAR_BUFFER logBuffer;
     RtCircularBufferInit(&logBuffer, underlyingLogBuffer, sizeof(underlyingLogBuffer));
 
