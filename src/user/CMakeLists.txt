@@ -1,6 +1,7 @@
 set(SRC_USER
     )
 
+add_subdirectory("apps")
 add_subdirectory("io")
 add_subdirectory("trains")
 add_subdirectory("users")
