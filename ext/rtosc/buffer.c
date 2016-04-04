@@ -153,3 +153,12 @@ RtCircularBufferElementAt
         return STATUS_BUFFER_TOO_SMALL;
     }
 }
+
+RT_STATUS
+RtCircularBufferClear
+    (
+        IN RT_CIRCULAR_BUFFER* buffer
+    )
+{
+    return RtCircularBufferPop(buffer, RtCircularBufferSize(buffer));
+}

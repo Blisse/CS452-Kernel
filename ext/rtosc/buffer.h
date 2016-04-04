@@ -58,6 +58,12 @@ RtCircularBufferElementAt
         IN UINT bytesToRemove
     );
 
+RT_STATUS
+RtCircularBufferClear
+    (
+        IN RT_CIRCULAR_BUFFER* buffer
+    );
+
 static
 inline
 BOOLEAN
