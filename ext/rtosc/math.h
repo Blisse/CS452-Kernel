@@ -12,9 +12,18 @@ inline
 INT mmToUm(INT mm);
 
 inline
+INT cmToUm(INT cm);
+
+inline
 INT velocity(
         IN INT distance,
         IN INT ticks
+    );
+
+inline
+INT distance(
+        IN INT velocity,
+        IN INT time
     );
 
 inline

@@ -12,12 +12,24 @@ INT mmToUm(INT mm) {
     return (mm * 1000);
 }
 
+INT cmToUm(INT cm) {
+    return (cm * 10000);
+}
+
 INT velocity(
         IN INT distance,
         IN INT ticks
     )
 {
     return (distance / ticks);
+}
+
+INT distance(
+        IN INT velocity,
+        IN INT ticks
+    )
+{
+    return (velocity * ticks);
 }
 
 INT movingWeightedAverage(
