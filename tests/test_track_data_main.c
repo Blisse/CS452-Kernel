@@ -5,9 +5,9 @@ void test_track_print(RT_CIRCULAR_BUFFER* path) {
     for (UINT i = 0; i < (RtCircularBufferSize(path) / sizeof(TRACK_NODE*)); i++) {
         TRACK_NODE* node;
         VERIFY(RT_SUCCESS(RtCircularBufferElementAt(path, i, &node, sizeof(node))));
-        printf("%s ", node->name);
+        PRINTF("%s ", node->name);
     }
-    printf("\n");
+    PRINTF("\n");
 }
 
 void test_trackb_lib_find_path() {
@@ -25,12 +25,12 @@ void test_trackb_lib_find_path() {
         {
             if (nodes[i].type == NODE_SENSOR && nodes[j].type == NODE_SENSOR)
             {
-                printf("find [%s, %s] path: ", nodes[i].name, nodes[j].name);
+                PRINTF("find [%s, %s] path: ", nodes[i].name, nodes[j].name);
                 BOOLEAN success  = FindPath(nodes, sizeof(nodes) / sizeof(nodes[0]), &nodes[i], &nodes[j], &pathBuffer);
                 if (success) {
                     test_track_print(&pathBuffer);
                 } else {
-                    printf("no path possible without reverse\n");
+                    PRINTF("no path possible without reverse\n");
                 }
                 T_ASSERT(RT_SUCCESS(RtCircularBufferClear(&pathBuffer)));
             }
@@ -54,11 +54,11 @@ void test_tracka_lib_find_path() {
             {
                 BOOLEAN success = FindPath(nodes, sizeof(nodes) / sizeof(nodes[0]), &nodes[i], &nodes[j], &pathBuffer);
                 #ifndef NLOCAL
-                printf("find [%s, %s] path: ", nodes[i].name, nodes[j].name);
+                PRINTF("find [%s, %s] path: ", nodes[i].name, nodes[j].name);
                 if (success) {
                     test_track_print(&pathBuffer);
                 } else {
-                    printf("no path possible without reverse\n");
+                    PRINTF("no path possible without reverse\n");
                 }
                 #endif
                 UNREFERENCED_PARAMETER(success);
