@@ -4,15 +4,16 @@
 
 static
 VOID
-PathVisitNode(
+FindPathVisitNode(
         IN TRACK_NODE* node,
         IN TRACK_NODE* parent,
+        IN UINT distance,
         IN RT_CIRCULAR_BUFFER* pathQueue
     )
 {
     if (node->path_distance == -1)
     {
-        node->path_distance = parent->path_distance + 1;
+        node->path_distance = parent->path_distance + distance;
         node->path_parent = parent;
         VERIFY(RT_SUCCESS(RtCircularBufferPush(pathQueue, &node, sizeof(node))));
     }
@@ -20,16 +21,14 @@ PathVisitNode(
 
 static
 VOID
-GetPathToDestination(
-    IN TRACK_NODE* destinationNode,
-    IN RT_CIRCULAR_BUFFER* path
+FindPathFromDestination(
+        IN TRACK_NODE* destinationNode,
+        IN RT_CIRCULAR_BUFFER* path
     )
 {
     TRACK_NODE* underlyingPathBuffer[TRACK_MAX];
     RT_CIRCULAR_BUFFER foundPath;
     RtCircularBufferInit(&foundPath, underlyingPathBuffer, sizeof(underlyingPathBuffer));
-
-    INT pathSize = destinationNode->path_distance;
 
     while (destinationNode != NULL)
     {
@@ -37,11 +36,10 @@ GetPathToDestination(
         destinationNode = destinationNode->path_parent;
     }
 
-    while (pathSize >= 0)
+    for (INT i = (RtCircularBufferSize(&foundPath) / sizeof(TRACK_NODE*)) - 1; i >= 0; i--)
     {
-        VERIFY(RT_SUCCESS(RtCircularBufferElementAt(&foundPath, pathSize, &destinationNode, sizeof(destinationNode))));
+        VERIFY(RT_SUCCESS(RtCircularBufferElementAt(&foundPath, i, &destinationNode, sizeof(destinationNode))));
         VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &destinationNode, sizeof(destinationNode))));
-        pathSize -= 1;
     }
 }
 
@@ -57,6 +55,13 @@ FindPath(
     ASSERT(&nodes[startNode->node_index] == startNode);
     ASSERT(&nodes[destinationNode->node_index] == destinationNode);
 
+    for (UINT i = 0; i < TRACK_MAX; i++)
+    {
+        nodes[i].node_index = i;
+        nodes[i].path_distance = -1;
+        nodes[i].path_parent = 0;
+    }
+
     TRACK_NODE* underlyingQueueBuffer[TRACK_MAX];
     RT_CIRCULAR_BUFFER pathQueue;
     RtCircularBufferInit(&pathQueue, underlyingQueueBuffer, sizeof(underlyingQueueBuffer));
@@ -71,24 +76,24 @@ FindPath(
 
         if (currentNode == destinationNode)
         {
-            GetPathToDestination(destinationNode, path);
+            FindPathFromDestination(destinationNode, path);
             return TRUE;
         }
 
         if (currentNode->type == NODE_BRANCH)
         {
-            PathVisitNode(currentNode->edge[DIR_STRAIGHT].dest, currentNode, &pathQueue);
-            PathVisitNode(currentNode->edge[DIR_CURVED].dest, currentNode, &pathQueue);
-            // PathVisitNode(currentNode->reverse, currentNode, &pathQueue);
+            FindPathVisitNode(currentNode->edge[DIR_STRAIGHT].dest, currentNode, currentNode->edge[DIR_STRAIGHT].dist, &pathQueue);
+            FindPathVisitNode(currentNode->edge[DIR_CURVED].dest, currentNode, currentNode->edge[DIR_CURVED].dist, &pathQueue);
+            // FindPathVisitNode(currentNode->reverse, currentNode, 1, &pathQueue);
         }
         else if (currentNode->type == NODE_EXIT)
         {
-            // PathVisitNode(currentNode->reverse, currentNode, &pathQueue);
+            // FindPathVisitNode(currentNode->reverse, currentNode, 1, &pathQueue);
         }
         else
         {
-            PathVisitNode(currentNode->edge[DIR_AHEAD].dest, currentNode, &pathQueue);
-            // PathVisitNode(currentNode->reverse, currentNode, &pathQueue);
+            FindPathVisitNode(currentNode->edge[DIR_AHEAD].dest, currentNode, currentNode->edge[DIR_AHEAD].dist, &pathQueue);
+            // FindPathVisitNode(currentNode->reverse, currentNode, 1, &pathQueue);
         }
     }
 
