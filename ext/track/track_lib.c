@@ -79,6 +79,11 @@ FindPath(
             FindPathFromDestination(destinationNode, path);
             return TRUE;
         }
+        else if (currentNode->reverse == destinationNode)
+        {
+            FindPathFromDestination(currentNode, path);
+            return TRUE;
+        }
 
         if (currentNode->type == NODE_BRANCH)
         {
