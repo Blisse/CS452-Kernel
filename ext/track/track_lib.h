@@ -13,8 +13,3 @@ FindPath(
         IN TRACK_NODE* destinationNode,
         IN RT_CIRCULAR_BUFFER* path
     );
-
-UINT
-FindPathDistance(
-        IN RT_CIRCULAR_BUFFER* path
-    );

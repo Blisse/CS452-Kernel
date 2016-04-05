@@ -104,11 +104,3 @@ FindPath(
 
     return FALSE;
 }
-
-UINT
-FindPathDistance(
-        IN RT_CIRCULAR_BUFFER* path
-    )
-{
-    return 0;
-}
