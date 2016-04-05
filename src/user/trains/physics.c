@@ -77,6 +77,15 @@ PhysicsInit()
         g_steadyStateDeceleration[i][13] = -44;
         g_steadyStateDeceleration[i][14] = -44;
     }
+
+    g_steadyStateDeceleration[71][7] = -19;
+    g_steadyStateDeceleration[71][8] = -19;
+    g_steadyStateDeceleration[71][9] = -19;
+    g_steadyStateDeceleration[71][10] = -19;
+    g_steadyStateDeceleration[71][11] = -19;
+    g_steadyStateDeceleration[71][12] = -19;
+    g_steadyStateDeceleration[71][13] = -19;
+    g_steadyStateDeceleration[71][14] = -19;
 }
 
 UINT
