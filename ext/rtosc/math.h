@@ -12,6 +12,9 @@ inline
 INT mmToUm(INT mm);
 
 inline
+INT mmToCm(INT mm);
+
+inline
 INT cmToUm(INT cm);
 
 inline

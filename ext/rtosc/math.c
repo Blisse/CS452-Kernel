@@ -12,6 +12,10 @@ INT mmToUm(INT mm) {
     return (mm * 1000);
 }
 
+INT mmToCm(INT mm) {
+    return (mm / 10);
+}
+
 INT cmToUm(INT cm) {
     return (cm * 10000);
 }
