@@ -389,13 +389,19 @@ RtStrpScanFormatted (
                 case 'u':
                 {
                     UINT* n = VA_ARG(va, UINT*);
-                    VERIFY(RT_SUCCESS(RtAtoui(token, n)));
+                    if (RT_FAILURE(RtAtoui(token, n)))
+                    {
+                        return -1;
+                    }
                     break;
                 }
                 case 'd':
                 {
                     INT* n = VA_ARG(va, INT*);
-                    VERIFY(RT_SUCCESS(RtAtoi(token, n)));
+                    if (RT_FAILURE(RtAtoi(token, n)))
+                    {
+                        return -1;
+                    }
                     break;
                 }
             }
