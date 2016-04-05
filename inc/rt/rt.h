@@ -10,7 +10,7 @@
 
 #ifndef NLOCAL
 #include <stdio.h>
-#define PRINTF(format, ...) printf(format, __VA_ARGS__)
+#define PRINTF(format, args...) printf(format, ## args)
 #else
 #define PRINTF(format, ...)
 #endif
