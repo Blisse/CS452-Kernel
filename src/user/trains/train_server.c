@@ -18,6 +18,7 @@
 
 typedef enum _TRAIN_REQUEST_TYPE {
     ShutdownRequest = 0,
+    SendDataRequest,
     SetSpeedRequest,
     ReverseRequest
 } TRAIN_REQUEST_TYPE;
@@ -110,6 +111,23 @@ TrainpReverse(
     return TrainpSendTwoByteCommand(device, TRAIN_COMMAND_REVERSE, train);
 }
 
+// 64 all off
+// 65 #1
+// 66 #2
+// 67 #1,#2
+// 68 #3
+// 69 #3,#1
+// 70 #3,#2
+// 71 #3,#2,#1
+// 72 #4
+// 73 #4,#1
+// 74 #4,#2
+// 75 #4,#2,#1
+// 76 #4,#3
+// 77 #4,#3,#1
+// 78 #4,#3,#2
+// 79 #4,#3,#2,#1
+
 static
 VOID
 TrainpTask()
@@ -127,7 +145,7 @@ TrainpTask()
 
     for (UINT i = 0; i < sizeof(speeds); i++)
     {
-        VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, i, 0)));
+        VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, i+1, 0)));
     }
 
     BOOLEAN running = TRUE;
@@ -143,6 +161,13 @@ TrainpTask()
             {
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
                 running = FALSE;
+                break;
+            }
+
+            case SendDataRequest:
+            {
+                VERIFY(SUCCESSFUL(TrainpSendTwoByteCommand(&com1, request.train, request.speed)));
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
                 break;
             }
 
@@ -174,6 +199,16 @@ TrainpTask()
     }
 
     VERIFY(SUCCESSFUL(TrainpStop(&com1)));
+}
+
+INT
+TrainSendData(
+        IN INT trainId,
+        IN INT data
+    )
+{
+    TRAIN_REQUEST request = { SendDataRequest, (UCHAR) trainId, (UCHAR) data };
+    return TrainpSendRequest(&request);
 }
 
 INT

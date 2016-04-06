@@ -3,9 +3,9 @@
 #include <rtosc/buffer.h>
 #include <rtkernel.h>
 
-#define STACK_SIZE  0x10000
+#define STACK_SIZE  0x80000
 #define STACK_ADDRESS_START 0x00400000
-#define STACK_ADDRESS_END   0x01F00000
+#define STACK_ADDRESS_END   0xFFF00000
 
 static STACK g_stacks[NUM_TASKS];
 static STACK* g_availableStacksBuffer[NUM_TASKS];

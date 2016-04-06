@@ -10,7 +10,6 @@
 #include <user/trains.h>
 #include <user/io.h>
 
-#include "conductor.h"
 #include "physics.h"
 #include "location_server.h"
 #include "track_reserver.h"
@@ -75,7 +74,6 @@ typedef struct _SCHEDULER_REQUEST {
 
 typedef struct _TRAIN_SCHEDULE {
     RT_CIRCULAR_BUFFER lookaheadBuffer;
-    TRACK_NODE* stopNode;
     TRACK_NODE* destinationNode;
     INT destinationNodeDelta;
     RT_CIRCULAR_BUFFER destinationBuffer;
@@ -144,8 +142,6 @@ SchedulerpTask()
     for (UINT i = 0; i < MAX_TRAINS; i++)
     {
         RtCircularBufferInit(&trainSchedules[i].lookaheadBuffer, lookaheadBuffers[i], sizeof(lookaheadBuffers[i]));
-        trainSchedules[i].stopNode = NULL;
-        trainSchedules[i].destinationNode = NULL;
         RtCircularBufferInit(&trainSchedules[i].destinationBuffer, destinationBuffers[i], sizeof(destinationBuffers[i]));
         trainSchedules[i].nextSpeed = -1;
     }
@@ -172,8 +168,9 @@ SchedulerpTask()
                     trainSchedule = &trainSchedules[trainId];
                 }
 
-                INT stopPosition = (distanceToAccelerate(trainData->velocity, 0, PhysicsSteadyStateDeceleration(trainId, trainData->trainSpeed)) * 12) / 10;
-                stopPosition += trainData->distancePastCurrentNode;
+                INT stoppingDistance = distanceToAccelerate(max(PhysicsSteadyStateVelocity(trainData->trainId, trainData->trainSpeed), trainData->velocity),
+                                                            0,
+                                                            PhysicsSteadyStateDeceleration(trainId, trainData->trainSpeed)) * 2;
 
                 if (trainSchedule != NULL)
                 {
@@ -194,7 +191,6 @@ SchedulerpTask()
                             if (SUCCESSFUL(GetPathToDestination(trainData->currentNode, trainSchedule->destinationNode, &trainSchedule->destinationBuffer)))
                             {
                                 UINT pathSize = (RtCircularBufferSize(&trainSchedule->destinationBuffer) / sizeof(TRACK_NODE*)) - 1;
-
                                 BOOLEAN success = TRUE;
                                 for (UINT i = 0; i < pathSize && success; i++)
                                 {
@@ -222,78 +218,85 @@ SchedulerpTask()
                                                     VERIFY(SUCCESSFUL(ConductorSetSwitchDirection(branchNode->num, SwitchCurved)));
                                                 }
                                             }
-
-                                            success = FALSE;
+                                            else
+                                            {
+                                                success = FALSE;
+                                            }
                                         }
                                     }
                                 }
                             }
                             else
                             {
-                                Log("Failed to generate path!");
+                                Log("Couldn't find a path!!");
                             }
                         }
 
                         // update lookahead buffer
-                        VERIFY(SUCCESSFUL(GetNextNodesWithinDistance(trainData->currentNode, stopPosition, &trainSchedule->lookaheadBuffer)));
+                        VERIFY(SUCCESSFUL(GetNextNodesWithinDistance(trainData->currentNode, stoppingDistance + trainData->distancePastCurrentNode, &trainSchedule->lookaheadBuffer)));
                     }
 
                     // reserve 2x stopping distance of track
                     if (SUCCESSFUL(ReserveTrackMultiple(&trainSchedule->lookaheadBuffer, trainId)))
                     {
-                        if (trainData->trainSpeed == 0)
+                        if (trainData->trainSpeed == 0 && trainSchedule->destinationNode != NULL)
                         {
-                            Log("%d could reserve, starting", trainId);
                             VERIFY(SUCCESSFUL(ConductorSetTrainSpeed(trainId, DEFAULT_TRAIN_SPEED)));
                         }
                     }
                     else
                     {
-                        if (trainData->trainSpeed != 8)
+                        if (trainData->trainSpeed > DEFAULT_TRAIN_SPEED)
                         {
-                            Log("%d could not reserve, slowing down", trainId);
+                            VERIFY(SUCCESSFUL(ConductorSetTrainSpeed(trainId, DEFAULT_TRAIN_SPEED)));
+                            VERIFY(SUCCESSFUL(TrainSendData(trainId, 68)));
+                        }
+                        else if (trainData->trainSpeed > 8)
+                        {
                             VERIFY(SUCCESSFUL(ConductorSetTrainSpeed(trainId, 8)));
                         }
-                        else
+                        else if (trainData->trainSpeed > 0)
                         {
-                            Log("%d could not reserve, stopping", trainId);
-                            VERIFY(SUCCESSFUL(ConductorSetTrainSpeed(trainId, 0)));
+                            VERIFY(RT_SUCCESS(RtCircularBufferClear(&trainSchedule->lookaheadBuffer)));
+                            VERIFY(SUCCESSFUL(ConductorReverseTrain(trainId, trainData->trainSpeed)));
+                            VERIFY(SUCCESSFUL(TrainSendData(trainId, 64)));
                         }
                     }
 
                     // stop at destination node + delta
-
                     UINT lookaheadBufferSize = (RtCircularBufferSize(&trainSchedule->lookaheadBuffer) / sizeof(TRACK_NODE*));
-
                     for (UINT i = 0; i < lookaheadBufferSize && trainSchedule->destinationNode != NULL; i++)
                     {
                         TRACK_NODE* aheadNode;
                         VERIFY(RT_SUCCESS(RtCircularBufferElementAt(&trainSchedule->lookaheadBuffer, i, &aheadNode, sizeof(aheadNode))));
 
-                        if (aheadNode == trainSchedule->destinationNode)
+                        if (aheadNode == trainSchedule->destinationNode || aheadNode->reverse == trainSchedule->destinationNode)
                         {
-                            UINT distanceToDestination = mmToUm(aheadNode->path_distance) + cmToUm(trainSchedule->destinationNodeDelta);
+                            UINT distanceToDestination = mmToUm(aheadNode->path_distance) + cmToUm(trainSchedule->destinationNodeDelta) - cmToUm(15) - trainData->distancePastCurrentNode;
 
-                            Log("%s is %d cm away, send stop by %d cm",
+                            Log("%s + %d cm is still %d cm away, and we require %d cm to stop.",
                                 trainSchedule->destinationNode->name,
+                                trainSchedule->destinationNodeDelta,
                                 umToCm(distanceToDestination),
-                                umToCm(stopPosition - trainData->distancePastCurrentNode));
+                                umToCm(stoppingDistance));
 
-                            if (distanceToDestination < stopPosition)
+                            if (distanceToDestination < stoppingDistance)
                             {
+                                Log("%d is within stopping distance of %s, let's stop!", trainId, trainSchedule->destinationNode->name);
+
                                 VERIFY(SUCCESSFUL(ConductorSetTrainSpeed(trainId, 0)));
                                 trainSchedule->destinationNode = NULL;
                                 trainSchedule->nextSpeed = -1;
-
-                                Log("Send stop train %d command", trainId);
                             }
                         }
                     }
 
                     VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
-                    ShowTrainLocation(trainData);
-
+                    if (Time() % 6 == 0 || updateType == UpdateSchedulerBySensor)
+                    {
+                        ShowTrainLocation(trainData);
+                    }
                 }
 
                 break;
@@ -343,10 +346,9 @@ SchedulerpTask()
             {
                 SCHEDULER_TRAIN_START_REQUEST startRequest = request.startRequest;
 
-                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
-
                 VERIFY(SUCCESSFUL(ConductorSetTrainSpeed(startRequest.trainId, DEFAULT_TRAIN_SPEED)));
                 VERIFY(SUCCESSFUL(LocationServerLookForTrain(startRequest.trainId, DEFAULT_TRAIN_SPEED)));
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
                 break;
             }
@@ -367,14 +369,14 @@ SchedulerpTask()
             {
                 SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST moveToSensorRequest = request.moveToSensorRequest;
 
-                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
-
                 TRACK_NODE* destinationNode;
                 VERIFY(SUCCESSFUL(GetSensorNode(&moveToSensorRequest.sensor, &destinationNode)));
 
                 TRAIN_SCHEDULE* trainSchedule = &trainSchedules[moveToSensorRequest.trainId];
                 trainSchedule->destinationNode = destinationNode;
                 trainSchedule->destinationNodeDelta = moveToSensorRequest.distancePastSensor;
+
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
                 break;
             }

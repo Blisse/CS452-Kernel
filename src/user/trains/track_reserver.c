@@ -29,7 +29,7 @@ typedef struct TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST {
 } TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST;
 
 typedef struct TRACK_RESERVER_IS_FREE_REQUEST {
-    TRACK_NODE* node;
+    TRACK_NODE* reservedNode;
     UINT trainId;
     BOOLEAN* isFree;
 } TRACK_RESERVER_IS_FREE_REQUEST;
@@ -55,15 +55,101 @@ typedef struct _TRACK_RESERVER_REQUEST {
     };
 } TRACK_RESERVER_REQUEST;
 
+inline
+static
+BOOLEAN
+TrackReserverpIsReservationFree(
+        IN INT reservation
+    )
+{
+    return (reservation == -1);
+}
+
+inline
+static
+BOOLEAN
+TrackReserverpIsReservationMine(
+        IN INT reservation,
+        IN INT trainId
+    )
+{
+    return (reservation == trainId);
+}
+
+inline
+static
+BOOLEAN
+TrackReserverpIsReservationFreeOrMine(
+        IN INT* trackReservations,
+        IN UINT trackReservationsSize,
+        IN TRACK_NODE* trackNode,
+        IN INT trainId
+    )
+{
+    UINT forwardIndex = trackNode->node_index;
+    ASSERT(forwardIndex < trackReservationsSize);
+    UINT reverseIndex = trackNode->reverse->node_index;
+    ASSERT(reverseIndex < trackReservationsSize);
+
+    INT forwardReservation = trackReservations[forwardIndex];
+    INT reverseReservation = trackReservations[reverseIndex];
+
+    return ((TrackReserverpIsReservationFree(forwardReservation) || TrackReserverpIsReservationMine(forwardReservation, trainId))
+        && (TrackReserverpIsReservationFree(reverseReservation) || TrackReserverpIsReservationMine(reverseReservation, trainId)));
+}
+
+inline
+static
+BOOLEAN
+TrackReserverpTryReserve(
+        IN INT* trackReservations,
+        IN UINT trackReservationsSize,
+        IN TRACK_NODE* trackNode,
+        IN INT trainId
+    )
+{
+    if (TrackReserverpIsReservationFreeOrMine(trackReservations, trackReservationsSize, trackNode, trainId))
+    {
+        trackReservations[trackNode->node_index] = trainId;
+        trackReservations[trackNode->reverse->node_index] = trainId;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+inline
+static
+BOOLEAN
+TrackReserverpTryRelease(
+        IN INT* trackReservations,
+        IN UINT trackReservationsSize,
+        IN TRACK_NODE* trackNode,
+        IN INT trainId
+    )
+{
+    if (TrackReserverpIsReservationFreeOrMine(trackReservations, trackReservationsSize, trackNode, trainId))
+    {
+        trackReservations[trackNode->node_index] = -1;
+        trackReservations[trackNode->reverse->node_index] = -1;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 VOID
 TrackReserverpTask()
 {
-    INT trackReservationByIndex[TRACK_MAX / 2];
-    RtMemset(trackReservationByIndex, sizeof(trackReservationByIndex), -1);
-
-    UINT trackReservationSize = sizeof(trackReservationByIndex) / sizeof(trackReservationByIndex[0]);
-
     VERIFY(SUCCESSFUL(RegisterAs(TRACK_RESERVER_NAME)));
+
+    INT trackReservations[TRACK_MAX];
+    UINT trackReservationsSize = TRACK_MAX;
+
+    for (UINT i = 0; i < trackReservationsSize; i++)
+    {
+        trackReservations[i] = -1;
+    }
 
     while (1)
     {
@@ -78,18 +164,7 @@ TrackReserverpTask()
             case ReserveRequest:
             {
                 TRACK_RESERVER_RESERVE_REQUEST* reserveRequest = &request->reserveRequest;
-
-                UINT forwardAndReverseIndex = reserveRequest->reservedNode->node_index / 2;
-
-                if (trackReservationByIndex[forwardAndReverseIndex] == -1)
-                {
-                    trackReservationByIndex[forwardAndReverseIndex] = reserveRequest->trainId;
-                }
-                else if (trackReservationByIndex[forwardAndReverseIndex] != reserveRequest->trainId)
-                {
-                    success = FALSE;
-                }
-
+                success = TrackReserverpTryReserve(trackReservations, trackReservationsSize, reserveRequest->reservedNode, reserveRequest->trainId);
                 break;
             }
 
@@ -99,35 +174,32 @@ TrackReserverpTask()
 
                 UINT reservedNodesSize = RtCircularBufferSize(reserveMultipleRequest->reservedNodes) / sizeof(TRACK_NODE*);
 
-                for (UINT i = 0; i < reservedNodesSize; i++)
+                for (UINT i = 0; i < reservedNodesSize && success; i++)
                 {
                     TRACK_NODE* trackNode;
                     VERIFY(RT_SUCCESS(RtCircularBufferElementAt(reserveMultipleRequest->reservedNodes, i, &trackNode, sizeof(trackNode))));
+                    ASSERT(trackNode != NULL);
 
-                    UINT forwardAndReverseIndex = trackNode->node_index / 2;
-                    if (trackReservationByIndex[forwardAndReverseIndex] != -1
-                        && trackReservationByIndex[forwardAndReverseIndex] != reserveMultipleRequest->trainId)
-                    {
-                        success = FALSE;
-                    }
+                    success = TrackReserverpIsReservationFreeOrMine(trackReservations, trackReservationsSize, trackNode, reserveMultipleRequest->trainId);
                 }
 
                 if (success)
                 {
-                    for (UINT i = 0; i < trackReservationSize; i++)
+                    for (UINT i = 0; i < trackReservationsSize; i++)
                     {
-                        if (trackReservationByIndex[i] == reserveMultipleRequest->trainId)
+                        if (trackReservations[i] == reserveMultipleRequest->trainId)
                         {
-                            trackReservationByIndex[i] = -1;
+                            trackReservations[i] = -1;
                         }
                     }
 
-                    for (UINT i = 0; i < reservedNodesSize; i++)
+                    for (UINT i = 0; i < reservedNodesSize && success; i++)
                     {
                         TRACK_NODE* trackNode;
                         VERIFY(RT_SUCCESS(RtCircularBufferElementAt(reserveMultipleRequest->reservedNodes, i, &trackNode, sizeof(trackNode))));
-                        UINT forwardAndReverseIndex = trackNode->node_index / 2;
-                        trackReservationByIndex[forwardAndReverseIndex] = reserveMultipleRequest->trainId;
+                        ASSERT(trackNode != NULL);
+
+                        success = TrackReserverpTryReserve(trackReservations, trackReservationsSize, trackNode, reserveMultipleRequest->trainId);
                     }
                 }
 
@@ -138,10 +210,7 @@ TrackReserverpTask()
             {
                 TRACK_RESERVER_IS_FREE_REQUEST* isFreeRequest = &request->isFreeRequest;
 
-                UINT forwardAndReverseIndex = isFreeRequest->node->node_index / 2;
-
-                *isFreeRequest->isFree = (trackReservationByIndex[forwardAndReverseIndex] != -1
-                    || trackReservationByIndex[forwardAndReverseIndex] != isFreeRequest->trainId);
+                *isFreeRequest->isFree = TrackReserverpIsReservationFreeOrMine(trackReservations, trackReservationsSize, isFreeRequest->reservedNode, isFreeRequest->trainId);
 
                 break;
             }
@@ -150,16 +219,7 @@ TrackReserverpTask()
             {
                 TRACK_RESERVER_RELEASE_REQUEST* releaseRequest = &request->releaseRequest;
 
-                UINT forwardAndReverseIndex = releaseRequest->reservedNode->node_index / 2;
-
-                if (trackReservationByIndex[forwardAndReverseIndex] == releaseRequest->trainId)
-                {
-                    trackReservationByIndex[forwardAndReverseIndex] = -1;
-                }
-                else
-                {
-                    success = FALSE;
-                }
+                success = TrackReserverpTryRelease(trackReservations, trackReservationsSize, releaseRequest->reservedNode, releaseRequest->trainId);
 
                 break;
             }
@@ -168,11 +228,11 @@ TrackReserverpTask()
             {
                 TRACK_RESERVER_RELEASE_ALL_REQUEST* releaseAllRequest = &request->releaseAllRequest;
 
-                for (UINT i = 0; i < trackReservationSize; i++)
+                for (UINT i = 0; i < trackReservationsSize; i++)
                 {
-                    if (trackReservationByIndex[i] == releaseAllRequest->trainId)
+                    if (trackReservations[i] == releaseAllRequest->trainId)
                     {
-                        trackReservationByIndex[i] = -1;
+                        trackReservations[i] = -1;
                     }
                 }
 
@@ -241,7 +301,7 @@ ReserveTrackMultiple (
 
 INT
 IsTrackFree (
-        IN TRACK_NODE* node,
+        IN TRACK_NODE* reservedNode,
         IN UINT trainId,
         OUT BOOLEAN* isFree
     )
@@ -249,7 +309,7 @@ IsTrackFree (
     TRACK_RESERVER_REQUEST request;
 
     request.type = IsFreeRequest;
-    request.isFreeRequest.node = node;
+    request.isFreeRequest.reservedNode = reservedNode;
     request.isFreeRequest.trainId = trainId;
     request.isFreeRequest.isFree = isFree;
 

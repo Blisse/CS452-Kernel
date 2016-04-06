@@ -20,12 +20,19 @@ typedef enum _TRACK {
 
 #define MAX_SPEED 14
 
+typedef enum TRAIN_ACCELERATION_TYPE {
+    TrainNoAcceleration = 0,
+    TrainAcceleration,
+    TrainDeceleration,
+} TRAIN_ACCELERATION_TYPE;
+
 typedef struct _TRAIN_DATA {
     UINT trainId; // id
     UINT trainSpeed; // 0-14
 
     INT velocity; // in micrometers / tick
     INT acceleration; // in micrometers / tick^2
+    TRAIN_ACCELERATION_TYPE accelerationType;
 
     TRACK_NODE* currentNode;
     TRACK_NODE* nextNode;
@@ -41,6 +48,12 @@ typedef struct _TRAIN_DATA {
 } TRAIN_DATA;
 
 INT
+TrainSendData(
+        IN INT trainId,
+        IN INT data
+    );
+
+INT
 TrainSetSpeed (
         IN INT train,
         IN INT speed
@@ -49,12 +62,6 @@ TrainSetSpeed (
 INT
 TrainReverse (
         IN INT train
-    );
-
-INT
-GetTrainData (
-        IN UCHAR train,
-        OUT TRAIN_DATA** data
     );
 
 /************************************
@@ -77,6 +84,29 @@ SwitchGetDirection (
         IN INT sw,
         OUT SWITCH_DIRECTION* direction
     );
+
+/************************************
+ *         CONDUCTOR API            *
+ ************************************/
+
+INT
+ConductorSetTrainSpeed(
+        IN INT trainId,
+        IN INT trainSpeed
+    );
+
+INT
+ConductorReverseTrain(
+        IN INT trainId,
+        IN INT initialTrainSpeed
+    );
+
+INT
+ConductorSetSwitchDirection(
+        IN INT switchId,
+        IN SWITCH_DIRECTION switchDirection
+    );
+
 
 /************************************
  *           SENSOR API             *
@@ -142,6 +172,11 @@ MoveTrainToSensor (
     );
 
 INT
+AwaitTrainArrival (
+        IN UINT trainId
+    );
+
+INT
 StopTrain (
         IN UINT trainId
     );
@@ -156,6 +191,7 @@ ScheduleTrainSpeed (
         IN UINT trainId,
         IN UINT trainSpeed
     );
+
 
 /************************************
  *           INIT TASK              *

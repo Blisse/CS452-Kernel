@@ -5,6 +5,7 @@
 #include <rtosc/assert.h>
 #include <rtosc/stdlib.h>
 #include <rtosc/string.h>
+#include <user/apps.h>
 #include <user/trains.h>
 #include <user/io.h>
 
@@ -175,6 +176,61 @@ InputParserpParseCommand (
             {
                Log("Failed to start train %d", trainId);
             }
+        }
+    }
+    else if (RtStrEqual(token, "speed"))
+    {
+        INT trainId;
+        INT trainSpeed;
+
+        read = RtStrScanFormatted(buffer, "%d %d", &trainId, &trainSpeed);
+
+        if (SUCCESSFUL(read))
+        {
+            if (!SUCCESSFUL(ConductorSetTrainSpeed(trainId, trainSpeed)))
+            {
+                Log("Failed to set train %d speed %d", trainId, trainSpeed);
+            }
+        }
+    }
+    else if (RtStrEqual(token, "reverse"))
+    {
+        INT trainId;
+        INT trainSpeed;
+
+        read = RtStrScanFormatted(buffer, "%d %d", &trainId, &trainSpeed);
+
+        if (SUCCESSFUL(read))
+        {
+            if (!SUCCESSFUL(ConductorReverseTrain(trainId, trainSpeed)))
+            {
+                Log("Failed to set train %d speed %d", trainId, trainSpeed);
+            }
+        }
+    }
+    else if (RtStrEqual(token, "switch"))
+    {
+        INT switchId;
+        CHAR switchDirection;
+
+        read = RtStrScanFormatted(buffer, "%d %c", &switchId, &switchDirection);
+
+        if (SUCCESSFUL(read))
+        {
+            SWITCH_DIRECTION direction = SwitchCurved;
+            InputParserpGetSwitchDirection(switchDirection, &direction);
+
+            if (!SUCCESSFUL(ConductorSetSwitchDirection(switchId, direction)))
+            {
+                Log("Failed to switch %d to %c", switchId, switchDirection);
+            }
+        }
+    }
+    else if (RtStrEqual(token, "demo"))
+    {
+        if (RtStrIsWhitespace(buffer))
+        {
+            StartDemo();
         }
     }
     else if (RtStrEqual(token, "q"))

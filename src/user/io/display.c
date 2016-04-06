@@ -16,14 +16,16 @@
 #define CURSOR_DELETE_LINE  "\033[K"
 #define CURSOR_HIDE         "\033[?25l"
 
-#define CURSOR_RESET    "\033[0m"
+#define CURSOR_RESET    "\033[0;0m"
+
 #define CURSOR_RED      "\033[31m"
 #define CURSOR_GREEN    "\033[32m"
 #define CURSOR_YELLOW   "\033[33m"
 #define CURSOR_BLUE     "\033[34m"
 #define CURSOR_MAGENTA  "\033[35m"
 #define CURSOR_CYAN     "\033[36m"
-#define CURSOR_WHITE    "\033[37m"
+#define CURSOR_WHITE    "\033[0;37m"
+#define CURSOR_BOLD_WHITE   "\033[1;37m"
 
 #define DISPLAY_NAME "display"
 
@@ -90,20 +92,20 @@ typedef struct _DISPLAY_REQUEST {
 #define CURSOR_IDLE_X 4
 #define CURSOR_IDLE_Y 2
 
-#define CURSOR_LOG_X 25
-#define CURSOR_LOG_Y 20
+#define CURSOR_LOG_X 4
+#define CURSOR_LOG_Y 29
 
 #define CURSOR_SWITCH_X 4
-#define CURSOR_SWITCH_Y 6
+#define CURSOR_SWITCH_Y 5
 
 #define CURSOR_SENSOR_X 16
 #define CURSOR_SENSOR_Y 6
 
-#define CURSOR_TRAIN_ARRIVAL_X 25
-#define CURSOR_TRAIN_ARRIVAL_Y 12
+#define CURSOR_TRAIN_ARRIVAL_X 20
+#define CURSOR_TRAIN_ARRIVAL_Y 10
 
-#define CURSOR_TRAIN_LOCATION_X 25
-#define CURSOR_TRAIN_LOCATION_Y 6
+#define CURSOR_TRAIN_LOCATION_X 20
+#define CURSOR_TRAIN_LOCATION_Y 4
 
 typedef struct _CURSOR_POSITION {
     INT x;
@@ -171,7 +173,7 @@ DisplaypClock (
 
     CURSOR_POSITION cursor = { CURSOR_CLOCK_X, CURSOR_CLOCK_Y };
     WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, CURSOR_CYAN "|%02d:%02d:%d>" CURSOR_RESET, m % 60, s % 60, ts % 10);
+    WriteFormattedString(com2Device, "|%02d:%02d:%d>", m % 60, s % 60, ts % 10);
 }
 
 static
@@ -183,7 +185,7 @@ DisplaypIdlePercentage (
 {
     CURSOR_POSITION cursor = { CURSOR_IDLE_X, CURSOR_IDLE_Y };
     WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, CURSOR_GREEN "%02d.%02d%%" CURSOR_RESET, idlePercentage / 100, idlePercentage % 100);
+    WriteFormattedString(com2Device, "%02d.%02d%%", idlePercentage / 100, idlePercentage % 100);
 }
 
 static
@@ -223,7 +225,7 @@ DisplaypSwitchRequest (
 {
     CURSOR_POSITION cursor = { CURSOR_SWITCH_X, CURSOR_SWITCH_Y + switchRequest->index };
     WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, CURSOR_CYAN "sw" CURSOR_RESET " %3d " CURSOR_YELLOW "%c" CURSOR_RESET, switchRequest->number, switchRequest->direction == SwitchStraight ? 'S' : 'C');
+    WriteFormattedString(com2Device, "sw %3d " CURSOR_YELLOW "%c" CURSOR_RESET, switchRequest->number, switchRequest->direction == SwitchStraight ? 'S' : 'C');
 }
 
 static
@@ -250,7 +252,7 @@ DisplaypSensorRequest (
         CURSOR_POSITION cursor = { CURSOR_SENSOR_X, CURSOR_SENSOR_Y + i };
         VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
         VERIFY(SUCCESSFUL(WriteFormattedString(com2Device,
-                                               CURSOR_CYAN "%c%02d " CURSOR_YELLOW "%d" CURSOR_RESET,
+                                               "%c%02d " CURSOR_YELLOW "%d" CURSOR_RESET,
                                                displayData.sensor.module,
                                                displayData.sensor.number,
                                                displayData.isOn)));
@@ -294,14 +296,15 @@ static
 VOID
 DisplaypTrainLocationRequest (
         IN IO_DEVICE* com2Device,
+        IN INT trainIndex,
         IN DISPLAY_TRAIN_LOCATION_REQUEST* locationRequest
     )
 {
     TRAIN_DATA* trainData = locationRequest->trainData;
 
-    CURSOR_POSITION cursor = { CURSOR_TRAIN_LOCATION_X, CURSOR_TRAIN_LOCATION_Y };
+    CURSOR_POSITION cursor = { CURSOR_TRAIN_LOCATION_X, CURSOR_TRAIN_LOCATION_Y + trainIndex };
     VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
-    VERIFY(SUCCESSFUL(WriteFormattedString(com2Device, CURSOR_GREEN "%d| @ %s>%s \t by %3d cm, %5d u/t, %3d u/t^2" CURSOR_RESET,
+    VERIFY(SUCCESSFUL(WriteFormattedString(com2Device, CURSOR_BOLD_WHITE "%d| @ %s->%s \t by %4d cm, %5d u/t, %2d u/t^2" CURSOR_RESET,
                                            trainData->trainId,
                                            trainData->currentNode->name,
                                            trainData->nextNode->name,
@@ -344,7 +347,20 @@ DisplaypTask()
     WriteString(&com2Device, CURSOR_CLEAR);
 
     {
-        CURSOR_POSITION cursor = { 4, 4 };
+        CURSOR_POSITION cursor;
+        cursor.x = 4;
+        cursor.y = 4;
+        WriteCursorPosition(&com2Device, &cursor);
+        WriteString(&com2Device, "---------------");
+
+        for (UINT i = 5; i < 27; i++)
+        {
+            cursor.y = i;
+            WriteCursorPosition(&com2Device, &cursor);
+            WriteString(&com2Device, "         |-----");
+        }
+
+        cursor.y = 27;
         WriteCursorPosition(&com2Device, &cursor);
         WriteString(&com2Device, "---------------");
     }
@@ -360,6 +376,9 @@ DisplaypTask()
     DISPLAY_TRAIN_ARRIVAL_REQUEST underlyingArrivalRequestBuffer[4];
     RT_CIRCULAR_BUFFER arrivalRequestBuffer;
     RtCircularBufferInit(&arrivalRequestBuffer, underlyingArrivalRequestBuffer, sizeof(underlyingArrivalRequestBuffer));
+
+    INT trainLocationIndex[4];
+    RtMemset(trainLocationIndex, sizeof(trainLocationIndex), 0);
 
     CURSOR_POSITION cursor = { CURSOR_CMD_X, CURSOR_CMD_Y };
 
@@ -409,7 +428,16 @@ DisplaypTask()
             }
             case DisplayTrainLocationRequest:
             {
-                DisplaypTrainLocationRequest(&com2Device, &request.locationRequest);
+                for (UINT i = 0; i < (sizeof(trainLocationIndex)/sizeof(trainLocationIndex[0])); i++)
+                {
+                    INT trainId = request.locationRequest.trainData->trainId;
+                    if (trainLocationIndex[i] == 0 || trainLocationIndex[i] == trainId)
+                    {
+                        trainLocationIndex[i] = trainId;
+                        DisplaypTrainLocationRequest(&com2Device, i, &request.locationRequest);
+                        break;
+                    }
+                }
                 break;
             }
             case DisplayShutdownRequest:

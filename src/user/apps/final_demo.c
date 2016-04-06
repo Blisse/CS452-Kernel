@@ -1,21 +1,28 @@
-#include "calibration.h"
+#include "final_demo.h"
 
+#include <rtosc/assert.h>
 #include <rtkernel.h>
 #include <rtos.h>
 #include <rtosc/assert.h>
 #include <user/trains.h>
 #include <user/io.h>
 
+#define FINAL_DEMO_SERVER_NAME "final_demo"
 static
 VOID
-CalibrationpSteadyStateVelocityTask()
+FinalDemopTask()
 {
-    Log("Waiting for servers to initialize (8s)");
-    VERIFY(SUCCESSFUL(Delay(400)));
-    Log("Waiting for servers to initialize (4s)");
-    VERIFY(SUCCESSFUL(Delay(400)));
+    VERIFY(SUCCESSFUL(RegisterAs(FINAL_DEMO_SERVER_NAME)));
 
-    Log("Calibration sequence started");
+    for (INT i = 7; i >= 0; i--)
+    {
+        Log("Waiting for servers to initialize (%ds)", i);
+        VERIFY(SUCCESSFUL(Delay(100)));
+    }
+
+    Log("Hello there!");
+    Log("Sit tight, I'm initializing the track...");
+
     UINT switchTime = Time();
 
 #if CHOSEN_TRACK == TRACK_B
@@ -34,11 +41,23 @@ CalibrationpSteadyStateVelocityTask()
 
     UINT switchCompletionTime = Time();
 
-    Log("Calibration sequence completed in %d ticks", switchCompletionTime - switchTime);
+    Log("I finished! It only took %d ticks", switchCompletionTime - switchTime);
+
+    INT senderId;
+    VERIFY(SUCCESSFUL(Receive(&senderId, NULL, 0)));
+    VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 }
 
 VOID
-CalibrationCreateTask()
+FinalDemoCreateTask()
 {
-    VERIFY(SUCCESSFUL(Create(LowestUserPriority, CalibrationpSteadyStateVelocityTask)));
+    VERIFY(SUCCESSFUL(Create(LowestUserPriority, FinalDemopTask)));
+}
+
+VOID
+StartDemo()
+{
+    INT finalDemoTaskId = WhoIs(FINAL_DEMO_SERVER_NAME);
+    ASSERT(SUCCESSFUL(finalDemoTaskId));
+    VERIFY(SUCCESSFUL(Send(finalDemoTaskId, NULL, 0, NULL, 0)));
 }

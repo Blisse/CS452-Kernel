@@ -1,7 +1,8 @@
 set(SRC_USER
     ${SRC_USER}
-    ${CMAKE_CURRENT_SOURCE_DIR}/init.c
     ${CMAKE_CURRENT_SOURCE_DIR}/calibration.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/final_demo.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/init.c
     PARENT_SCOPE
     )
 

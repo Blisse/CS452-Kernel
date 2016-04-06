@@ -2,6 +2,8 @@
 
 #include <rt.h>
 
+#include <user/trains.h>
+
 VOID
 LocationServerCreateTask();
 
@@ -23,4 +25,10 @@ INT
 LocationServerLookForTrain(
         IN UCHAR trainId,
         IN UCHAR trainSpeed
+    );
+
+INT
+GetTrainData (
+        IN UCHAR train,
+        OUT TRAIN_DATA** data
     );

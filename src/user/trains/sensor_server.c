@@ -51,19 +51,22 @@ SensorReaderpUpdate(
 
             if (previousValue != currentValue)
             {
+                CHAR sensorModule = 'A' + (i / 2);
+                INT sensorNumber = (8 - j) + ((i % 2) * 8);
+
                 if (request.changedSensors.size < MAX_TRACKABLE_TRAINS)
                 {
                     SENSOR_DATA* data = &request.changedSensors.sensors[request.changedSensors.size];
 
-                    data->sensor.module = 'A' + (i / 2);
-                    data->sensor.number = (8 - j) + ((i % 2) * 8);
+                    data->sensor.module = sensorModule;
+                    data->sensor.number = sensorNumber;
                     data->isOn = currentValue;
 
                     request.changedSensors.size++;
                 }
                 else
                 {
-                    Log("Received too much junk sensor data");
+                    Log("Received junk sensor data from %c%d", sensorModule, sensorNumber);
                     break;
                 }
             }
@@ -92,9 +95,12 @@ SensorReaderpTask()
     IO_DEVICE com1Device;
     VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1Device)));
 
-    Log("Waiting for junk sensor data (10s)");
-    VERIFY(SUCCESSFUL(Delay(500)));
-    Log("Waiting for junk sensor data (5s)");
+    for (INT i = 10; i >= 0; i--)
+    {
+        Log("Waiting for junk sensor data (%ds)", i);
+        VERIFY(SUCCESSFUL(Delay(100)));
+    }
+
     VERIFY(SUCCESSFUL(FlushInput(&com1Device)));
     Log("Flushed junk sensor data");
 

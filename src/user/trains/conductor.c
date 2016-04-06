@@ -9,6 +9,7 @@
 
 #include "location_server.h"
 
+#define CONDUCTOR_REVERSE_DELAY_NAME "conductor_reverse_delay"
 #define CONDUCTOR_SERVER_NAME "conductor"
 
 typedef enum CONDUCTOR_REQUEST_TYPE {
@@ -64,6 +65,7 @@ ConductorServerpWorkerTask()
             case ConductorSetTrainSpeedRequest:
             {
                 CONDUCTOR_SET_TRAIN_SPEED_REQUEST* setTrainSpeedRequest = &workRequest.setTrainSpeedRequest;
+
                 VERIFY(SUCCESSFUL(TrainSetSpeed(setTrainSpeedRequest->trainId, setTrainSpeedRequest->trainSpeed)));
                 VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(setTrainSpeedRequest->trainId, setTrainSpeedRequest->trainSpeed)));
                 break;
@@ -72,8 +74,18 @@ ConductorServerpWorkerTask()
             case ConductorReverseTrainRequest:
             {
                 CONDUCTOR_REVERSE_TRAIN_REQUEST* reverseTrainRequest = &workRequest.reverseTrainRequest;
+
+                VERIFY(SUCCESSFUL(TrainSetSpeed(reverseTrainRequest->trainId, 0)));
+                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(reverseTrainRequest->trainId, 0)));
+
+                INT delayTicks = reverseTrainRequest->initialTrainSpeed / 3;
+                VERIFY(SUCCESSFUL(Delay(delayTicks * 100)));
+
                 VERIFY(SUCCESSFUL(TrainReverse(reverseTrainRequest->trainId)));
                 VERIFY(SUCCESSFUL(LocationServerTrainDirectionReverse(reverseTrainRequest->trainId)));
+
+                VERIFY(SUCCESSFUL(TrainSetSpeed(reverseTrainRequest->trainId, reverseTrainRequest->initialTrainSpeed)));
+                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(reverseTrainRequest->trainId, reverseTrainRequest->initialTrainSpeed)));
                 break;
             }
 
@@ -99,11 +111,11 @@ ConductorServerpTask()
 {
     VERIFY(SUCCESSFUL(RegisterAs(CONDUCTOR_SERVER_NAME)));
 
-    INT conductorWorkers[MAX_TRACKABLE_TRAINS];
+    INT conductorWorkers[10];
     RT_CIRCULAR_BUFFER conductorWorkersQueue;
     RtCircularBufferInit(&conductorWorkersQueue, conductorWorkers, sizeof(conductorWorkers));
 
-    for (UINT i = 0; i < MAX_TRACKABLE_TRAINS; i++)
+    for (UINT i = 0; i < 10; i++)
     {
         VERIFY(SUCCESSFUL(Create(Priority14, ConductorServerpWorkerTask)));
     }
@@ -120,6 +132,7 @@ ConductorServerpTask()
             case ConductorRegisterWorkerRequest:
             {
                 VERIFY(RT_SUCCESS(RtCircularBufferPush(&conductorWorkersQueue, &senderId, sizeof(senderId))));
+
                 break;
             }
 
@@ -132,8 +145,9 @@ ConductorServerpTask()
                 }
                 else
                 {
-                    Log("All workers busy, sorry!");
+                    Log("All our conductor workers are busy, sorry!");
                 }
+
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
                 break;

@@ -96,14 +96,16 @@ SwitchpDirection
         IN SWITCH_DIRECTION direction
     )
 {
+    INT status = -1;
     if (SwitchCurved == direction)
     {
-        return SwitchpSendTwoByteCommand(device, SWITCH_COMMAND_DIRECTION_CURVED, sw);
+        status = SwitchpSendTwoByteCommand(device, SWITCH_COMMAND_DIRECTION_CURVED, sw);
     }
     else
     {
-        return SwitchpSendTwoByteCommand(device, SWITCH_COMMAND_DIRECTION_STRAIGHT, sw);
+        status = SwitchpSendTwoByteCommand(device, SWITCH_COMMAND_DIRECTION_STRAIGHT, sw);
     }
+    return status;
 }
 
 static

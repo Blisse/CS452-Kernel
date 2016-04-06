@@ -230,26 +230,43 @@ TrackServerpTask()
                 RT_CIRCULAR_BUFFER* path = request.nextNodesWithinDistanceRequest.path;
 
                 VERIFY(RT_SUCCESS(RtCircularBufferClear(path)));
-                VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &currentNode, sizeof(currentNode))));
 
-                UINT position = 0;
-                while (position < distance)
+                if (currentNode != NULL)
                 {
-                    TRACK_NODE* nextNode = TrackServerpGetNextNode(currentNode);
-                    VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &nextNode, sizeof(nextNode))));
+                    VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &currentNode, sizeof(currentNode))));
 
-                    UINT distanceBetweenNodes = 0;
-                    if (!TrackServerpCalculateDistanceBetweenNodes(currentNode, nextNode, &distanceBetweenNodes))
+                    UINT position = 0;
+                    while (position < distance)
                     {
-                        Log("Oh shit, %s %s failed ", currentNode->name, nextNode->name);
+                        TRACK_NODE* nextNode = TrackServerpGetNextNode(currentNode);
+
+                        if (nextNode != NULL)
+                        {
+                            VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &nextNode, sizeof(nextNode))));
+
+                            UINT distanceBetweenNodes = 0;
+                            if (!TrackServerpCalculateDistanceBetweenNodes(currentNode, nextNode, &distanceBetweenNodes))
+                            {
+                                Log("Oh no, what's the distance between %s and %s?", currentNode->name, nextNode->name);
+                                break;
+                            }
+
+                            position += distanceBetweenNodes;
+                            currentNode = nextNode;
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
 
-                    position += distanceBetweenNodes;
-                    currentNode = nextNode;
-                }
+                    TRACK_NODE* nextNode = TrackServerpGetNextNode(currentNode);
 
-                TRACK_NODE* nextNode = TrackServerpGetNextNode(currentNode);
-                VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &nextNode, sizeof(nextNode))));
+                    if (nextNode != NULL)
+                    {
+                        VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &nextNode, sizeof(nextNode))));
+                    }
+                }
 
                 break;
             }

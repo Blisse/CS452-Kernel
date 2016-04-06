@@ -69,7 +69,9 @@ FindPath(
     startNode->path_distance = 0;
     VERIFY(RT_SUCCESS(RtCircularBufferPush(&pathQueue, &startNode, sizeof(startNode))));
 
-    while (!RtCircularBufferIsEmpty(&pathQueue))
+    UINT i = 0;
+
+    while (!RtCircularBufferIsEmpty(&pathQueue) && i++ < TRACK_MAX)
     {
         TRACK_NODE* currentNode;
         VERIFY(RT_SUCCESS(RtCircularBufferPeekAndPop(&pathQueue, &currentNode, sizeof(currentNode))));

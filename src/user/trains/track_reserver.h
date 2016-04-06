@@ -16,7 +16,7 @@ ReserveTrackMultiple (
 
 INT
 IsTrackFree (
-        IN TRACK_NODE* node,
+        IN TRACK_NODE* reservedNode,
         IN UINT trainId,
         OUT BOOLEAN* isFree
     );
