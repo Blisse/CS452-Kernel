@@ -1,6 +1,7 @@
 #include "conductor.h"
 
 #include <rtosc/assert.h>
+#include <rtosc/buffer.h>
 #include <rtkernel.h>
 #include <rtos.h>
 
@@ -14,6 +15,7 @@ typedef enum CONDUCTOR_REQUEST_TYPE {
     ConductorSetTrainSpeedRequest = 0,
     ConductorReverseTrainRequest,
     ConductorSetSwitchDirectionRequest,
+    ConductorRegisterWorkerRequest,
 } CONDUCTOR_REQUEST_TYPE;
 
 typedef struct CONDUCTOR_SET_TRAIN_SPEED_REQUEST {
@@ -43,9 +45,68 @@ typedef struct CONDUCTOR_REQUEST {
 
 static
 VOID
+ConductorServerpWorkerTask()
+{
+    CONDUCTOR_REQUEST registerRequest;
+    registerRequest.type = ConductorRegisterWorkerRequest;
+
+    INT conductorServerId = MyParentTid();
+    ASSERT(SUCCESSFUL(conductorServerId));
+
+    while (1)
+    {
+        CONDUCTOR_REQUEST workRequest;
+
+        VERIFY(SUCCESSFUL(Send(conductorServerId, &registerRequest, sizeof(registerRequest), &workRequest, sizeof(workRequest))));
+
+        switch(workRequest.type)
+        {
+            case ConductorSetTrainSpeedRequest:
+            {
+                CONDUCTOR_SET_TRAIN_SPEED_REQUEST* setTrainSpeedRequest = &workRequest.setTrainSpeedRequest;
+                VERIFY(SUCCESSFUL(TrainSetSpeed(setTrainSpeedRequest->trainId, setTrainSpeedRequest->trainSpeed)));
+                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(setTrainSpeedRequest->trainId, setTrainSpeedRequest->trainSpeed)));
+                break;
+            }
+
+            case ConductorReverseTrainRequest:
+            {
+                CONDUCTOR_REVERSE_TRAIN_REQUEST* reverseTrainRequest = &workRequest.reverseTrainRequest;
+                VERIFY(SUCCESSFUL(TrainReverse(reverseTrainRequest->trainId)));
+                VERIFY(SUCCESSFUL(LocationServerTrainDirectionReverse(reverseTrainRequest->trainId)));
+                break;
+            }
+
+            case ConductorSetSwitchDirectionRequest:
+            {
+                CONDUCTOR_SET_SWITCH_DIRECTION_REQUEST* setSwitchDirectionRequest = &workRequest.setSwitchDirectionRequest;
+                VERIFY(SUCCESSFUL(SwitchSetDirection(setSwitchDirectionRequest->switchId, setSwitchDirectionRequest->switchDirection)));
+                VERIFY(SUCCESSFUL(LocationServerSwitchUpdated()));
+                break;
+            }
+
+            default:
+            {
+                ASSERT(FALSE);
+            }
+        }
+    }
+}
+
+static
+VOID
 ConductorServerpTask()
 {
     VERIFY(SUCCESSFUL(RegisterAs(CONDUCTOR_SERVER_NAME)));
+
+    INT conductorWorkers[MAX_TRACKABLE_TRAINS];
+    RT_CIRCULAR_BUFFER conductorWorkersQueue;
+    RtCircularBufferInit(&conductorWorkersQueue, conductorWorkers, sizeof(conductorWorkers));
+
+    for (UINT i = 0; i < MAX_TRACKABLE_TRAINS; i++)
+    {
+        VERIFY(SUCCESSFUL(Create(Priority14, ConductorServerpWorkerTask)));
+    }
 
     BOOLEAN running = TRUE;
     while (running)
@@ -54,40 +115,30 @@ ConductorServerpTask()
         CONDUCTOR_REQUEST request;
         VERIFY(SUCCESSFUL(Receive(&senderId, &request, sizeof(request))));
 
-        switch(request.type)
+        switch (request.type)
         {
-            case ConductorSetTrainSpeedRequest:
+            case ConductorRegisterWorkerRequest:
             {
-                CONDUCTOR_SET_TRAIN_SPEED_REQUEST* setTrainSpeedRequest = &request.setTrainSpeedRequest;
-                VERIFY(SUCCESSFUL(TrainSetSpeed(setTrainSpeedRequest->trainId, setTrainSpeedRequest->trainSpeed)));
-                Log("update loc server speed");
-                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(setTrainSpeedRequest->trainId, setTrainSpeedRequest->trainSpeed)));
+                VERIFY(RT_SUCCESS(RtCircularBufferPush(&conductorWorkersQueue, &senderId, sizeof(senderId))));
                 break;
             }
 
-            case ConductorReverseTrainRequest:
+            default:
             {
-                CONDUCTOR_REVERSE_TRAIN_REQUEST* reverseTrainRequest = &request.reverseTrainRequest;
-                VERIFY(SUCCESSFUL(TrainReverse(reverseTrainRequest->trainId)));
-                Log("update loc server direction");
-                VERIFY(SUCCESSFUL(LocationServerTrainDirectionReverse(reverseTrainRequest->trainId)));
-                break;
-            }
+                INT workerId = -1;
+                if (RT_SUCCESS(RtCircularBufferPeekAndPop(&conductorWorkersQueue, &workerId, sizeof(workerId))))
+                {
+                    VERIFY(SUCCESSFUL(Reply(workerId, &request, sizeof(request))));
+                }
+                else
+                {
+                    Log("All workers busy, sorry!");
+                }
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
-            case ConductorSetSwitchDirectionRequest:
-            {
-                CONDUCTOR_SET_SWITCH_DIRECTION_REQUEST* setSwitchDirectionRequest = &request.setSwitchDirectionRequest;
-                VERIFY(SUCCESSFUL(SwitchSetDirection(setSwitchDirectionRequest->switchId, setSwitchDirectionRequest->switchDirection)));
-                Log("update loc server switch");
-                VERIFY(SUCCESSFUL(LocationServerSwitchUpdated()));
-                Log("actually done");
                 break;
             }
         }
-        Log("finish conductor bsns");
-
-        VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
-
     }
 }
 

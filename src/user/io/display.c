@@ -301,9 +301,10 @@ DisplaypTrainLocationRequest (
 
     CURSOR_POSITION cursor = { CURSOR_TRAIN_LOCATION_X, CURSOR_TRAIN_LOCATION_Y };
     VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
-    VERIFY(SUCCESSFUL(WriteFormattedString(com2Device, "%d| @ %s by %3d cm, %5d u/t, %3d u/t^2",
+    VERIFY(SUCCESSFUL(WriteFormattedString(com2Device, CURSOR_GREEN "%d| @ %s>%s \t by %3d cm, %5d u/t, %3d u/t^2" CURSOR_RESET,
                                            trainData->trainId,
                                            trainData->currentNode->name,
+                                           trainData->nextNode->name,
                                            umToCm(trainData->distancePastCurrentNode),
                                            trainData->velocity,
                                            trainData->acceleration)));

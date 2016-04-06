@@ -28,6 +28,7 @@ typedef struct _TRAIN_DATA {
     INT acceleration; // in micrometers / tick^2
 
     TRACK_NODE* currentNode;
+    TRACK_NODE* nextNode;
 
     UINT distancePastCurrentNode; // in micrometers
     UINT distanceCurrentToNextNode; // in micrometers
