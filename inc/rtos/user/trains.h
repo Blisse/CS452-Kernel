@@ -1,7 +1,7 @@
 #pragma once
 
 #include <rt.h>
-#include <track/track_node.h>
+#include <track/track_data.h>
 #include <rtosc/buffer.h>
 
 typedef enum _TRACK {
@@ -21,8 +21,8 @@ typedef enum _TRACK {
 #define MAX_SPEED 14
 
 typedef struct _TRAIN_DATA {
-    UCHAR trainId; // id
-    UCHAR trainSpeed; // 0-14
+    UINT trainId; // id
+    UINT trainSpeed; // 0-14
 
     INT velocity; // in micrometers / tick
     INT acceleration; // in micrometers / tick^2
@@ -104,30 +104,56 @@ SensorAwait (
     );
 
 /************************************
+ *            TRACK API             *
+ ************************************/
+
+INT
+GetSensorNode(
+        IN SENSOR* sensor,
+        OUT TRACK_NODE** sensorNode
+    );
+
+/************************************
+ *         RESERVATION API          *
+ ************************************/
+
+INT
+ReserveTrack (
+        IN TRACK_NODE* trackNode,
+        IN UINT trainId
+    );
+
+INT
+ReleaseTrack (
+        IN TRACK_NODE* trackNode,
+        IN UINT trainId
+    );
+
+/************************************
  *          SCHEDULER API           *
  ************************************/
 
 INT
 MoveTrainToSensor (
-        IN UCHAR trainId,
+        IN UINT trainId,
         IN SENSOR sensor,
         IN UINT distancePastSensor
     );
 
 INT
 StopTrain (
-        IN UCHAR trainId
+        IN UINT trainId
     );
 
 INT
 StartTrain (
-        IN UCHAR trainId
+        IN UINT trainId
     );
 
 INT
-SetTrainSpeed (
-        IN UCHAR trainId,
-        IN UCHAR trainSpeed
+ScheduleTrainSpeed (
+        IN UINT trainId,
+        IN UINT trainSpeed
     );
 
 /************************************

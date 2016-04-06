@@ -43,8 +43,7 @@ PerformanceInit()
 
 
 RT_STATUS
-PerformanceGet
-    (
+PerformanceGet (
         IN INT taskId,
         OUT TASK_PERFORMANCE* performance
     )
@@ -64,8 +63,7 @@ PerformanceEnterTask()
 }
 
 VOID
-PerformanceExitTask
-    (
+PerformanceExitTask (
         IN INT taskId
     )
 {

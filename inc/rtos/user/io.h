@@ -45,14 +45,13 @@ ShowSensorStatus (
 
 VOID
 ShowTrainArrival (
-        IN UCHAR train,
+        IN UINT trainId,
         IN TRACK_NODE* node,
-        IN INT diff
+        IN INT tick,
+        IN INT distance
     );
 
 VOID
 ShowTrainLocation (
-        IN UCHAR train,
-        IN TRACK_NODE* node,
-        IN INT distanceToNode
+        IN TRAIN_DATA* trainData
     );

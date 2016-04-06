@@ -5,15 +5,15 @@
 #include <rtosc/assert.h>
 #include <rtosc/string.h>
 #include <track/track_data.h>
+#include <user/io.h>
 #include <user/trains.h>
-
-#include "track_server.h"
 
 #define TRACK_RESERVER_NAME "track_reserver"
 
 typedef enum _TRACK_RESERVER_REQUEST_TYPE {
     ReserveRequest = 0,
     ReserveMultipleRequest,
+    IsFreeRequest,
     ReleaseRequest,
     ReleaseAllRequest,
 } TRACK_RESERVER_REQUEST_TYPE;
@@ -27,6 +27,12 @@ typedef struct TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST {
     RT_CIRCULAR_BUFFER* reservedNodes;
     UINT trainId;
 } TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST;
+
+typedef struct TRACK_RESERVER_IS_FREE_REQUEST {
+    TRACK_NODE* node;
+    UINT trainId;
+    BOOLEAN* isFree;
+} TRACK_RESERVER_IS_FREE_REQUEST;
 
 typedef struct _TRACK_RESERVER_RELEASE_REQUEST {
     TRACK_NODE* reservedNode;
@@ -43,6 +49,7 @@ typedef struct _TRACK_RESERVER_REQUEST {
     union {
         TRACK_RESERVER_RESERVE_REQUEST reserveRequest;
         TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST reserveMultipleRequest;
+        TRACK_RESERVER_IS_FREE_REQUEST isFreeRequest;
         TRACK_RESERVER_RELEASE_REQUEST releaseRequest;
         TRACK_RESERVER_RELEASE_ALL_REQUEST releaseAllRequest;
     };
@@ -51,8 +58,10 @@ typedef struct _TRACK_RESERVER_REQUEST {
 VOID
 TrackReserverpTask()
 {
-    INT trackReservationByIndex[TRACK_MAX/2];
+    INT trackReservationByIndex[TRACK_MAX / 2];
     RtMemset(trackReservationByIndex, sizeof(trackReservationByIndex), -1);
+
+    UINT trackReservationSize = sizeof(trackReservationByIndex) / sizeof(trackReservationByIndex[0]);
 
     VERIFY(SUCCESSFUL(RegisterAs(TRACK_RESERVER_NAME)));
 
@@ -88,7 +97,9 @@ TrackReserverpTask()
             {
                 TRACK_RESERVER_RESERVE_MULTIPLE_REQUEST* reserveMultipleRequest = &request->reserveMultipleRequest;
 
-                for (UINT i = 0; i < sizeof(reserveMultipleRequest->reservedNodes) / sizeof(TRACK_NODE*); i++)
+                UINT reservedNodesSize = RtCircularBufferSize(reserveMultipleRequest->reservedNodes) / sizeof(TRACK_NODE*);
+
+                for (UINT i = 0; i < reservedNodesSize; i++)
                 {
                     TRACK_NODE* trackNode;
                     VERIFY(RT_SUCCESS(RtCircularBufferElementAt(reserveMultipleRequest->reservedNodes, i, &trackNode, sizeof(trackNode))));
@@ -103,7 +114,15 @@ TrackReserverpTask()
 
                 if (success)
                 {
-                    for (UINT i = 0; i < sizeof(reserveMultipleRequest->reservedNodes) / sizeof(TRACK_NODE*); i++)
+                    for (UINT i = 0; i < trackReservationSize; i++)
+                    {
+                        if (trackReservationByIndex[i] == reserveMultipleRequest->trainId)
+                        {
+                            trackReservationByIndex[i] = -1;
+                        }
+                    }
+
+                    for (UINT i = 0; i < reservedNodesSize; i++)
                     {
                         TRACK_NODE* trackNode;
                         VERIFY(RT_SUCCESS(RtCircularBufferElementAt(reserveMultipleRequest->reservedNodes, i, &trackNode, sizeof(trackNode))));
@@ -111,6 +130,19 @@ TrackReserverpTask()
                         trackReservationByIndex[forwardAndReverseIndex] = reserveMultipleRequest->trainId;
                     }
                 }
+
+                break;
+            }
+
+            case IsFreeRequest:
+            {
+                TRACK_RESERVER_IS_FREE_REQUEST* isFreeRequest = &request->isFreeRequest;
+
+                UINT forwardAndReverseIndex = isFreeRequest->node->node_index / 2;
+
+                *isFreeRequest->isFree = (trackReservationByIndex[forwardAndReverseIndex] != -1
+                    || trackReservationByIndex[forwardAndReverseIndex] != isFreeRequest->trainId);
+
                 break;
             }
 
@@ -136,7 +168,7 @@ TrackReserverpTask()
             {
                 TRACK_RESERVER_RELEASE_ALL_REQUEST* releaseAllRequest = &request->releaseAllRequest;
 
-                for (UINT i = 0; i < sizeof(trackReservationByIndex)/sizeof(trackReservationByIndex[0]); i++)
+                for (UINT i = 0; i < trackReservationSize; i++)
                 {
                     if (trackReservationByIndex[i] == releaseAllRequest->trainId)
                     {
@@ -203,6 +235,23 @@ ReserveTrackMultiple (
     request.type = ReserveMultipleRequest;
     request.reserveMultipleRequest.reservedNodes = trackNodes;
     request.reserveMultipleRequest.trainId = trainId;
+
+    return TrackReserverpSendRequest(&request);
+}
+
+INT
+IsTrackFree (
+        IN TRACK_NODE* node,
+        IN UINT trainId,
+        OUT BOOLEAN* isFree
+    )
+{
+    TRACK_RESERVER_REQUEST request;
+
+    request.type = IsFreeRequest;
+    request.isFreeRequest.node = node;
+    request.isFreeRequest.trainId = trainId;
+    request.isFreeRequest.isFree = isFree;
 
     return TrackReserverpSendRequest(&request);
 }

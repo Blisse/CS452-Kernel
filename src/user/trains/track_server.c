@@ -41,7 +41,7 @@ typedef struct TRACK_SERVER_PATH_TO_DESTINATION_REQUEST {
 
 typedef struct TRACK_SERVER_NEXT_NODES_WITHIN_DISTANCE_REQUEST {
     TRACK_NODE* currentNode;
-    UINT distance;
+    INT distance;
     RT_CIRCULAR_BUFFER* path;
 } TRACK_SERVER_NEXT_NODES_WITHIN_DISTANCE_REQUEST;
 
@@ -64,12 +64,13 @@ TrackServerpGetNextEdge(
         IN TRACK_NODE* node
     )
 {
-    if (NODE_BRANCH == node->type)
+    if (node->type == NODE_BRANCH)
     {
-        SWITCH_DIRECTION direction;
+        SWITCH_DIRECTION direction = SwitchStraight;
+
         VERIFY(SUCCESSFUL(SwitchGetDirection(node->num, &direction)));
 
-        if (SwitchStraight == direction)
+        if (direction == SwitchStraight)
         {
             return &node->edge[DIR_STRAIGHT];
         }
@@ -171,7 +172,7 @@ TrackServerpTask()
         {
             case GetDistanceBetweenNodesRequest:
             {
-                UINT nodeDistance;
+                UINT nodeDistance = 0;
                 requestSuccess = TrackServerpCalculateDistanceBetweenNodes(
                     request.distanceBetweenNodesRequest.nodeA,
                     request.distanceBetweenNodesRequest.nodeB,
@@ -213,32 +214,42 @@ TrackServerpTask()
                 TRACK_NODE* currentNode = request.pathToDestinationRequest.currentNode;
                 TRACK_NODE* destinationNode = request.pathToDestinationRequest.destinationNode;
                 RT_CIRCULAR_BUFFER* path = request.pathToDestinationRequest.path;
-                VERIFY(FindPath(trackNodes, sizeof(trackNodes)/sizeof(trackNodes[0]), currentNode, destinationNode, path));
+
+                VERIFY(RT_SUCCESS(RtCircularBufferClear(path)));
+                if (!FindPath(trackNodes, sizeof(trackNodes)/sizeof(trackNodes[0]), currentNode, destinationNode, path))
+                {
+                    requestSuccess = FALSE;
+                }
                 break;
             }
 
             case GetNextNodesWithinDistanceRequest:
             {
                 TRACK_NODE* currentNode = request.nextNodesWithinDistanceRequest.currentNode;
-                UINT distance = request.nextNodesWithinDistanceRequest.distance;
+                INT distance = request.nextNodesWithinDistanceRequest.distance;
                 RT_CIRCULAR_BUFFER* path = request.nextNodesWithinDistanceRequest.path;
+
+                VERIFY(RT_SUCCESS(RtCircularBufferClear(path)));
+                VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &currentNode, sizeof(currentNode))));
 
                 UINT position = 0;
                 while (position < distance)
                 {
-                    TRACK_NODE* iteraterNode;
-                    VERIFY(TrackServerpGetNextSensorNode(currentNode, &iteraterNode));
-                    VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &currentNode, sizeof(currentNode))));
+                    TRACK_NODE* nextNode = TrackServerpGetNextNode(currentNode);
+                    VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &nextNode, sizeof(nextNode))));
 
-                    UINT distanceBetweenNodes;
-                    VERIFY(TrackServerpCalculateDistanceBetweenNodes(currentNode, iteraterNode, &distanceBetweenNodes));
+                    UINT distanceBetweenNodes = 0;
+                    if (!TrackServerpCalculateDistanceBetweenNodes(currentNode, nextNode, &distanceBetweenNodes))
+                    {
+                        Log("Oh shit, %s %s failed ", currentNode->name, nextNode->name);
+                    }
 
                     position += distanceBetweenNodes;
-                    currentNode = iteraterNode;
+                    currentNode = nextNode;
                 }
 
-                VERIFY(TrackServerpGetNextSensorNode(currentNode, &currentNode));
-                VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &currentNode, sizeof(currentNode))));
+                TRACK_NODE* nextNode = TrackServerpGetNextNode(currentNode);
+                VERIFY(RT_SUCCESS(RtCircularBufferPush(path, &nextNode, sizeof(nextNode))));
 
                 break;
             }
@@ -337,7 +348,7 @@ GetPathToDestination(
 INT
 GetNextNodesWithinDistance(
         IN TRACK_NODE* currentNode,
-        IN UINT distance,
+        IN INT distance,
         OUT RT_CIRCULAR_BUFFER* path
     )
 {

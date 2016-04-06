@@ -12,18 +12,30 @@ static
 VOID
 CalibrationpSteadyStateVelocityTask()
 {
-    Log("Waiting for servers to initialize (10s)");
-    VERIFY(SUCCESSFUL(Delay(500)));
-    Log("Waiting for servers to initialize (5s)");
-    VERIFY(SUCCESSFUL(Delay(500)));
-    Log("Initializing calibration sequence");
+    Log("Waiting for servers to initialize (8s)");
+    VERIFY(SUCCESSFUL(Delay(400)));
+    Log("Waiting for servers to initialize (4s)");
 
+    VERIFY(SUCCESSFUL(Delay(400)));
+
+    UINT switchTime = Time();
+
+    Log("Calibration sequence started");
+
+    VERIFY(SUCCESSFUL(SwitchSetDirection(18, SwitchStraight)));
     VERIFY(SUCCESSFUL(SwitchSetDirection(15, SwitchStraight)));
     VERIFY(SUCCESSFUL(SwitchSetDirection(14, SwitchStraight)));
+    VERIFY(SUCCESSFUL(SwitchSetDirection(11, SwitchStraight)));
     VERIFY(SUCCESSFUL(SwitchSetDirection(9, SwitchStraight)));
     VERIFY(SUCCESSFUL(SwitchSetDirection(8, SwitchStraight)));
-    VERIFY(SUCCESSFUL(SwitchSetDirection(7, SwitchStraight)));
     VERIFY(SUCCESSFUL(SwitchSetDirection(6, SwitchStraight)));
+    VERIFY(SUCCESSFUL(SwitchSetDirection(4, SwitchStraight)));
+    VERIFY(SUCCESSFUL(SwitchSetDirection(2, SwitchStraight)));
+    VERIFY(SUCCESSFUL(SwitchSetDirection(1, SwitchStraight)));
+
+    UINT switchCompletionTime = Time();
+
+    Log("Calibration sequence completed in %d ticks", switchCompletionTime - switchTime);
 
     UINT startTime = Time();
 

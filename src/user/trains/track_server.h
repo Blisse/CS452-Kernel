@@ -3,7 +3,6 @@
 #include <rt.h>
 #include <track/track_data.h>
 #include <user/trains.h>
-#include <user/trains.h>
 
 VOID
 TrackServerCreate();
@@ -13,12 +12,6 @@ GetDistanceBetweenNodes(
         IN TRACK_NODE* nodeA,
         IN TRACK_NODE* nodeB,
         OUT UINT* distance
-    );
-
-INT
-GetSensorNode(
-        IN SENSOR* sensor,
-        OUT TRACK_NODE** sensorNode
     );
 
 INT
@@ -43,6 +36,6 @@ GetPathToDestination(
 INT
 GetNextNodesWithinDistance(
         IN TRACK_NODE* currentNode,
-        IN UINT distance,
+        IN INT distance,
         OUT RT_CIRCULAR_BUFFER* path
     );

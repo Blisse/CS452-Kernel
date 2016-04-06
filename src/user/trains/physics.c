@@ -45,6 +45,15 @@ PhysicsInit()
     g_steadyStateVelocities[71][13] = 4820;
     g_steadyStateVelocities[71][14] = 5680;
 
+    g_steadyStateVelocities[58][7] = 1600;
+    g_steadyStateVelocities[58][8] = 2150;
+    g_steadyStateVelocities[58][9] = 2720;
+    g_steadyStateVelocities[58][10] = 3325;
+    g_steadyStateVelocities[58][11] = 4080;
+    g_steadyStateVelocities[58][12] = 4720;
+    g_steadyStateVelocities[58][13] = 5070;
+    g_steadyStateVelocities[58][14] = 5975;
+
     for (UINT i = 0; i < MAX_TRAINS + 1; i++)
     {
         g_steadyStateAcceleration[i][5] = 10;

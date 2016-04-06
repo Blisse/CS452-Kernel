@@ -40,7 +40,7 @@ typedef enum _DISPLAY_REQUEST_TYPE {
 } DISPLAY_REQUEST_TYPE;
 
 typedef struct _DISPLAY_LOG_REQUEST {
-    CHAR message[100];
+    CHAR message[60];
     INT length;
 } DISPLAY_LOG_REQUEST;
 
@@ -55,15 +55,14 @@ typedef struct _DISPLAY_SWITCH_REQUEST {
 } DISPLAY_SWITCH_REQUEST;
 
 typedef struct _DISPLAY_TRAIN_ARRIVAL_REQUEST {
-    UCHAR train;
+    UINT trainId;
     TRACK_NODE* node;
-    INT diff;
+    INT tick;
+    INT distance;
 } DISPLAY_TRAIN_ARRIVAL_REQUEST;
 
 typedef struct _DISPLAY_TRAIN_LOCATION_REQUEST {
-    UCHAR train;
-    TRACK_NODE* node;
-    INT distanceToNode;
+    TRAIN_DATA* trainData;
 } DISPLAY_TRAIN_LOCATION_REQUEST;
 
 typedef struct _DISPLAY_REQUEST {
@@ -85,14 +84,14 @@ typedef struct _DISPLAY_REQUEST {
 #define CURSOR_CMD_X 20
 #define CURSOR_CMD_Y 2
 
-#define CURSOR_CLOCK_X 11
+#define CURSOR_CLOCK_X 10
 #define CURSOR_CLOCK_Y 2
 
 #define CURSOR_IDLE_X 4
 #define CURSOR_IDLE_Y 2
 
 #define CURSOR_LOG_X 25
-#define CURSOR_LOG_Y 13
+#define CURSOR_LOG_Y 20
 
 #define CURSOR_SWITCH_X 4
 #define CURSOR_SWITCH_Y 6
@@ -101,7 +100,7 @@ typedef struct _DISPLAY_REQUEST {
 #define CURSOR_SENSOR_Y 6
 
 #define CURSOR_TRAIN_ARRIVAL_X 25
-#define CURSOR_TRAIN_ARRIVAL_Y 8
+#define CURSOR_TRAIN_ARRIVAL_Y 12
 
 #define CURSOR_TRAIN_LOCATION_X 25
 #define CURSOR_TRAIN_LOCATION_Y 6
@@ -172,7 +171,7 @@ DisplaypClock (
 
     CURSOR_POSITION cursor = { CURSOR_CLOCK_X, CURSOR_CLOCK_Y };
     WriteCursorPosition(com2Device, &cursor);
-    WriteFormattedString(com2Device, CURSOR_CYAN "%02d:%02d:%d>" CURSOR_RESET, m % 60, s % 60, ts % 10);
+    WriteFormattedString(com2Device, CURSOR_CYAN "|%02d:%02d:%d>" CURSOR_RESET, m % 60, s % 60, ts % 10);
 }
 
 static
@@ -206,7 +205,7 @@ DisplaypLogRequest (
 
     for (UINT i = 0; i < logBufferSize; i++)
     {
-        CHAR buffer[100];
+        CHAR buffer[60];
         VERIFY(RT_SUCCESS(RtCircularBufferElementAt(logBuffer, i, buffer, sizeof(buffer))));
 
         CURSOR_POSITION cursor = { CURSOR_LOG_X, CURSOR_LOG_Y + i };
@@ -259,6 +258,58 @@ DisplaypSensorRequest (
 }
 
 static
+VOID
+DisplaypTrainArrivalRequest (
+        IN IO_DEVICE* com2Device,
+        IN RT_CIRCULAR_BUFFER* arrivalRequestBuffer,
+        IN DISPLAY_TRAIN_ARRIVAL_REQUEST* arrivalRequest
+    )
+{
+
+    if (RtCircularBufferIsFull(arrivalRequestBuffer))
+    {
+        RtCircularBufferPop(arrivalRequestBuffer, sizeof(DISPLAY_TRAIN_ARRIVAL_REQUEST));
+    }
+
+    RtCircularBufferPush(arrivalRequestBuffer, arrivalRequest, sizeof(DISPLAY_TRAIN_ARRIVAL_REQUEST));
+
+    UINT arrivalRequestBufferSize = RtCircularBufferSize(arrivalRequestBuffer) / sizeof(DISPLAY_TRAIN_ARRIVAL_REQUEST);
+
+    for (UINT i = 0; i < arrivalRequestBufferSize; i++)
+    {
+        DISPLAY_TRAIN_ARRIVAL_REQUEST request;
+        VERIFY(RT_SUCCESS(RtCircularBufferElementAt(arrivalRequestBuffer, i, &request, sizeof(request))));
+
+        CURSOR_POSITION cursor = { CURSOR_TRAIN_ARRIVAL_X, CURSOR_TRAIN_ARRIVAL_Y + i };
+        VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
+        VERIFY(SUCCESSFUL(WriteFormattedString(com2Device, CURSOR_DELETE_LINE "%d| @ %s, off by %d ticks, %d cm",
+            request.trainId,
+            request.node->name,
+            request.tick,
+            umToCm(request.distance))));
+    }
+}
+
+static
+VOID
+DisplaypTrainLocationRequest (
+        IN IO_DEVICE* com2Device,
+        IN DISPLAY_TRAIN_LOCATION_REQUEST* locationRequest
+    )
+{
+    TRAIN_DATA* trainData = locationRequest->trainData;
+
+    CURSOR_POSITION cursor = { CURSOR_TRAIN_LOCATION_X, CURSOR_TRAIN_LOCATION_Y };
+    VERIFY(SUCCESSFUL(WriteCursorPosition(com2Device, &cursor)));
+    VERIFY(SUCCESSFUL(WriteFormattedString(com2Device, "%d| @ %s by %3d cm, %5d u/t, %3d u/t^2",
+                                           trainData->trainId,
+                                           trainData->currentNode->name,
+                                           umToCm(trainData->distancePastCurrentNode),
+                                           trainData->velocity,
+                                           trainData->acceleration)));
+}
+
+static
 INT
 DisplaypSendRequest (
         IN DISPLAY_REQUEST* request
@@ -291,13 +342,23 @@ DisplaypTask()
     WriteString(&com2Device, CURSOR_HIDE);
     WriteString(&com2Device, CURSOR_CLEAR);
 
+    {
+        CURSOR_POSITION cursor = { 4, 4 };
+        WriteCursorPosition(&com2Device, &cursor);
+        WriteString(&com2Device, "---------------");
+    }
+
     SENSOR_DATA underlyingSensorDataBuffer[8];
     RT_CIRCULAR_BUFFER sensorDataBuffer;
     RtCircularBufferInit(&sensorDataBuffer, underlyingSensorDataBuffer, sizeof(underlyingSensorDataBuffer));
 
-    CHAR underlyingLogBuffer[1200];
+    CHAR underlyingLogBuffer[600];
     RT_CIRCULAR_BUFFER logBuffer;
     RtCircularBufferInit(&logBuffer, underlyingLogBuffer, sizeof(underlyingLogBuffer));
+
+    DISPLAY_TRAIN_ARRIVAL_REQUEST underlyingArrivalRequestBuffer[4];
+    RT_CIRCULAR_BUFFER arrivalRequestBuffer;
+    RtCircularBufferInit(&arrivalRequestBuffer, underlyingArrivalRequestBuffer, sizeof(underlyingArrivalRequestBuffer));
 
     CURSOR_POSITION cursor = { CURSOR_CMD_X, CURSOR_CMD_Y };
 
@@ -342,10 +403,12 @@ DisplaypTask()
             }
             case DisplayTrainArrivalRequest:
             {
+                DisplaypTrainArrivalRequest(&com2Device, &arrivalRequestBuffer, &request.arrivalRequest);
                 break;
             }
             case DisplayTrainLocationRequest:
             {
+                DisplaypTrainLocationRequest(&com2Device, &request.locationRequest);
                 break;
             }
             case DisplayShutdownRequest:
@@ -454,30 +517,29 @@ ShowSensorStatus (
 
 VOID
 ShowTrainArrival (
-        IN UCHAR train,
+        IN UINT trainId,
         IN TRACK_NODE* node,
-        IN INT diff
+        IN INT tick,
+        IN INT distance
     )
 {
     DISPLAY_REQUEST request;
     request.type = DisplayTrainArrivalRequest;
-    request.arrivalRequest.train = train;
+    request.arrivalRequest.trainId = trainId;
     request.arrivalRequest.node = node;
-    request.arrivalRequest.diff = diff;
+    request.arrivalRequest.tick = tick;
+    request.arrivalRequest.distance = distance;
+
     VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }
 
 VOID
 ShowTrainLocation (
-        IN UCHAR train,
-        IN TRACK_NODE* node,
-        IN INT distanceToNode
+        IN TRAIN_DATA* trainData
     )
 {
     DISPLAY_REQUEST request;
     request.type = DisplayTrainLocationRequest;
-    request.locationRequest.train = train;
-    request.locationRequest.node = node;
-    request.locationRequest.distanceToNode = distanceToNode;
+    request.locationRequest.trainData = trainData;
     VERIFY(SUCCESSFUL(DisplaypSendRequest(&request)));
 }

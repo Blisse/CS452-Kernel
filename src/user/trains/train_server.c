@@ -4,6 +4,7 @@
 #include <rtosc/string.h>
 #include <rtkernel.h>
 #include <rtos.h>
+#include <user/io.h>
 #include <user/trains.h>
 
 #include "location_server.h"
@@ -126,7 +127,7 @@ TrainpTask()
 
     for (UINT i = 0; i < sizeof(speeds); i++)
     {
-        VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, i + 1, 0)));
+        VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, i, 0)));
     }
 
     BOOLEAN running = TRUE;
@@ -140,38 +141,23 @@ TrainpTask()
         {
             case ShutdownRequest:
             {
-                running = FALSE;
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+                running = FALSE;
                 break;
             }
 
             case SetSpeedRequest:
             {
-                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
-
                 VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, request.speed)));
-                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, request.speed)));
-
-                speeds[request.train - 1] = request.speed;
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+                speeds[request.train] = request.speed;
                 break;
             }
 
             case ReverseRequest:
             {
-                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
-
-                UCHAR oldSpeed = speeds[request.train - 1];
-
-                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, 0)));
-                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, 0)));
-
-                Delay(100 * (oldSpeed / 3 + 1));
-
                 VERIFY(SUCCESSFUL(TrainpReverse(&com1, request.train)));
-                VERIFY(SUCCESSFUL(LocationServerTrainDirectionReverse(request.train)));
-
-                VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, request.train, oldSpeed)));
-                VERIFY(SUCCESSFUL(LocationServerUpdateTrainSpeed(request.train, oldSpeed)));
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
                 break;
             }
@@ -183,7 +169,7 @@ TrainpTask()
     {
         if (speeds[i] != 0)
         {
-            VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, i + 1, 0)));
+            VERIFY(SUCCESSFUL(TrainpSetSpeed(&com1, i, 0)));
         }
     }
 

@@ -2,18 +2,11 @@
 
 #include <rt.h>
 
-#include <track/track_data.h>
-
 #include <rtosc/buffer.h>
+#include <track/track_data.h>
 
 VOID
 TrackReserverCreate();
-
-INT
-ReserveTrack (
-        IN TRACK_NODE* trackNode,
-        IN UINT trainId
-    );
 
 INT
 ReserveTrackMultiple (
@@ -22,9 +15,10 @@ ReserveTrackMultiple (
     );
 
 INT
-ReleaseTrack (
-        IN TRACK_NODE* trackNode,
-        IN UINT trainId
+IsTrackFree (
+        IN TRACK_NODE* node,
+        IN UINT trainId,
+        OUT BOOLEAN* isFree
     );
 
 INT

@@ -10,11 +10,13 @@
 #include <user/trains.h>
 #include <user/io.h>
 
+#include "conductor.h"
 #include "physics.h"
 #include "location_server.h"
 #include "track_reserver.h"
 #include "track_server.h"
 
+#define DEFAULT_TRAIN_SPEED 10
 #define SCHEDULER_SERVER_NAME "scheduler_server"
 #define SCHEDULER_WORKER_NAME "scheduler_worker"
 
@@ -33,7 +35,7 @@ typedef enum _SCHEDULER_REQUEST_TYPE {
     TrainMoveToSensorRequest,
     StopTrainRequest,
     StartTrainRequest,
-    SetTrainSpeedRequest,
+    ScheduleTrainSpeedRequest,
 } SCHEDULER_REQUEST_TYPE;
 
 typedef struct _SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST {
@@ -41,22 +43,22 @@ typedef struct _SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST {
 } SCHEDULER_TRAIN_UPDATE_LOCATION_REQUEST;
 
 typedef struct _SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST {
-    UCHAR trainId;
+    UINT trainId;
     SENSOR sensor;
     UINT distancePastSensor;
 } SCHEDULER_TRAIN_MOVE_TO_SENSOR_REQUEST;
 
 typedef struct _SCHEDULER_TRAIN_STOP_REQUEST {
-    UCHAR trainId;
+    UINT trainId;
 } SCHEDULER_TRAIN_STOP_REQUEST;
 
 typedef struct _SCHEDULER_TRAIN_START_REQUEST {
-    UCHAR trainId;
+    UINT trainId;
 } SCHEDULER_TRAIN_START_REQUEST;
 
 typedef struct _SCHEDULER_TRAIN_SPEED_REQUEST {
-    UCHAR trainId;
-    UCHAR trainSpeed;
+    UINT trainId;
+    UINT trainSpeed;
 } SCHEDULER_TRAIN_SPEED_REQUEST;
 
 typedef struct _SCHEDULER_REQUEST {
@@ -73,7 +75,10 @@ typedef struct _SCHEDULER_REQUEST {
 
 typedef struct _TRAIN_SCHEDULE {
     RT_CIRCULAR_BUFFER lookaheadBuffer;
+    TRACK_NODE* stopNode;
     TRACK_NODE* destinationNode;
+    INT destinationNodeDelta;
+    RT_CIRCULAR_BUFFER destinationBuffer;
     INT nextSpeed;
 } TRAIN_SCHEDULE;
 
@@ -129,15 +134,19 @@ SchedulerpTask()
 {
     VERIFY(SUCCESSFUL(RegisterAs(SCHEDULER_SERVER_NAME)));
 
-    VERIFY(SUCCESSFUL(Create(Priority10, SchedulerpUpdateNotifierTask)));
+    VERIFY(SUCCESSFUL(Create(Priority19, SchedulerpUpdateNotifierTask)));
 
-    TRACK_NODE* lookaheadBuffers[MAX_TRAINS][TRACK_MAX];
+    TRACK_NODE* lookaheadBuffers[MAX_TRAINS][TRACK_MAX*2];
+    TRACK_NODE* destinationBuffers[MAX_TRAINS][TRACK_MAX*2];
     TRAIN_SCHEDULE trainSchedules[MAX_TRAINS];
     RtMemset(trainSchedules, sizeof(trainSchedules), 0);
 
     for (UINT i = 0; i < MAX_TRAINS; i++)
     {
         RtCircularBufferInit(&trainSchedules[i].lookaheadBuffer, lookaheadBuffers[i], sizeof(lookaheadBuffers[i]));
+        trainSchedules[i].stopNode = NULL;
+        trainSchedules[i].destinationNode = NULL;
+        RtCircularBufferInit(&trainSchedules[i].destinationBuffer, destinationBuffers[i], sizeof(destinationBuffers[i]));
         trainSchedules[i].nextSpeed = -1;
     }
 
@@ -341,7 +350,7 @@ MoveTrainToSensor (
 
 INT
 StopTrain (
-        IN UCHAR trainId
+        IN UINT trainId
     )
 {
     SCHEDULER_REQUEST request;
@@ -353,7 +362,7 @@ StopTrain (
 
 INT
 StartTrain (
-        IN UCHAR trainId
+        IN UINT trainId
     )
 {
     SCHEDULER_REQUEST request;

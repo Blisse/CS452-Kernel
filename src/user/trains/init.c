@@ -2,6 +2,7 @@
 #include <rtos.h>
 #include <user/trains.h>
 
+#include "conductor.h"
 #include "location_server.h"
 #include "physics.h"
 #include "scheduler.h"
@@ -26,5 +27,6 @@ InitTrainTasks()
     // Initialize remaining tasks
     SensorServerCreateTask();
     LocationServerCreateTask();
+    ConductorServerCreateTask();
     SchedulerCreateTask();
 }

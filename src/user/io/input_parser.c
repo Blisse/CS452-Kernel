@@ -93,6 +93,44 @@ InputParserpParseCommand (
             }
         }
     }
+    else if (RtStrEqual(token, "rs"))
+    {
+        INT trainId;
+        SENSOR sensor;
+
+        read = RtStrScanFormatted(buffer, "%d %c %d", &trainId, &sensor.module, &sensor.number);
+
+        if (SUCCESSFUL(read))
+        {
+            TRACK_NODE* sensorNode;
+            if (SUCCESSFUL(GetSensorNode(&sensor, &sensorNode)))
+            {
+                if (!SUCCESSFUL(ReserveTrack(sensorNode, trainId)))
+                {
+                    Log("Failed to reserve %s for train %d", sensorNode->name, trainId);
+                }
+            }
+        }
+    }
+    else if (RtStrEqual(token, "rl"))
+    {
+        INT trainId;
+        SENSOR sensor;
+
+        read = RtStrScanFormatted(buffer, "%d %c %d", &trainId, &sensor.module, &sensor.number);
+
+        if (SUCCESSFUL(read))
+        {
+            TRACK_NODE* sensorNode;
+            if (SUCCESSFUL(GetSensorNode(&sensor, &sensorNode)))
+            {
+                if (!SUCCESSFUL(ReleaseTrack(sensorNode, trainId)))
+                {
+                    Log("Failed to release %s for train %d", sensorNode->name, trainId);
+                }
+            }
+        }
+    }
     else if (RtStrEqual(token, "goto"))
     {
         INT trainId;

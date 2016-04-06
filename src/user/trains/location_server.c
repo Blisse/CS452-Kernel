@@ -73,6 +73,11 @@ typedef struct _LOCATION_SERVER_REQUEST {
     };
 } LOCATION_SERVER_REQUEST;
 
+typedef struct LOCATION_SERVER_SCHEDULER_UPDATE_REQUEST {
+    TRAIN_DATA* trainData;
+    BOOLEAN onTick;
+} LOCATION_SERVER_SCHEDULER_UPDATE_REQUEST;
+
 static
 VOID
 LocationServerpSensorNotifierTask()
@@ -175,6 +180,28 @@ LocationServerpFindTrainByNextSensor (
 
 static
 VOID
+LocationServerpSchedulerUpdateWorkerTask()
+{
+    while (1)
+    {
+        INT senderId;
+        LOCATION_SERVER_SCHEDULER_UPDATE_REQUEST schedulerUpdateRequest;
+        VERIFY(SUCCESSFUL(Receive(&senderId, &schedulerUpdateRequest, sizeof(schedulerUpdateRequest))));
+        VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+
+        if (schedulerUpdateRequest.onTick)
+        {
+            VERIFY(SUCCESSFUL(UpdateOnTick(schedulerUpdateRequest.trainData)));
+        }
+        else
+        {
+            VERIFY(SUCCESSFUL(UpdateOnSensorNode(schedulerUpdateRequest.trainData)));
+        }
+    }
+}
+
+static
+VOID
 LocationServerpTask()
 {
     VERIFY(SUCCESSFUL(RegisterAs(LOCATION_SERVER_NAME)));
@@ -192,6 +219,14 @@ LocationServerpTask()
     INT sensorCorrections[MAX_TRAINS][NUM_SENSORS];
     RtMemset(sensorCorrections, sizeof(sensorCorrections), 0);
 
+    UINT availableSchedulerUpdateWorker = 0;
+    INT schedulerUpdateWorker[MAX_TRACKABLE_TRAINS];
+    for(UINT i = 0; i < MAX_TRACKABLE_TRAINS; i++)
+    {
+        schedulerUpdateWorker[i] = Create(Priority15, LocationServerpSchedulerUpdateWorkerTask);
+        ASSERT(SUCCESSFUL(schedulerUpdateWorker[i]));
+    }
+
     while (1)
     {
         INT senderId;
@@ -205,15 +240,13 @@ LocationServerpTask()
         {
             case SensorUpdateRequest:
             {
-                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
-
                 SENSOR* sensor = &request.sensorUpdate.sensor;
 
                 TRACK_NODE* sensorNode;
                 VERIFY(SUCCESSFUL(GetSensorNode(sensor, &sensorNode)));
                 UINT sensorIndex = ((sensor->module - 'A') * 16) + (sensor->number - 1);
 
-                TRAIN_DATA* trainData = LocationServerpFindTrainByNextSensor(trackedTrains, trackedTrainsSize, sensorNode, 2);
+                TRAIN_DATA* trainData = LocationServerpFindTrainByNextSensor(trackedTrains, trackedTrainsSize, sensorNode, 3);
 
                 if (trainData == NULL && !RtCircularBufferIsEmpty(&lostTrains))
                 {
@@ -222,7 +255,7 @@ LocationServerpTask()
 
                     VERIFY(RT_SUCCESS(RtCircularBufferPeekAndPop(&lostTrains, trainData, sizeof(*trainData))));
 
-                    Log("Found train %d", trainData->trainId);
+                    Log("Found train %d at %s", trainData->trainId, sensorNode->name);
                 }
 
                 if (trainData != NULL)
@@ -242,10 +275,7 @@ LocationServerpTask()
                                 sensorCorrections[trainData->trainId][sensorIndex] += actualArrivalTimeDifference;
                             }
 
-                            Log("%d| %s by %d ticks", trainData->trainId, sensorNode->name, actualArrivalTimeDifference);
-                        }
-                        else
-                        {
+                            ShowTrainArrival(trainData->trainId, sensorNode, actualArrivalTimeDifference, distance(trainData->velocity, actualArrivalTimeDifference));
                         }
 
                         INT ticksBetweenSensors = currentTick - trainData->currentNodeArrivalTick;
@@ -265,7 +295,13 @@ LocationServerpTask()
                         UINT distanceToTravel = trainData->distanceCurrentToNextNode - trainData->distancePastCurrentNode;
                         trainData->nextNodeExpectedArrivalTick = currentTick + timeToTravelDistance(distanceToTravel, trainData->velocity) + sensorCorrections[trainData->trainId][sensorIndex];
 
-                        VERIFY(SUCCESSFUL(UpdateOnSensorNode(trainData)));
+                        LOCATION_SERVER_SCHEDULER_UPDATE_REQUEST schedulerUpdateRequest;
+                        schedulerUpdateRequest.trainData = trainData;
+                        schedulerUpdateRequest.onTick = FALSE;
+
+                        UINT workerId = schedulerUpdateWorker[availableSchedulerUpdateWorker];
+                        VERIFY(SUCCESSFUL(Send(workerId, &schedulerUpdateRequest, sizeof(schedulerUpdateRequest), NULL, 0)));
+                        availableSchedulerUpdateWorker = (availableSchedulerUpdateWorker + 1) % MAX_TRACKABLE_TRAINS;
                     }
                 }
                 else
@@ -273,14 +309,17 @@ LocationServerpTask()
                     Log("Unexpected sensor %s", sensorNode->name);
                 }
 
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+
                 break;
             }
 
             case TrainSpeedUpdateRequest:
             {
+                TRAIN_SPEED_UPDATE speedUpdate = request.speedUpdate;
+
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
 
-                TRAIN_SPEED_UPDATE speedUpdate = request.speedUpdate;
                 TRAIN_DATA* trainData = LocationServerpFindTrainById(trackedTrains, trackedTrainsSize, speedUpdate.trainId);
 
                 if (trainData != NULL)
@@ -350,7 +389,7 @@ LocationServerpTask()
 
                 VERIFY(RT_SUCCESS(RtCircularBufferPush(&lostTrains, &newTrain, sizeof(newTrain))));
 
-                Log("Searching for train %d", newTrain.trainId);
+                Log("Anticipate train %d somewhere", newTrain.trainId);
 
                 break;
             }
@@ -372,12 +411,12 @@ LocationServerpTask()
                     }
                     else
                     {
+                        TRACK_NODE* nextSensorNode;
+                        VERIFY(SUCCESSFUL(GetNextSensorNode(trainData->currentNode, &nextSensorNode)));
+
                         INT distanceToTravel = trainData->distanceCurrentToNextNode - trainData->distancePastCurrentNode;
                         if (distanceToTravel > 0)
                         {
-                            TRACK_NODE* nextSensorNode;
-                            VERIFY(SUCCESSFUL(GetNextSensorNode(trainData->currentNode, &nextSensorNode)));
-
                             UINT sensorIndex = nextSensorNode->node_index;
 
                             trainData->nextNodeExpectedArrivalTick = currentTick + timeToTravelDistance(distanceToTravel, trainData->velocity) + sensorCorrections[trainData->trainId][sensorIndex];
@@ -395,7 +434,13 @@ LocationServerpTask()
 
                     trainData->lastTick = currentTick;
 
-                    VERIFY(SUCCESSFUL(UpdateOnTick(trainData)));
+                    LOCATION_SERVER_SCHEDULER_UPDATE_REQUEST schedulerUpdateRequest;
+                    schedulerUpdateRequest.trainData = trainData;
+                    schedulerUpdateRequest.onTick = TRUE;
+
+                    UINT workerId = schedulerUpdateWorker[availableSchedulerUpdateWorker];
+                    VERIFY(SUCCESSFUL(Send(workerId, &schedulerUpdateRequest, sizeof(schedulerUpdateRequest), NULL, 0)));
+                    availableSchedulerUpdateWorker = (availableSchedulerUpdateWorker + 1) % MAX_TRACKABLE_TRAINS;
                 }
 
                 VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
@@ -417,13 +462,19 @@ inline
 INT
 LocationServerpSendReplyRequest(
         IN LOCATION_SERVER_REQUEST* request,
-        OUT PVOID buffer,
+        IN PVOID buffer,
         IN INT bufferLength
     )
 {
-    INT locationServerId = WhoIs(LOCATION_SERVER_NAME);
+    INT status = WhoIs(LOCATION_SERVER_NAME);
 
-    return Send(locationServerId, request, sizeof(*request), buffer, bufferLength);
+    if (SUCCESSFUL(status))
+    {
+        INT locationServerId = status;
+        status = Send(locationServerId, request, sizeof(*request), buffer, bufferLength);
+    }
+
+    return status;
 }
 
 INT
@@ -443,7 +494,8 @@ LocationServerUpdateTrainSpeed(
 INT
 LocationServerSwitchUpdated()
 {
-    LOCATION_SERVER_REQUEST request = { SwitchUpdateRequest };
+    LOCATION_SERVER_REQUEST request;
+    request.type = SwitchUpdateRequest;
 
     return LocationServerpSendReplyRequest(&request, NULL, 0);
 }

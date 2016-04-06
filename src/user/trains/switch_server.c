@@ -1,6 +1,5 @@
 #include "switch_server.h"
 
-#include "location_server.h"
 #include <rtosc/assert.h>
 #include <rtkernel.h>
 #include <rtos.h>
@@ -128,7 +127,6 @@ SwitchpTask()
     IO_DEVICE com1;
     VERIFY(SUCCESSFUL(Open(UartDevice, ChannelCom1, &com1)));
 
-    // Set the switches to a known state
     for (UINT i = 0; i < NUM_SWITCHES; i++)
     {
         UCHAR sw = SwitchpFromIndex(i);
@@ -144,10 +142,10 @@ SwitchpTask()
 
     while (1)
     {
-        INT sender;
+        INT senderId;
         SWITCH_REQUEST request;
 
-        VERIFY(SUCCESSFUL(Receive(&sender, &request, sizeof(request))));
+        VERIFY(SUCCESSFUL(Receive(&senderId, &request, sizeof(request))));
 
         switch(request.type)
         {
@@ -156,13 +154,13 @@ SwitchpTask()
                 VERIFY(SUCCESSFUL(SwitchpDirection(&com1, request.sw, request.direction)));
                 VERIFY(SUCCESSFUL(SwitchpDisableSolenoid(&com1)));
 
-                VERIFY(SUCCESSFUL(Reply(sender, NULL, 0)));
-
                 UINT switchIndex = SwitchpToIndex(request.sw);
                 directions[switchIndex] = request.direction;
 
-                VERIFY(SUCCESSFUL(LocationServerSwitchUpdated()));
+                VERIFY(SUCCESSFUL(Reply(senderId, NULL, 0)));
+
                 ShowSwitchDirection(switchIndex, request.sw, request.direction);
+
                 break;
             }
 
@@ -170,7 +168,7 @@ SwitchpTask()
             {
                 UINT switchIndex = SwitchpToIndex(request.sw);
                 SWITCH_DIRECTION direction = directions[switchIndex];
-                VERIFY(SUCCESSFUL(Reply(sender, &direction, sizeof(direction))));
+                VERIFY(SUCCESSFUL(Reply(senderId, &direction, sizeof(direction))));
                 break;
             }
         }
